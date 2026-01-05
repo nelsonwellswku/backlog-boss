@@ -4,7 +4,7 @@ Video game backlog prioritizer
 ## Development
 
 ### Prerequisites
-* uv
+* [uv](https://docs.astral.sh/uv/)
 
 ### Backend
 
