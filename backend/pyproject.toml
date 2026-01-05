@@ -1,0 +1,14 @@
+[project]
+name = "backlog-boss-backend"
+version = "0.1.0"
+description = "Backend for Backlog Boss"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi[standard]>=0.128.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.10",
+]
