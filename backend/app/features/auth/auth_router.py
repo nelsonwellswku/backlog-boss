@@ -77,4 +77,27 @@ def auth_with_steam():
 def steam_callback(
     query_params: OpenIdCallbackParams = Depends(openid_callback_params),
 ):
-    return {"message": "callback received"}
+    outgoing_query_params: QueryParams = QueryParams(
+        {
+            "openid.ns": query_params.ns,
+            "openid.op_endpoint": query_params.op_endpoint,
+            "openid.claimed_id": query_params.claimed_id,
+            "openid.identity": query_params.identity,
+            "openid.return_to": query_params.return_to,
+            "openid.response_nonce": query_params.response_nonce,
+            "openid.assoc_handle": query_params.assoc_handle,
+            "openid.signed": query_params.signed,
+            "openid.sig": query_params.sig,
+            "openid.mode": "check_authentication",
+        }
+    )
+
+    check_auth_response = httpx.post(
+        "https://steamcommunity.com/openid/login",
+        params=outgoing_query_params,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    if not "is_valid:true" in check_auth_response.text:
+        raise ValueError("Log in is not valid.")
+
+    return {"claimed_id": query_params.claimed_id}
