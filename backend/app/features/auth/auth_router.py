@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
 import httpx
+from steam_web_api import Steam
 
 from app.settings import AppSettings
 
@@ -75,6 +76,7 @@ def auth_with_steam():
 
 @auth_router.get("/api/auth/steam/callback")
 def steam_callback(
+    settings: AppSettings,
     query_params: OpenIdCallbackParams = Depends(openid_callback_params),
 ):
     outgoing_query_params: QueryParams = QueryParams(
@@ -100,4 +102,10 @@ def steam_callback(
     if not "is_valid:true" in check_auth_response.text:
         raise ValueError("Log in is not valid.")
 
-    return {"claimed_id": query_params.claimed_id}
+    steam = Steam(settings.steam_api_key)
+    assert query_params.claimed_id
+    claimed_id = query_params.claimed_id.split("/")[-1]
+    assert claimed_id
+    owned_games = steam.users.get_owned_games(claimed_id, include_appinfo=True, includ_free_games=False)
+
+    return {"claimed_id": query_params.claimed_id, "owned_games": owned_games}

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
 
     twitch_client_id: str
     twitch_client_secret: str
+    steam_api_key: str
 
 
 @lru_cache

@@ -8,6 +8,7 @@ dependencies = [
     "fastapi[standard]>=0.128.0",
     "httpx>=0.28.1",
     "pydantic-settings>=2.12.0",
+    "python-steam-api>=2.2.1",
 ]
 
 [dependency-groups]
