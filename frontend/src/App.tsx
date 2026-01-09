@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import {
   livenessApiHealthLivenessGet,
 } from "./client";
+import { SteamButton } from "./Steambutton";
 
 
 export function App() {
 
   const [getIsLive, setIsLive]= useState<boolean>(false)
-
 
   useEffect(() => {
     livenessApiHealthLivenessGet().then(response => {
@@ -21,5 +21,6 @@ export function App() {
   return <>
      <h1>Backlog Boss</h1>
      <p>Is the app live? {getIsLive ? "Yes" : "No :("}</p>
+     <SteamButton />
   </>
 }

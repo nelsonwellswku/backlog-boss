@@ -1,4 +1,4 @@
-# backlog-boss
+# Backlog Boss
 Video game backlog prioritizer
 
 ## Development
