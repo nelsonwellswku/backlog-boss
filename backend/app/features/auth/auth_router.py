@@ -106,6 +106,8 @@ def steam_callback(
     assert query_params.claimed_id
     claimed_id = query_params.claimed_id.split("/")[-1]
     assert claimed_id
-    owned_games = steam.users.get_owned_games(claimed_id, include_appinfo=True, includ_free_games=False)
+    owned_games = steam.users.get_owned_games(
+        claimed_id, include_appinfo=True, includ_free_games=False
+    )
 
     return {"claimed_id": query_params.claimed_id, "owned_games": owned_games}
