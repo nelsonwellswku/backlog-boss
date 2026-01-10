@@ -15,6 +15,9 @@ app = FastAPI(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# pages
 app.include_router(home_page_router, tags=["Page"])
+
+# api routes
 app.include_router(health_router, tags=["Health"])
 app.include_router(auth_router, tags=["Auth"])

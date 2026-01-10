@@ -1,9 +1,27 @@
-<html>
+<!doctype html>
+<html lang="en">
     <head>
-
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="color-scheme" content="light dark">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+        <title>Backlog boss</title>
     </head>
+
     <body>
-        <h1>Backlog Boss</h1>
-        <p>This is a template.</p>
+        <main class="container">
+            <header >
+                <nav>
+                    <ul>
+                        <li><strong>Backlog Boss</strong></li>
+                    </ul>
+                    <ul>
+                        <li><a href="http://localhost:8000/api/auth/steam"><img src="{{ url_for('static', path='/images/steam_log_in.png') }}"/></a></li>
+                    </ul>
+                </nav>
+            </header>
+            <main style="min-height: 90vh;"></main>
+            <footer>Copyright 2026 Nelson Wells</footer>
+        </main>
     </body>
 </html>
