@@ -1,7 +1,6 @@
 
-import AppBar from "@mui/material/AppBar";
 import { SteamButton } from "./SteamButton";
-import { Container, CssBaseline, Toolbar, Typography } from "@mui/material";
+import { AppBar, Container, CssBaseline, Toolbar, Typography } from "@mui/material";
 
 
 export function App() {
@@ -15,11 +14,13 @@ export function App() {
           </Toolbar>
         </Container>
       </AppBar>
-      {/* <main style={{ minHeight: "90vh" }}></main> */}
+
+      {/* routing goes here */}
+
       <AppBar sx={{top: "auto", bottom: 0}}>
         <Container>
           <Toolbar>
-            <Typography variant="h6">Copyright 2026 Nelson Wells</Typography>
+            <Typography variant="h6">Copyright &copy; 2026 Nelson Wells</Typography>
           </Toolbar>
         </Container>
       </AppBar>
