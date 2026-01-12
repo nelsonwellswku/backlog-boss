@@ -1,26 +1,29 @@
-import { useEffect, useState } from "react";
-import {
-  livenessApiHealthLivenessGet,
-} from "./client";
-import { SteamButton } from "./Steambutton";
+
+import { SteamButton } from "./SteamButton";
+import { AppBar, Container, CssBaseline, Toolbar, Typography } from "@mui/material";
 
 
 export function App() {
+  return (
+    <CssBaseline enableColorScheme>
+      <AppBar>
+        <Container fixed>
+          <Toolbar>
+            <Typography variant="h5" style={{ flexGrow: 1 }}>Backlog Boss</Typography>
+            <SteamButton />
+          </Toolbar>
+        </Container>
+      </AppBar>
 
-  const [getIsLive, setIsLive]= useState<boolean>(false)
+      {/* routing goes here */}
 
-  useEffect(() => {
-    livenessApiHealthLivenessGet().then(response => {
-      if(!response.error) {
-        console.log(response.data?.message)
-        setIsLive(true)
-      }
-    })
-  })
-
-  return <>
-     <h1>Backlog Boss</h1>
-     <p>Is the app live? {getIsLive ? "Yes" : "No :("}</p>
-     <SteamButton />
-  </>
+      <AppBar sx={{top: "auto", bottom: 0}}>
+        <Container>
+          <Toolbar>
+            <Typography variant="h6">Copyright &copy; 2026 Nelson Wells</Typography>
+          </Toolbar>
+        </Container>
+      </AppBar>
+    </CssBaseline>
+  )
 }
