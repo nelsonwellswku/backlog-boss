@@ -53,7 +53,7 @@ def auth_with_twitch(settings: AppSettings):
     return {"expires_in": response_json["expires_in"]}
 
 
-@auth_router.get("/api/auth/steam")
+@auth_router.get("/api/auth/steam", name="steam_log_in")
 def auth_with_steam():
     return_url = "http://localhost:8000/api/auth/steam/callback"
     realm = "http://localhost:8000/"
