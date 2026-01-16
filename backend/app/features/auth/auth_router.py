@@ -102,12 +102,29 @@ def steam_callback(
     if not "is_valid:true" in check_auth_response.text:
         raise ValueError("Log in is not valid.")
 
+    assert query_params.identity
+    steam_id = query_params.identity.split("/")[-1]
+
     steam = Steam(settings.steam_api_key)
-    assert query_params.claimed_id
-    claimed_id = query_params.claimed_id.split("/")[-1]
-    assert claimed_id
+
+    # create the user record if it doesn't already exist
+    user_details = steam.users.get_user_details(steam_id)
+    persona_name = user_details["player"]["personaname"]
+    real_name = user_details["player"]["realname"]
+    split_name = real_name.split(" ")
+    first_name, last_name = split_name[1], split_name[-1]
+
+    # start the user's session by creating a session in the database
+    # and setting a session id cookie
+
+    # get the users owned games and save them to the database if they aren't already there
     owned_games = steam.users.get_owned_games(
-        claimed_id, include_appinfo=True, includ_free_games=False
+        steam_id, include_appinfo=True, includ_free_games=False
     )
 
-    return {"claimed_id": query_params.claimed_id, "owned_games": owned_games}
+    return {
+        "claimed_id": query_params.claimed_id,
+        "persona_name": persona_name,
+        "real_name": real_name,
+        "owned_games": owned_games,
+    }
