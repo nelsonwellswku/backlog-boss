@@ -1,12 +1,15 @@
 from dataclasses import dataclass
+
+import httpx
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
-import httpx
+from sqlalchemy import select
 from steam_web_api import Steam
 
+from app.database.engine import DbSession
+from app.database.models import AppUser
 from app.settings import AppSettings
-
 
 auth_router = APIRouter()
 
@@ -77,6 +80,7 @@ def auth_with_steam():
 @auth_router.get("/api/auth/steam/callback")
 def steam_callback(
     settings: AppSettings,
+    db_session: DbSession,
     query_params: OpenIdCallbackParams = Depends(openid_callback_params),
 ):
     outgoing_query_params: QueryParams = QueryParams(
@@ -99,7 +103,7 @@ def steam_callback(
         params=outgoing_query_params,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
-    if not "is_valid:true" in check_auth_response.text:
+    if "is_valid:true" not in check_auth_response.text:
         raise ValueError("Log in is not valid.")
 
     assert query_params.identity
@@ -116,14 +120,35 @@ def steam_callback(
 
     # start the user's session by creating a session in the database
     # and setting a session id cookie
+    app_user = db_session.scalars(
+        select(AppUser).where(AppUser.steam_id == steam_id)
+    ).one_or_none()
+    if app_user is None:
+        app_user = AppUser(
+            steam_id=steam_id,
+            persona_name=persona_name,
+            first_name=first_name,
+            last_name=last_name,
+        )
+        db_session.add(app_user)
+    else:
+        app_user.persona_name = persona_name
+        app_user.first_name = first_name
+        app_user.last_name = last_name
+
+    db_session.flush()
+    app_user_id = app_user.app_user_id
 
     # get the users owned games and save them to the database if they aren't already there
     owned_games = steam.users.get_owned_games(
         steam_id, include_appinfo=True, includ_free_games=False
     )
 
+    db_session.commit()
+
     return {
         "claimed_id": query_params.claimed_id,
+        "app_user_id": app_user_id,
         "persona_name": persona_name,
         "real_name": real_name,
         "owned_games": owned_games,
