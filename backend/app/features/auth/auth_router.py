@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 
 import httpx
 from fastapi import APIRouter, Depends, Request
@@ -8,7 +9,7 @@ from sqlalchemy import select
 from steam_web_api import Steam
 
 from app.database.engine import DbSession
-from app.database.models import AppUser
+from app.database.models import AppSession, AppUser
 from app.settings import AppSettings
 
 auth_router = APIRouter()
@@ -135,6 +136,10 @@ def steam_callback(
         app_user.persona_name = persona_name
         app_user.first_name = first_name
         app_user.last_name = last_name
+
+    expiration = datetime.now(tz=timezone.utc) + timedelta(hours=1)
+    app_session = AppSession(app_user=app_user, expiration_date=expiration)
+    db_session.add(app_session)
 
     db_session.flush()
     app_user_id = app_user.app_user_id
