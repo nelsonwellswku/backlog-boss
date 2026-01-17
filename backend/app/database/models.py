@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
+
 from sqlalchemy import BigInteger, ForeignKey, String
 from sqlalchemy.dialects.mssql import DATETIMEOFFSET
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
