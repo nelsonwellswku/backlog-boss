@@ -1,12 +1,16 @@
 from dataclasses import dataclass
-from fastapi import APIRouter, Depends, Request
+from datetime import datetime, timedelta, timezone
+
+import httpx
+from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
-import httpx
+from sqlalchemy import select
 from steam_web_api import Steam
 
+from app.database.engine import DbSession
+from app.database.models import AppSession, AppUser
 from app.settings import AppSettings
-
 
 auth_router = APIRouter()
 
@@ -77,6 +81,8 @@ def auth_with_steam():
 @auth_router.get("/api/auth/steam/callback")
 def steam_callback(
     settings: AppSettings,
+    db_session: DbSession,
+    response: Response,
     query_params: OpenIdCallbackParams = Depends(openid_callback_params),
 ):
     outgoing_query_params: QueryParams = QueryParams(
@@ -99,15 +105,62 @@ def steam_callback(
         params=outgoing_query_params,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
-    if not "is_valid:true" in check_auth_response.text:
+    if "is_valid:true" not in check_auth_response.text:
         raise ValueError("Log in is not valid.")
 
+    assert query_params.identity
+    steam_id = query_params.identity.split("/")[-1]
+
     steam = Steam(settings.steam_api_key)
-    assert query_params.claimed_id
-    claimed_id = query_params.claimed_id.split("/")[-1]
-    assert claimed_id
+
+    # create the user record if it doesn't already exist
+    user_details = steam.users.get_user_details(steam_id)
+    persona_name = user_details["player"]["personaname"]
+    real_name = user_details["player"]["realname"]
+    split_name = real_name.split(" ")
+    first_name, last_name = split_name[1], split_name[-1]
+
+    # start the user's session by creating a session in the database
+    # and setting a session id cookie
+    app_user = db_session.scalars(
+        select(AppUser).where(AppUser.steam_id == steam_id)
+    ).one_or_none()
+    if app_user is None:
+        app_user = AppUser(
+            steam_id=steam_id,
+            persona_name=persona_name,
+            first_name=first_name,
+            last_name=last_name,
+        )
+        db_session.add(app_user)
+    else:
+        app_user.persona_name = persona_name
+        app_user.first_name = first_name
+        app_user.last_name = last_name
+
+    expiration = datetime.now(tz=timezone.utc) + timedelta(hours=1)
+    app_session = AppSession(app_user=app_user, expiration_date=expiration)
+    db_session.add(app_session)
+
+    db_session.flush()
+    app_user_id = app_user.app_user_id
+    app_session_key = app_session.app_session_key
+
+    # get the users owned games and save them to the database if they aren't already there
     owned_games = steam.users.get_owned_games(
-        claimed_id, include_appinfo=True, includ_free_games=False
+        steam_id, include_appinfo=True, includ_free_games=False
     )
 
-    return {"claimed_id": query_params.claimed_id, "owned_games": owned_games}
+    db_session.commit()
+
+    response.set_cookie(
+        "session_key", str(app_session_key), expires=expiration, secure=True
+    )
+
+    return {
+        "claimed_id": query_params.claimed_id,
+        "app_user_id": app_user_id,
+        "persona_name": persona_name,
+        "real_name": real_name,
+        "owned_games": owned_games,
+    }

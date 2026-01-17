@@ -5,7 +5,18 @@ Video game backlog prioritizer
 
 ### Prerequisites
 * [uv](https://docs.astral.sh/uv/)
-* Node and NPM
+* [node](https://nodejs.org)
+* [docker](https://docker.com)
+
+### Database
+
+The database is SQL Server. [grate](https://github.com/grate-devs/grate) creates the local database and runs the database migrations.
+
+From the root directory, run:
+
+```
+docker compose up
+```
 
 ### Backend
 

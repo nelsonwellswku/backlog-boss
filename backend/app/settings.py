@@ -1,11 +1,16 @@
 from functools import lru_cache
 from typing import Annotated
+
 from fastapi import Depends
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    db_host: str
+    db_user: str
+    db_password: str
 
     twitch_client_id: str
     twitch_client_secret: str

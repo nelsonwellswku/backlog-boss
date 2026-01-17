@@ -1,0 +1,33 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    container_name: sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=superSecret123!
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "superSecret123!", "-Q", "SELECT 1", "-C"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  grate:
+    image: erikbra/grate:2.0.0
+    container_name: grate
+    environment:
+      APP_CONNSTRING: "Server=sqlserver;Database=BacklogBoss;User Id=sa;Password=superSecret123!;TrustServerCertificate=True"
+      VERSION: "1.0.0.0"
+      DATABASE_TYPE: "sqlserver"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/db
+
+volumes:
+  sqlserver_data:
