@@ -16,7 +16,3 @@ create table AppSession (
     constraint PK_AppSession_AppSessionId primary key clustered (AppSessionId),
     constraint FK_AppSession_AppUserId foreign key (AppUserId) references AppUser(AppUserId)
 )
-
-create nonclustered index IX_AppSession_AppSessionKey_AppUserId_ExpirationDate
-    on AppSession (AppSessionKey, ExpirationDate)
-    include (AppUserId);
