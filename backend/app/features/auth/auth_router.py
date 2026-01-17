@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 import httpx
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
 from sqlalchemy import select
@@ -82,6 +82,7 @@ def auth_with_steam():
 def steam_callback(
     settings: AppSettings,
     db_session: DbSession,
+    response: Response,
     query_params: OpenIdCallbackParams = Depends(openid_callback_params),
 ):
     outgoing_query_params: QueryParams = QueryParams(
@@ -143,6 +144,7 @@ def steam_callback(
 
     db_session.flush()
     app_user_id = app_user.app_user_id
+    app_session_key = app_session.app_session_key
 
     # get the users owned games and save them to the database if they aren't already there
     owned_games = steam.users.get_owned_games(
@@ -150,6 +152,10 @@ def steam_callback(
     )
 
     db_session.commit()
+
+    response.set_cookie(
+        "session_key", str(app_session_key), expires=expiration, secure=True
+    )
 
     return {
         "claimed_id": query_params.claimed_id,

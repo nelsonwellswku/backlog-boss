@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.features.auth.auth_router import auth_router
 from app.features.health.health_router import health_router
+from app.features.user.user_router import user_router
 
 app = FastAPI(
     title="Backlog Boss",
@@ -12,3 +13,4 @@ app = FastAPI(
 
 app.include_router(health_router, tags=["Health"])
 app.include_router(auth_router, tags=["Auth"])
+app.include_router(user_router, tags=["User"])
