@@ -1,7 +1,7 @@
 
 import { SteamButton } from "./SteamButton";
 import { AppBar, Container, CssBaseline, Toolbar, Typography } from "@mui/material";
-import {readinessApiHealthReadinessGet} from "./client"
+import { healthReadiness } from "./client"
 import { useEffect, useState } from "react";
 
 
@@ -10,7 +10,7 @@ export function App() {
   const [message, setMessage] = useState<string | null>(null)
 
   useEffect(()=>{
-    readinessApiHealthReadinessGet()
+    healthReadiness()
       .then(() => setMessage("Ready :)"))
       .catch(() => setMessage("Something's wrong..."))
   })
