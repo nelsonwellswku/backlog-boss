@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
@@ -5,6 +6,7 @@ import httpx
 from fastapi import APIRouter, Query, Response
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
+from igdb.wrapper import IGDBWrapper
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from steam_web_api import Steam
@@ -38,6 +40,16 @@ def auth_with_twitch(settings: AppSettings):
     )
     response = httpx.post("https://id.twitch.tv/oauth2/token", params=query_params)
     response_json = response.json()
+
+    access_token = response_json["access_token"]
+
+    wrapper = IGDBWrapper(settings.twitch_client_id, access_token)
+    bytes = wrapper.api_request(
+        "external_games",
+        "fields id, game, name; where external_game_source = 1; offset 0; limit 10;",
+    )
+    games = json.loads(bytes)
+
     return {"expires_in": response_json["expires_in"]}
 
 
