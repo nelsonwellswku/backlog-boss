@@ -1,10 +1,11 @@
-from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Query, Response
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from steam_web_api import Steam
 
@@ -15,34 +16,17 @@ from app.settings import AppSettings
 auth_router = APIRouter()
 
 
-@dataclass
-class OpenIdCallbackParams:
-    ns: str | None = None
-    mode: str | None = None
-    op_endpoint: str | None = None
-    claimed_id: str | None = None
-    identity: str | None = None
-    return_to: str | None = None
-    response_nonce: str | None = None
-    assoc_handle: str | None = None
-    signed: str | None = None
-    sig: str | None = None
-
-
-def openid_callback_params(request: Request):
-    qp = request.query_params
-    return OpenIdCallbackParams(
-        ns=qp.get("openid.ns"),
-        mode=qp.get("openid.mode"),
-        op_endpoint=qp.get("openid.op_endpoint"),
-        claimed_id=qp.get("openid.claimed_id"),
-        identity=qp.get("openid.identity"),
-        return_to=qp.get("openid.return_to"),
-        response_nonce=qp.get("openid.response_nonce"),
-        assoc_handle=qp.get("openid.assoc_handle"),
-        signed=qp.get("openid.signed"),
-        sig=qp.get("openid.sig"),
-    )
+class OpenIdCallbackParams(BaseModel):
+    ns: str = Field(alias="openid.ns")
+    mode: str = Field(alias="openid.mode")
+    op_endpoint: str = Field(alias="openid.op_endpoint")
+    claimed_id: str = Field(alias="openid.claimed_id")
+    identity: str = Field(alias="openid.identity")
+    return_to: str = Field(alias="openid.return_to")
+    response_nonce: str = Field(alias="openid.response_nonce")
+    assoc_handle: str = Field(alias="openid.assoc_handle")
+    signed: str = Field(alias="openid.signed")
+    sig: str = Field(alias="openid.sig")
 
 
 @auth_router.get("/api/auth/twitch")
@@ -59,8 +43,8 @@ def auth_with_twitch(settings: AppSettings):
 
 @auth_router.get("/api/auth/steam")
 def auth_with_steam():
-    return_url = "http://localhost:8000/api/auth/steam/callback"
-    realm = "http://localhost:8000/"
+    return_url = "http://localhost:5173/api/auth/steam/callback"
+    realm = "http://localhost:5173/"
 
     query_params: QueryParams = QueryParams(
         {
@@ -83,19 +67,19 @@ def steam_callback(
     settings: AppSettings,
     db_session: DbSession,
     response: Response,
-    query_params: OpenIdCallbackParams = Depends(openid_callback_params),
+    openid_params: Annotated[OpenIdCallbackParams, Query()],
 ):
     outgoing_query_params: QueryParams = QueryParams(
         {
-            "openid.ns": query_params.ns,
-            "openid.op_endpoint": query_params.op_endpoint,
-            "openid.claimed_id": query_params.claimed_id,
-            "openid.identity": query_params.identity,
-            "openid.return_to": query_params.return_to,
-            "openid.response_nonce": query_params.response_nonce,
-            "openid.assoc_handle": query_params.assoc_handle,
-            "openid.signed": query_params.signed,
-            "openid.sig": query_params.sig,
+            "openid.ns": openid_params.ns,
+            "openid.op_endpoint": openid_params.op_endpoint,
+            "openid.claimed_id": openid_params.claimed_id,
+            "openid.identity": openid_params.identity,
+            "openid.return_to": openid_params.return_to,
+            "openid.response_nonce": openid_params.response_nonce,
+            "openid.assoc_handle": openid_params.assoc_handle,
+            "openid.signed": openid_params.signed,
+            "openid.sig": openid_params.sig,
             "openid.mode": "check_authentication",
         }
     )
@@ -108,8 +92,8 @@ def steam_callback(
     if "is_valid:true" not in check_auth_response.text:
         raise ValueError("Log in is not valid.")
 
-    assert query_params.identity
-    steam_id = query_params.identity.split("/")[-1]
+    assert openid_params.identity
+    steam_id = openid_params.identity.split("/")[-1]
 
     steam = Steam(settings.steam_api_key)
 
@@ -153,14 +137,9 @@ def steam_callback(
 
     db_session.commit()
 
-    response.set_cookie(
+    redirect = RedirectResponse("/")
+    redirect.set_cookie(
         "session_key", str(app_session_key), expires=expiration, secure=True
     )
 
-    return {
-        "claimed_id": query_params.claimed_id,
-        "app_user_id": app_user_id,
-        "persona_name": persona_name,
-        "real_name": real_name,
-        "owned_games": owned_games,
-    }
+    return redirect

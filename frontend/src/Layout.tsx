@@ -1,29 +1,27 @@
-
-import { SteamButton } from "./SteamButton";
 import { AppBar, Container, CssBaseline, Toolbar, Typography } from "@mui/material";
+import { Outlet } from "react-router";
+import { GreetingOrLoginButton } from "./GreetingOrLoginButton";
 
-
-export function App() {
-  return (
+export function Layout() {
+    return (
     <CssBaseline enableColorScheme>
-      <AppBar>
+      <AppBar position="static">
         <Container fixed>
-          <Toolbar>
-            <Typography variant="h5" style={{ flexGrow: 1 }}>Backlog Boss</Typography>
-            <SteamButton />
+          <Toolbar disableGutters>
+            <Typography variant="h5" sx={{ flexGrow: 1 }}>Backlog Boss</Typography>
+            <GreetingOrLoginButton/>
           </Toolbar>
         </Container>
       </AppBar>
 
-      {/* routing goes here */}
+      <Outlet/>
 
       <AppBar sx={{top: "auto", bottom: 0}}>
         <Container>
-          <Toolbar>
+          <Toolbar disableGutters>
             <Typography variant="h6">Copyright &copy; 2026 Nelson Wells</Typography>
           </Toolbar>
         </Container>
       </AppBar>
-    </CssBaseline>
-  )
+    </CssBaseline>)
 }

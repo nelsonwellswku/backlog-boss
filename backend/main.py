@@ -7,6 +7,7 @@ from app.features.user.user_router import user_router
 app = FastAPI(
     title="Backlog Boss",
     docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
     redoc_url=None,
     description="Prioritize your video game backlog",
 )
