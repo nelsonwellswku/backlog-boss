@@ -49,7 +49,7 @@ npm run dev
 
 ### And then...
 
-Once the backend and frontend are running, the application, including OpenAPI docs can be accessed.
+Once both the backend and frontend are running, you can access the application and its OpenAPI documentation at the following URLs:
 
 * [Frontend Website](http://localhost:5173)
 * [API Docs](http://localhost:5713/api/docs)
