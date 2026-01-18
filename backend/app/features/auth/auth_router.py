@@ -43,8 +43,8 @@ def auth_with_twitch(settings: AppSettings):
 
 @auth_router.get("/api/auth/steam")
 def auth_with_steam():
-    return_url = "http://localhost:8000/api/auth/steam/callback"
-    realm = "http://localhost:8000/"
+    return_url = "http://localhost:5173/api/auth/steam/callback"
+    realm = "http://localhost:5173/"
 
     query_params: QueryParams = QueryParams(
         {
@@ -137,14 +137,9 @@ def steam_callback(
 
     db_session.commit()
 
-    response.set_cookie(
+    redirect = RedirectResponse("/")
+    redirect.set_cookie(
         "session_key", str(app_session_key), expires=expiration, secure=True
     )
 
-    return {
-        "claimed_id": openid_params.claimed_id,
-        "app_user_id": app_user_id,
-        "persona_name": persona_name,
-        "real_name": real_name,
-        "owned_games": owned_games,
-    }
+    return redirect

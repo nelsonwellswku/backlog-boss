@@ -46,3 +46,10 @@ npm install
 px @hey-api/openapi-ts -i ../backend/openapi.json -o src/client
 npm run dev
 ```
+
+### And then...
+
+Once the backend and frontend are running, the application, including OpenAPI docs can be accessed.
+
+* [Frontend Website](http://localhost:5173)
+* [API Docs](http://localhost:5713/api/docs)
