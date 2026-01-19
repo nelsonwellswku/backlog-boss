@@ -1,5 +1,6 @@
+from dataclasses import dataclass
 import json
-from typing import Annotated, TypeAlias
+from typing import Annotated, Any, TypeAlias, TypedDict
 
 from expiring_dict import ExpiringDict
 from fastapi import Depends
@@ -37,20 +38,43 @@ def get_igdb_wrapper(
     return IGDBWrapper(settings.twitch_client_id, access_token)
 
 
-class IgdbClientX:
+class IgdbGameDict(TypedDict):
+    id: int
+    name: str
+
+
+class IgdbExternalGameDict(TypedDict):
+    uid: str
+    game: IgdbGameDict
+
+
+@dataclass
+class IgdbGame:
+    igdb_game_id: int
+    steam_game_id: int
+    title: str
+
+
+class IgdbClient:
     def __init__(self, igdb_wrapper=Depends(get_igdb_wrapper)):
         self.igdb_wrapper = igdb_wrapper
 
-    def get_external_games(self):
-        bytes = self.igdb_wrapper.api_request(
-            "external_games",
-            "fields id, game, name; where external_game_source = 1; offset 0; limit 10;",
-        )
-        games = json.loads(bytes)
+    def get_games(self, steam_ids: list[int], limit: int) -> list[IgdbGame]:
+        formatted_steam_ids = ", ".join([str(id) for id in steam_ids])
+        endpoint = "external_games"
+        query = f"""
+            fields uid, game.id, game.name;
+            where external_game_source = 1 & uid = ({formatted_steam_ids});
+            offset 0;
+            limit {limit};
+        """
+        bytes = self.igdb_wrapper.api_request(endpoint, query)
+        games_json: list[IgdbExternalGameDict] = json.loads(bytes)
+        games = [
+            IgdbGame(v["game"]["id"], int(v["uid"]), v["game"]["name"])
+            for v in games_json
+        ]
         return games
 
-    def get_games(self):
-        pass
 
-
-IgdbClient: TypeAlias = Annotated[IgdbClientX, Depends(IgdbClientX)]
+IgdbClientDep: TypeAlias = Annotated[IgdbClient, Depends(IgdbClient)]

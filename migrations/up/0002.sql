@@ -1,6 +1,7 @@
 create table Game (
-    gameId int identity(1, 1) not null,
-    title nvarchar(255) not null,
-    steamGameId int not null,
-    igdbGameId int not null
+    GameId int identity(1, 1) not null,
+    Title nvarchar(255) not null,
+    SteamGameId int not null,
+    IgdbGameId int not null,
+    constraint PK_Game_GameId primary key clustered (GameId),
 )

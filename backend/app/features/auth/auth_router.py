@@ -139,13 +139,7 @@ def steam_callback(
     db_session.add(app_session)
 
     db_session.flush()
-    app_user_id = app_user.app_user_id
     app_session_key = app_session.app_session_key
-
-    # get the users owned games and save them to the database if they aren't already there
-    owned_games = steam.users.get_owned_games(
-        steam_id, include_appinfo=True, includ_free_games=False
-    )
 
     db_session.commit()
 
