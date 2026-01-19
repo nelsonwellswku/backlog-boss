@@ -33,9 +33,7 @@ def create_my_games(
     game_ids_to_insert = owned_game_ids - games_in_db_ids
 
     # fetch the games to insert from igdb and save them to the database
-    igdb_games = igdb_client.get_games(
-        list(game_ids_to_insert), len(game_ids_to_insert)
-    )
+    igdb_games = igdb_client.get_games(game_ids_to_insert, len(game_ids_to_insert))
     games_to_insert = [
         Game(title=game.title, igdb_id=game.igdb_game_id, steam_id=game.steam_game_id)
         for game in igdb_games

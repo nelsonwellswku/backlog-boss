@@ -59,7 +59,7 @@ class IgdbClient:
     def __init__(self, igdb_wrapper: IGDBWrapper = Depends(get_igdb_wrapper)):
         self.igdb_wrapper = igdb_wrapper
 
-    def get_games(self, steam_ids: list[int], limit: int) -> list[IgdbGame]:
+    def get_games(self, steam_ids: set[int], limit: int) -> list[IgdbGame]:
         formatted_steam_ids = ", ".join([str(id) for id in steam_ids])
         endpoint = "external_games"
         query = f"""
@@ -74,6 +74,21 @@ class IgdbClient:
             IgdbGame(v["game"]["id"], int(v["uid"]), v["game"]["name"])
             for v in games_json
         ]
+
+        # dedup the list - this is required because a single igdb game can
+        # be related to multiple steam games
+        # for exxample,
+        # mass effect 2 (2010 edition) - igdb id 74, steam id 2362420
+        # mass effect 2 - igdb id 74, steam id 24980
+        games.sort(key=lambda g: (g.steam_game_id, g.igdb_game_id))
+        igdb_games_seen = set()
+        games = [
+            g
+            for g in games
+            if g.igdb_game_id not in igdb_games_seen
+            and not igdb_games_seen.add(g.igdb_game_id)
+        ]
+
         return games
 
 
