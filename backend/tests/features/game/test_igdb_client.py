@@ -41,3 +41,25 @@ def test_get_games_selects_lowest_igdb_id_per_steam_game():
     ]
 
     assert actual == expected
+
+
+def test_get_games_filters_malformed_responses():
+    mock_games = [
+        {"uid": "1", "game": {"id": 123, "name": "Super Mario Bros."}},
+        {"uid": "2", "game": {"id": 456}},  # missing name
+        {"uid": "3"},  # missing game
+        {"game": {"id": 789, "name": "Zelda"}},  # missing uid
+        {"uid": "4", "game": {"id": 101, "name": "Valid Game"}},
+    ]
+    igdb_wrapper_mock = Mock(spec=IGDBWrapper)
+    igdb_wrapper_mock.api_request.return_value = json.dumps(mock_games).encode("utf-8")
+
+    igdb_client = IgdbClient(igdb_wrapper_mock)
+    actual = igdb_client.get_games(set([1, 2, 3, 4]), 4)
+
+    expected = [
+        IgdbGame(123, 1, "Super Mario Bros."),
+        IgdbGame(101, 4, "Valid Game"),
+    ]
+
+    assert actual == expected
