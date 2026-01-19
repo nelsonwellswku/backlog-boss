@@ -70,9 +70,12 @@ class IgdbClient:
         """
         bytes = self.igdb_wrapper.api_request(endpoint, query)
         games_json: list[IgdbExternalGameDict] = json.loads(bytes)
+        
+        # Filter out any malformed responses that don't have the required fields
         games = [
             IgdbGame(v["game"]["id"], int(v["uid"]), v["game"]["name"])
             for v in games_json
+            if "game" in v and "id" in v["game"] and "name" in v["game"] and "uid" in v
         ]
 
         # dedup the list - this is required because a single igdb game can

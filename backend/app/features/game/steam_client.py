@@ -24,7 +24,9 @@ class SteamClient:
         owned_games_response = self.steam.users.get_owned_games(
             steam_id, include_free_games=False, include_appinfo=False
         )
-        return [SteamGame(game["appid"]) for game in owned_games_response["games"]]
+        # Handle case where response might not contain games key
+        games = owned_games_response.get("games", [])
+        return [SteamGame(game["appid"]) for game in games]
 
 
 SteamClientDep: TypeAlias = Annotated[SteamClient, Depends(SteamClient)]
