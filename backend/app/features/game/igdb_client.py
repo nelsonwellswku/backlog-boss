@@ -76,8 +76,7 @@ class IgdbClient:
         ]
 
         # dedup the list - this is required because a single igdb game can
-        # be related to multiple steam games
-        # for exxample,
+        # be related to multiple steam games. for example,
         # mass effect 2 (2010 edition) - igdb id 74, steam id 2362420
         # mass effect 2 - igdb id 74, steam id 24980
         games.sort(key=lambda g: (g.steam_game_id, g.igdb_game_id))

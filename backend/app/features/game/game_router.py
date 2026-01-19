@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 from sqlalchemy import select
 
 from app.database.engine import DbSession
@@ -34,12 +34,22 @@ def create_my_games(
 
     # fetch the games to insert from igdb and save them to the database
     igdb_games = igdb_client.get_games(game_ids_to_insert, len(game_ids_to_insert))
+
+    # we need to double check that the games we get back are not already in the db
+    # this is because when querying igdb for steam games, igdb will sometimes return
+    # two steam ids for a singular igdb id - one of these we'll _never_ insert
+    stmt = select(Game.igdb_id).where(
+        Game.igdb_id.in_([game.igdb_game_id for game in igdb_games])
+    )
+    igdb_ids_to_preclude_from_insert = set(db.scalars(stmt).all())
+
     games_to_insert = [
         Game(title=game.title, igdb_id=game.igdb_game_id, steam_id=game.steam_game_id)
         for game in igdb_games
+        if game.igdb_game_id not in igdb_ids_to_preclude_from_insert
     ]
 
     db.add_all(games_to_insert)
     db.commit()
 
-    return None
+    return Response()
