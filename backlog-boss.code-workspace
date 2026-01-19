@@ -9,5 +9,22 @@
     {
       "path": "frontend"
     }
-  ]
+  ],
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Python: FastAPI",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "fastapi",
+        "args": [
+          "dev",
+          "main.py"
+        ],
+        "cwd": "${workspaceFolder:backend}",
+        "justMyCode": true
+      }
+    ]
+  }
 }

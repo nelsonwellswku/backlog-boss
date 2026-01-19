@@ -1,12 +1,10 @@
-import json
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Query, Response
+from fastapi import APIRouter, Query
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
-from igdb.wrapper import IGDBWrapper
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from steam_web_api import Steam
@@ -29,28 +27,6 @@ class OpenIdCallbackParams(BaseModel):
     assoc_handle: str = Field(alias="openid.assoc_handle")
     signed: str = Field(alias="openid.signed")
     sig: str = Field(alias="openid.sig")
-
-
-@auth_router.get("/api/auth/twitch")
-def auth_with_twitch(settings: AppSettings):
-    query_params: QueryParams = QueryParams(
-        client_id=settings.twitch_client_id,
-        client_secret=settings.twitch_client_secret,
-        grant_type="client_credentials",
-    )
-    response = httpx.post("https://id.twitch.tv/oauth2/token", params=query_params)
-    response_json = response.json()
-
-    access_token = response_json["access_token"]
-
-    wrapper = IGDBWrapper(settings.twitch_client_id, access_token)
-    bytes = wrapper.api_request(
-        "external_games",
-        "fields id, game, name; where external_game_source = 1; offset 0; limit 10;",
-    )
-    games = json.loads(bytes)
-
-    return {"expires_in": response_json["expires_in"]}
 
 
 @auth_router.get("/api/auth/steam")
@@ -78,7 +54,6 @@ def auth_with_steam():
 def steam_callback(
     settings: AppSettings,
     db_session: DbSession,
-    response: Response,
     openid_params: Annotated[OpenIdCallbackParams, Query()],
 ):
     outgoing_query_params: QueryParams = QueryParams(

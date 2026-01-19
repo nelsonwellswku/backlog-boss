@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import json
-from typing import Annotated, Any, TypeAlias, TypedDict
+from typing import Annotated, TypeAlias, TypedDict
 
 from expiring_dict import ExpiringDict
 from fastapi import Depends
@@ -56,7 +56,7 @@ class IgdbGame:
 
 
 class IgdbClient:
-    def __init__(self, igdb_wrapper=Depends(get_igdb_wrapper)):
+    def __init__(self, igdb_wrapper: IGDBWrapper = Depends(get_igdb_wrapper)):
         self.igdb_wrapper = igdb_wrapper
 
     def get_games(self, steam_ids: list[int], limit: int) -> list[IgdbGame]:

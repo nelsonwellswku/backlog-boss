@@ -22,21 +22,25 @@ def create_my_games(
     igdb_client: IgdbClientDep,
 ):
     # find the games the user owns but are not already in the database
-    owned_games = steam.get_owned_games(current_user.steam_id)[:1]
+    owned_games = steam.get_owned_games(current_user.steam_id)
     owned_game_ids = set([game.steam_game_id for game in owned_games])
-    stmt = select(Game).where(
-        Game.steam_id.not_in([game.steam_game_id for game in owned_games])
-    )
-    games_in_the_database_that_are_owned = db.scalars(stmt).all()
-    games_in_the_database_that_are_owned_ids = set([game.steam_id for game in games_in_the_database_that_are_owned])
-    print("owned game ids", owned_game_ids)
-    print("games in db ids", games_in_the_database_that_are_owned_ids)
-    game_ids_to_insert = games_in_the_database_that_are_owned_ids - owned_game_ids
+
+    # query for games already in the database with these steam_ids
+    stmt = select(Game.steam_id).where(Game.steam_id.in_(owned_game_ids))
+    games_in_db = db.scalars(stmt).all()
+    games_in_db_ids = set(games_in_db)
+
+    game_ids_to_insert = owned_game_ids - games_in_db_ids
 
     # fetch the games to insert from igdb and save them to the database
-    igdb_games = igdb_client.get_games(list(game_ids_to_insert), len(game_ids_to_insert))
-    games_to_insert = [Game(title=game.title, igdb_id=game.igdb_game_id, steam_id=game.steam_game_id) for game in igdb_games]
-    print(games_to_insert)
+    igdb_games = igdb_client.get_games(
+        list(game_ids_to_insert), len(game_ids_to_insert)
+    )
+    games_to_insert = [
+        Game(title=game.title, igdb_id=game.igdb_game_id, steam_id=game.steam_game_id)
+        for game in igdb_games
+    ]
+
     db.add_all(games_to_insert)
     db.commit()
 
