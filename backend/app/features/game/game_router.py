@@ -25,7 +25,7 @@ def create_my_games(
     steam: SteamClientDep,
     current_user: CurrentUser,
     igdb_client: IgdbClientDep,
-):
+) -> CreateMyGamesResponse:
     # find the games the user owns but are not already in the database
     owned_games = steam.get_owned_games(current_user.steam_id)
     owned_game_ids = set([game.steam_game_id for game in owned_games])
