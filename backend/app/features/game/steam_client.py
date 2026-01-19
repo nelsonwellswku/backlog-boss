@@ -22,7 +22,7 @@ class SteamClient:
 
     def get_owned_games(self, steam_id: str):
         owned_games_response = self.steam.users.get_owned_games(
-            steam_id, includ_free_games=False, include_appinfo=False
+            steam_id, include_free_games=False, include_appinfo=False
         )
         return [SteamGame(game["appid"]) for game in owned_games_response["games"]]
 

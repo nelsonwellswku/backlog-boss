@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Response
+from fastapi import APIRouter
+from pydantic import BaseModel
 from sqlalchemy import select
 
 from app.database.engine import DbSession
@@ -8,6 +9,10 @@ from app.features.game.igdb_client import IgdbClientDep
 from app.features.game.steam_client import SteamClientDep
 
 game_router = APIRouter()
+
+
+class CreateMyGamesResponse(BaseModel):
+    games_created: int
 
 
 # api endpoint that
@@ -25,6 +30,10 @@ def create_my_games(
     owned_games = steam.get_owned_games(current_user.steam_id)
     owned_game_ids = set([game.steam_game_id for game in owned_games])
 
+    # if user has no owned games, return early
+    if not owned_game_ids:
+        return CreateMyGamesResponse(games_created=0)
+
     # query for games already in the database with these steam_ids
     stmt = select(Game.steam_id).where(Game.steam_id.in_(owned_game_ids))
     games_in_db = db.scalars(stmt).all()
@@ -32,8 +41,16 @@ def create_my_games(
 
     game_ids_to_insert = owned_game_ids - games_in_db_ids
 
+    # if there are no new games to insert, return early
+    if not game_ids_to_insert:
+        return CreateMyGamesResponse(games_created=0)
+
     # fetch the games to insert from igdb and save them to the database
     igdb_games = igdb_client.get_games(game_ids_to_insert, len(game_ids_to_insert))
+
+    # if no games were returned from igdb, return early
+    if not igdb_games:
+        return CreateMyGamesResponse(games_created=0)
 
     # we need to double check that the games we get back are not already in the db
     # this is because when querying igdb for steam games, igdb will sometimes return
@@ -52,4 +69,4 @@ def create_my_games(
     db.add_all(games_to_insert)
     db.commit()
 
-    return Response()
+    return CreateMyGamesResponse(games_created=len(games_to_insert))
