@@ -36,3 +36,18 @@ class AppSession(Base):
         "AppUserId", ForeignKey("AppUser.AppUserId")
     )
     app_user: Mapped[AppUser] = relationship()
+
+
+class Game(Base):
+    __tablename__ = "Game"
+
+    game_id: Mapped[int] = mapped_column("GameId", primary_key=True)
+    title: Mapped[str] = mapped_column("Title", String(255))
+    steam_id: Mapped[int] = mapped_column("SteamGameId")
+    igdb_id: Mapped[int] = mapped_column("IgdbGameId")
+
+    def __str__(self):
+        return f"Game id: {self.game_id}, title: {self.title}, steam_id: {self.steam_id}, igdb_id: {self.igdb_id}"
+
+    def __repr__(self) -> str:
+        return self.__str__()

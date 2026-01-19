@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Query, Response
+from fastapi import APIRouter, Query
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
 from pydantic import BaseModel, Field
@@ -27,18 +27,6 @@ class OpenIdCallbackParams(BaseModel):
     assoc_handle: str = Field(alias="openid.assoc_handle")
     signed: str = Field(alias="openid.signed")
     sig: str = Field(alias="openid.sig")
-
-
-@auth_router.get("/api/auth/twitch")
-def auth_with_twitch(settings: AppSettings):
-    query_params: QueryParams = QueryParams(
-        client_id=settings.twitch_client_id,
-        client_secret=settings.twitch_client_secret,
-        grant_type="client_credentials",
-    )
-    response = httpx.post("https://id.twitch.tv/oauth2/token", params=query_params)
-    response_json = response.json()
-    return {"expires_in": response_json["expires_in"]}
 
 
 @auth_router.get("/api/auth/steam")
@@ -66,7 +54,6 @@ def auth_with_steam():
 def steam_callback(
     settings: AppSettings,
     db_session: DbSession,
-    response: Response,
     openid_params: Annotated[OpenIdCallbackParams, Query()],
 ):
     outgoing_query_params: QueryParams = QueryParams(
@@ -127,13 +114,7 @@ def steam_callback(
     db_session.add(app_session)
 
     db_session.flush()
-    app_user_id = app_user.app_user_id
     app_session_key = app_session.app_session_key
-
-    # get the users owned games and save them to the database if they aren't already there
-    owned_games = steam.users.get_owned_games(
-        steam_id, include_appinfo=True, includ_free_games=False
-    )
 
     db_session.commit()
 
