@@ -12,4 +12,4 @@ create table BacklogGame (
     constraint PK_BacklogGameId primary key clustered (BacklogGameId),
     constraint FK_BacklogGame_BacklogId foreign key (BacklogId) references Backlog(BacklogId),
     constraint FK_BacklogGame_GameId foreign key (GameId) references Game(GameId)
-)
+);
