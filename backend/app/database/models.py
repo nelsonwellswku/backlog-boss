@@ -51,3 +51,32 @@ class Game(Base):
 
     def __repr__(self) -> str:
         return self.__str__()
+
+
+class Backlog(Base):
+    __tablename__ = "Backlog"
+
+    backlog_id: Mapped[int] = mapped_column("BacklogId", primary_key=True)
+    app_user_id: Mapped[int] = mapped_column(
+        "AppUserId", ForeignKey("AppUser.AppUserId"), nullable=False
+    )
+
+    app_user: Mapped["AppUser"] = relationship("AppUser", backref="backlogs")
+    backlog_games: Mapped[list["BacklogGame"]] = relationship(
+        "BacklogGame", back_populates="backlog"
+    )
+
+
+class BacklogGame(Base):
+    __tablename__ = "BacklogGame"
+
+    backlog_game_id: Mapped[int] = mapped_column("BacklogGameId", primary_key=True)
+    backlog_id: Mapped[int] = mapped_column(
+        "BacklogId", ForeignKey("Backlog.BacklogId"), nullable=False
+    )
+    game_id: Mapped[int] = mapped_column(
+        "GameId", ForeignKey("Game.GameId"), nullable=False
+    )
+
+    backlog: Mapped["Backlog"] = relationship("Backlog", back_populates="backlog_games")
+    game: Mapped["Game"] = relationship("Game")
