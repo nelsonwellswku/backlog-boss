@@ -61,7 +61,7 @@ def create_my_backlog(
     db.add_all(games_to_insert)
     db.flush()
 
-    # get the user's backlog or create it if it doesn't exist
+    # determine which of the user's owned games are not yet in their backlog
 
     # re-fetch owned games by steam id
     # we do this in case a subset of the user's owned games already existed
