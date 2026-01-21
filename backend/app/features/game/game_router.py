@@ -14,6 +14,8 @@ game_router = APIRouter()
 # 1. fetches users owned games from steam
 # 2. fetches all of the games' details from igdb
 # 3. adds them to the game table in the database
+# 4. creates the user's backlog
+# 5. adds their owned games to the backlog
 @game_router.post("/api/game/create_my_backlog")
 def create_my_backlog(
     db: DbSession,
@@ -61,16 +63,9 @@ def create_my_backlog(
     db.add_all(games_to_insert)
     db.flush()
 
-    # determine which of the user's owned games are not yet in their backlog
-
-    # re-fetch owned games by steam id
-    # we do this in case a subset of the user's owned games already existed
-    stmt = (
-        select(Game)
-        .join(BacklogGame, isouter=True)
-        .where(Game.steam_id.in_(owned_game_steam_ids))
-        .where(BacklogGame.backlog_game_id == None)  # noqa: E711
-    )
+    # re-query owned games by steam id in case a subset of the user's owned games
+    # already existed in the database when we inserted new Game records above
+    stmt = select(Game).where(Game.steam_id.in_(owned_game_steam_ids))
     games_to_add_to_backlog = db.scalars(stmt).all()
 
     backlog_games = [

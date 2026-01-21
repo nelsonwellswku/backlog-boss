@@ -20,6 +20,10 @@ class AppUser(Base):
     first_name: Mapped[Optional[str]] = mapped_column("FirstName", String(20))
     last_name: Mapped[Optional[str]] = mapped_column("LastName", String(20))
 
+    backlogs: Mapped[list["Backlog"]] = relationship(
+        "Backlog", back_populates="app_user"
+    )
+
 
 class AppSession(Base):
     __tablename__ = "AppSession"
@@ -58,10 +62,10 @@ class Backlog(Base):
 
     backlog_id: Mapped[int] = mapped_column("BacklogId", primary_key=True)
     app_user_id: Mapped[int] = mapped_column(
-        "AppUserId", ForeignKey("AppUser.AppUserId"), nullable=False
+        "AppUserId", ForeignKey("AppUser.AppUserId")
     )
 
-    app_user: Mapped["AppUser"] = relationship("AppUser", backref="backlogs")
+    app_user: Mapped["AppUser"] = relationship("AppUser", back_populates="backlogs")
     backlog_games: Mapped[list["BacklogGame"]] = relationship(
         "BacklogGame", back_populates="backlog"
     )
@@ -72,11 +76,9 @@ class BacklogGame(Base):
 
     backlog_game_id: Mapped[int] = mapped_column("BacklogGameId", primary_key=True)
     backlog_id: Mapped[int] = mapped_column(
-        "BacklogId", ForeignKey("Backlog.BacklogId"), nullable=False
+        "BacklogId", ForeignKey("Backlog.BacklogId")
     )
-    game_id: Mapped[int] = mapped_column(
-        "GameId", ForeignKey("Game.GameId"), nullable=False
-    )
+    game_id: Mapped[int] = mapped_column("GameId", ForeignKey("Game.GameId"))
 
     backlog: Mapped["Backlog"] = relationship("Backlog", back_populates="backlog_games")
     game: Mapped["Game"] = relationship("Game")
