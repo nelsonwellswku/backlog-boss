@@ -14,9 +14,12 @@ export function Layout() {
         </Container>
       </AppBar>
 
-      <Outlet/>
+      <Container fixed>
+        <Outlet/>
+      </Container>
 
-      <AppBar sx={{top: "auto", bottom: 0}}>
+
+      <AppBar position="static" sx={{top: "auto", bottom: 0}}>
         <Container>
           <Toolbar disableGutters>
             <Typography variant="h6">Copyright &copy; 2026 Nelson Wells</Typography>

@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router'
 import { Layout } from './Layout.tsx'
 import { Home } from './Home.tsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MyBacklog } from './MyBacklog.tsx'
 
 const queryClient = new QueryClient();
 
@@ -13,7 +14,8 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
+            <Route path="" element={<Home />} />
+            <Route path="my-backlog" element={<MyBacklog />} />
           </Route>
         </Routes>
       </BrowserRouter>
