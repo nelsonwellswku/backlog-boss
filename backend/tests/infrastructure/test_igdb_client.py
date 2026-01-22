@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 from igdb.wrapper import IGDBWrapper
 
-from app.features.game.igdb_client import IgdbClient, IgdbExternalGameDict, IgdbGame
+from app.infrastructure.igdb_client import IgdbClient, IgdbExternalGameDict, IgdbGame
 
 
 def test_get_games_maps_steam_ids_to_igdb_games():

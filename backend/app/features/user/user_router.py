@@ -1,21 +1,32 @@
-from fastapi import APIRouter
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Depends
 
-from app.features.auth.get_current_user import CurrentUser
+from app.features.user.create_my_backlog_command import (
+    CreateMyBacklogCommand,
+    CreateMyBacklogResponse,
+)
+from app.features.user.get_me_query import GetMeQuery, GetMeResponse
+from app.features.user.get_my_backlog_query import (
+    GetMyBacklogQuery,
+    GetMyBacklogResponse,
+)
 
-user_router = APIRouter()
-
-
-class CurrentUserResponse(BaseModel):
-    app_user_id: int = Field(serialization_alias="appUserId")
-    steam_id: str = Field(serialization_alias="steamId")
-    persona_name: str = Field(serialization_alias="personaName")
+user_router = APIRouter(tags=["User"])
 
 
 @user_router.get("/api/user/me")
-def get_me(current_user: CurrentUser) -> CurrentUserResponse:
-    return CurrentUserResponse(
-        app_user_id=current_user.app_user_id,
-        steam_id=current_user.steam_id,
-        persona_name=current_user.persona_name,
-    )
+def get_me(query: GetMeQuery = Depends()) -> GetMeResponse:
+    return query.execute()
+
+
+@user_router.post("/api/user/create-my-backlog")
+def create_my_backlog(
+    command: CreateMyBacklogCommand = Depends(),
+) -> CreateMyBacklogResponse:
+    return command.execute()
+
+
+@user_router.get("/api/user/get-my-backlog")
+def get_my_backlog(
+    query: GetMyBacklogQuery = Depends(),
+) -> GetMyBacklogResponse:
+    return query.execute()

@@ -1,0 +1,43 @@
+from fastapi import HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+
+from app.database.engine import DbSession
+from app.database.models import Backlog, BacklogGame, Game
+from app.features.auth.get_current_user import CurrentUser
+
+
+class GetMyBacklogResponse(BaseModel):
+    backlog_id: int = Field(serialization_alias="backlogId")
+    games: list["BacklogGameRow"]
+
+
+class BacklogGameRow(BaseModel):
+    game_id: int = Field(serialization_alias="gameId")
+    title: str
+
+
+class GetMyBacklogQuery:
+    def __init__(self, db: DbSession, current_user: CurrentUser):
+        self.db = db
+        self.current_user = current_user
+
+    def execute(self):
+        stmt = (
+            select(BacklogGame)
+            .select_from(Backlog)
+            .join(BacklogGame)
+            .join(Game)
+            .where(Backlog.app_user_id == self.current_user.app_user_id)
+        )
+        backlog_games = self.db.scalars(stmt).all()
+        if not backlog_games:
+            raise HTTPException(404, "Backlog not found.")
+
+        backlog_game_rows = [
+            BacklogGameRow(game_id=g.game_id, title=g.game.title) for g in backlog_games
+        ]
+
+        return GetMyBacklogResponse(
+            backlog_id=backlog_games[0].backlog_id, games=backlog_game_rows
+        )
