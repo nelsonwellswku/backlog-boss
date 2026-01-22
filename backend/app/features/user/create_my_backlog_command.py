@@ -1,11 +1,15 @@
-from fastapi import Response
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from app.database.engine import DbSession
 from app.database.models import Backlog, BacklogGame, Game
 from app.features.auth.get_current_user import CurrentUser
-from app.features.game.igdb_client import IgdbClientDep
-from app.features.game.steam_client import SteamClientDep
+from app.infrastructure.igdb_client import IgdbClientDep
+from app.infrastructure.steam_client import SteamClientDep
+
+
+class CreateMyBacklogResponse(BaseModel):
+    backlog_id: int = Field(..., serialization_alias="backlogId")
 
 
 class CreateMyBacklogCommand:
@@ -26,7 +30,7 @@ class CreateMyBacklogCommand:
     # 3. adds them to the game table in the database
     # 4. creates the user's backlog
     # 5. adds their owned games to the backlog
-    def execute(self) -> Response:
+    def execute(self) -> CreateMyBacklogResponse:
         # if the user already has a backlog, return early
         # adding / removing items from the backlog can happen elsewhere
         stmt = select(Backlog).where(
@@ -34,7 +38,7 @@ class CreateMyBacklogCommand:
         )
         backlog = self.db.scalars(stmt).one_or_none()
         if backlog:
-            return Response()
+            return CreateMyBacklogResponse(backlog_id=backlog.backlog_id)
 
         backlog = Backlog(app_user_id=self.current_user.app_user_id)
 
@@ -86,4 +90,4 @@ class CreateMyBacklogCommand:
 
         self.db.commit()
 
-        return Response()
+        return CreateMyBacklogResponse(backlog_id=backlog.backlog_id)
