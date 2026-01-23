@@ -68,7 +68,11 @@ class CreateMyBacklogCommand:
 
         games_to_insert = [
             Game(
-                title=game.title, igdb_id=game.igdb_game_id, steam_id=game.steam_game_id
+                title=game.title,
+                igdb_id=game.igdb_game_id,
+                steam_id=game.steam_game_id,
+                total_rating=game.total_rating,
+                time_to_beat=game.time_to_beat,
             )
             for game in igdb_games
             if game.igdb_game_id not in igdb_ids_to_preclude_from_insert

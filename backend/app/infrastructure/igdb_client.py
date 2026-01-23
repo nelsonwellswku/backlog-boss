@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Annotated, TypeAlias, TypedDict
+from typing import Annotated, Optional, TypeAlias, TypedDict
 
 from expiring_dict import ExpiringDict
 from fastapi import Depends
@@ -41,6 +41,7 @@ def get_igdb_wrapper(
 class IgdbGameDict(TypedDict):
     id: int
     name: str
+    total_rating: float
 
 
 class IgdbExternalGameDict(TypedDict):
@@ -48,11 +49,18 @@ class IgdbExternalGameDict(TypedDict):
     game: IgdbGameDict
 
 
+class IgdbTimeToBeat(TypedDict):
+    game_id: int
+    normally: int | None
+
+
 @dataclass
 class IgdbGame:
     igdb_game_id: int
     steam_game_id: int
     title: str
+    total_rating: float
+    time_to_beat: int | None
 
 
 class IgdbClient:
@@ -63,15 +71,37 @@ class IgdbClient:
         formatted_steam_ids = ", ".join([str(id) for id in steam_ids])
         endpoint = "external_games"
         query = f"""
-            fields uid, game.id, game.name;
+            fields uid, game.id, game.name, game.total_rating;
             where external_game_source = 1 & uid = ({formatted_steam_ids});
             offset 0;
             limit {limit};
         """
         bytes = self.igdb_wrapper.api_request(endpoint, query)
         games_json: list[IgdbExternalGameDict] = json.loads(bytes)
+        game_id_to_game = {g["game"]["id"]: g for g in games_json}
+
+        formatted_game_ids = ", ".join([str(g["game"]["id"]) for g in games_json])
+        endpoint = "game_time_to_beats"
+        query = f"""
+            fields game_id, normally;
+            where game_id = ({formatted_game_ids});
+            offset 0;
+            limit {limit};
+        """
+        time_to_beat_bytes = self.igdb_wrapper.api_request(endpoint, query)
+        time_to_beats: list[IgdbTimeToBeat] = json.loads(time_to_beat_bytes)
+        game_id_to_time_to_beat = {
+            ttb["game_id"]: ttb.get("normally", None) for ttb in time_to_beats
+        }
+
         games = [
-            IgdbGame(v["game"]["id"], int(v["uid"]), v["game"]["name"])
+            IgdbGame(
+                igdb_game_id=v["game"]["id"],
+                steam_game_id=int(v["uid"]),
+                title=v["game"]["name"],
+                total_rating=v["game"].get("total_rating", None),
+                time_to_beat=(game_id_to_time_to_beat.get(v["game"]["id"], None)),
+            )
             for v in games_json
         ]
 

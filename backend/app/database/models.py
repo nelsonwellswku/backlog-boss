@@ -47,6 +47,8 @@ class Game(Base):
 
     game_id: Mapped[int] = mapped_column("GameId", primary_key=True)
     title: Mapped[str] = mapped_column("Title", String(255))
+    total_rating: Mapped[Optional[float]] = mapped_column("TotalRating")
+    time_to_beat: Mapped[Optional[int]] = mapped_column("TimeToBeat")
     steam_id: Mapped[int] = mapped_column("SteamGameId")
     igdb_id: Mapped[int] = mapped_column("IgdbGameId")
 
