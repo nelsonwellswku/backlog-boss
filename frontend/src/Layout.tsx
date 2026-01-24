@@ -6,10 +6,13 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import { Outlet } from "react-router";
+import { Link, Outlet } from "react-router";
 import { GreetingOrLoginButton } from "./GreetingOrLoginButton";
+import { useCurrentUser } from "./hooks/useCurrentUser";
 
 export function Layout() {
+  const { data, isSuccess } = useCurrentUser();
+
   return (
     <CssBaseline enableColorScheme>
       <Box
@@ -18,9 +21,25 @@ export function Layout() {
         <AppBar position="static">
           <Container fixed>
             <Toolbar disableGutters>
-              <Typography variant="h5" sx={{ flexGrow: 1 }}>
+              <Typography
+                variant="h5"
+                component={Link}
+                to="/"
+                sx={{ textDecoration: "none", color: "inherit" }}
+              >
                 Backlog Boss
               </Typography>
+              {isSuccess && data?.data ? (
+                <Typography
+                  component={Link}
+                  to="/my-backlog"
+                  marginLeft={5}
+                  sx={{ textDecoration: "none", color: "inherit" }}
+                >
+                  My Backlog
+                </Typography>
+              ) : null}
+              <Box flexGrow={1} />
               <GreetingOrLoginButton />
             </Toolbar>
           </Container>
@@ -35,6 +54,14 @@ export function Layout() {
             <Toolbar disableGutters>
               <Typography variant="h6">
                 Copyright &copy; 2026 Nelson Wells
+              </Typography>
+              <Box flexGrow={1} />
+              <Typography
+                component="a"
+                href="/api/docs"
+                sx={{ textDecoration: "none", color: "inherit" }}
+              >
+                API Docs
               </Typography>
             </Toolbar>
           </Container>
