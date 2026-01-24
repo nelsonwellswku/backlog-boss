@@ -38,9 +38,7 @@ export function Layout() {
                 >
                   My Backlog
                 </Typography>
-              ) : (
-                <></>
-              )}
+              ) : null}
               <Box flexGrow={1} />
               <GreetingOrLoginButton />
             </Toolbar>
