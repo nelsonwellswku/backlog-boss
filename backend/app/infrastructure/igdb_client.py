@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Annotated, Optional, TypeAlias, TypedDict
+from typing import Annotated, TypeAlias, TypedDict
 
 from expiring_dict import ExpiringDict
 from fastapi import Depends
@@ -78,7 +78,6 @@ class IgdbClient:
         """
         bytes = self.igdb_wrapper.api_request(endpoint, query)
         games_json: list[IgdbExternalGameDict] = json.loads(bytes)
-        game_id_to_game = {g["game"]["id"]: g for g in games_json}
 
         formatted_game_ids = ", ".join([str(g["game"]["id"]) for g in games_json])
         endpoint = "game_time_to_beats"

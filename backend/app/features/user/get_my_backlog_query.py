@@ -15,6 +15,8 @@ class GetMyBacklogResponse(BaseModel):
 class BacklogGameRow(BaseModel):
     game_id: int = Field(serialization_alias="gameId")
     title: str
+    total_rating: float | None = Field(serialization_alias="totalRating")
+    time_to_beat: int | None = Field(serialization_alias="timeToBeat")
 
 
 class GetMyBacklogQuery:
@@ -35,7 +37,13 @@ class GetMyBacklogQuery:
             raise HTTPException(404, "Backlog not found.")
 
         backlog_game_rows = [
-            BacklogGameRow(game_id=g.game_id, title=g.game.title) for g in backlog_games
+            BacklogGameRow(
+                game_id=g.game_id,
+                title=g.game.title,
+                total_rating=g.game.total_rating,
+                time_to_beat=g.game.time_to_beat,
+            )
+            for g in backlog_games
         ]
 
         return GetMyBacklogResponse(

@@ -8,10 +8,14 @@ import {
   Divider,
 } from "@mui/material";
 import { useGetMyBacklog } from "./hooks/useGetMyBacklog";
+import type { BacklogGameRow } from "./client";
 
 export function MyBacklog() {
   const { data, isSuccess } = useGetMyBacklog();
-  const games = data?.data?.games ?? [];
+  const games: BacklogGameRow[] = data?.data?.games ?? [];
+  if (games.length) {
+    console.log(games);
+  }
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", mt: 4 }}>
@@ -39,6 +43,36 @@ export function MyBacklog() {
                 >
                   <ListItemText
                     primary={g.title}
+                    secondary={
+                      <Box sx={{ display: "flex", gap: 2, mt: 0.5 }}>
+                        {g.timeToBeat && (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
+                            ⏱️ {Math.round(g.timeToBeat / 3600)}h
+                          </Typography>
+                        )}
+                        {g.totalRating && (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
+                            ⭐ {Math.round(g.totalRating)}/100
+                          </Typography>
+                        )}
+                      </Box>
+                    }
                     slotProps={{
                       primary: {
                         variant: "body1",
