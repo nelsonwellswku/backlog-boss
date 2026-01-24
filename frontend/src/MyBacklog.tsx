@@ -13,9 +13,6 @@ import type { BacklogGameRow } from "./client";
 export function MyBacklog() {
   const { data, isSuccess } = useGetMyBacklog();
   const games: BacklogGameRow[] = data?.data?.games ?? [];
-  if (games.length) {
-    console.log(games);
-  }
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", mt: 4 }}>
