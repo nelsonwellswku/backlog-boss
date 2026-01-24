@@ -41,7 +41,7 @@ def get_igdb_wrapper(
 class IgdbGameDict(TypedDict):
     id: int
     name: str
-    total_rating: float
+    total_rating: float | None
 
 
 class IgdbExternalGameDict(TypedDict):
@@ -59,7 +59,7 @@ class IgdbGame:
     igdb_game_id: int
     steam_game_id: int
     title: str
-    total_rating: float
+    total_rating: float | None
     time_to_beat: int | None
 
 
@@ -78,6 +78,9 @@ class IgdbClient:
         """
         bytes = self.igdb_wrapper.api_request(endpoint, query)
         games_json: list[IgdbExternalGameDict] = json.loads(bytes)
+
+        if not games_json:
+            return []
 
         formatted_game_ids = ", ".join([str(g["game"]["id"]) for g in games_json])
         endpoint = "game_time_to_beats"

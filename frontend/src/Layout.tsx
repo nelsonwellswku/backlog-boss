@@ -29,7 +29,7 @@ export function Layout() {
               >
                 Backlog Boss
               </Typography>
-              {isSuccess ? (
+              {isSuccess && data?.data ? (
                 <Typography
                   component={Link}
                   to="/my-backlog"
