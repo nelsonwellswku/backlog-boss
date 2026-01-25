@@ -39,10 +39,6 @@ def get_igdb_wrapper(
     return IGDBWrapper(settings.twitch_client_id, access_token)
 
 
-class ExternalGameSource(BaseModel):
-    id: int
-
-
 class IgdbGameResponse(BaseModel):
     id: int
     name: str
