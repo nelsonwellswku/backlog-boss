@@ -1,11 +1,11 @@
 import json
-from dataclasses import dataclass
-from typing import Annotated, TypeAlias, TypedDict
+from typing import Annotated, TypeAlias
 
 from expiring_dict import ExpiringDict
 from fastapi import Depends
 from httpx import QueryParams
 from igdb.wrapper import IGDBWrapper
+from pydantic import BaseModel
 
 from app.http_client import HttpClient
 from app.settings import AppSettings
@@ -38,89 +38,82 @@ def get_igdb_wrapper(
     return IGDBWrapper(settings.twitch_client_id, access_token)
 
 
-class IgdbGameDict(TypedDict):
+class ExternalGameSource(BaseModel):
+    id: int
+
+
+class ExternalGame(BaseModel):
+    id: int
+    uid: str
+    external_game_source: ExternalGameSource
+
+
+class IgdbGameResponse(BaseModel):
     id: int
     name: str
-    total_rating: float | None
+    total_rating: float | None = None
+    external_games: list[ExternalGame] = []
+    time_to_beat: int | None = None
 
 
-class IgdbExternalGameDict(TypedDict):
-    uid: str
-    game: IgdbGameDict
-
-
-class IgdbTimeToBeat(TypedDict):
+class TimeToBeatResponse(BaseModel):
+    id: int
     game_id: int
-    normally: int | None
-
-
-@dataclass
-class IgdbGame:
-    igdb_game_id: int
-    steam_game_id: int
-    title: str
-    total_rating: float | None
-    time_to_beat: int | None
+    normally: int
 
 
 class IgdbClient:
     def __init__(self, igdb_wrapper: IGDBWrapper = Depends(get_igdb_wrapper)):
         self.igdb_wrapper = igdb_wrapper
 
-    def get_games(self, steam_ids: set[int], limit: int) -> list[IgdbGame]:
+    def get_games(self, steam_ids: set[int]) -> list[IgdbGameResponse]:
         formatted_steam_ids = ", ".join([str(id) for id in steam_ids])
-        endpoint = "external_games"
+        endpoint = "games"
         query = f"""
-            fields uid, game.id, game.name, game.total_rating;
-            where external_game_source = 1 & uid = ({formatted_steam_ids});
+            fields id, name, total_rating, external_games.uid, external_games.external_game_source.id;
+            where external_games.uid = ({formatted_steam_ids}) & external_games.external_game_source = (1);
             offset 0;
-            limit {limit};
+            limit {len(steam_ids)};
         """
         bytes = self.igdb_wrapper.api_request(endpoint, query)
-        games_json: list[IgdbExternalGameDict] = json.loads(bytes)
-
+        games_json = json.loads(bytes)
         if not games_json:
             return []
 
-        formatted_game_ids = ", ".join([str(g["game"]["id"]) for g in games_json])
-        endpoint = "game_time_to_beats"
-        query = f"""
-            fields game_id, normally;
-            where game_id = ({formatted_game_ids});
-            offset 0;
-            limit {limit};
-        """
-        time_to_beat_bytes = self.igdb_wrapper.api_request(endpoint, query)
-        time_to_beats: list[IgdbTimeToBeat] = json.loads(time_to_beat_bytes)
-        game_id_to_time_to_beat = {
-            ttb["game_id"]: ttb.get("normally", None) for ttb in time_to_beats
+        games = [IgdbGameResponse(**game) for game in games_json]
+        for g in games:
+            external_games = [
+                eg for eg in g.external_games if eg.external_game_source == 1
+            ]
+            g.external_games = external_games
+
+        game_time_to_beats = self.get_game_time_to_beats([g.id for g in games])
+        igdb_game_id_to_game_time_to_beat = {
+            gttb.game_id: gttb for gttb in game_time_to_beats
         }
 
-        games = [
-            IgdbGame(
-                igdb_game_id=v["game"]["id"],
-                steam_game_id=int(v["uid"]),
-                title=v["game"]["name"],
-                total_rating=v["game"].get("total_rating", None),
-                time_to_beat=(game_id_to_time_to_beat.get(v["game"]["id"], None)),
-            )
-            for v in games_json
-        ]
-
-        # dedup the list - this is required because a single igdb game can
-        # be related to multiple steam games. for example,
-        # mass effect 2 (2010 edition) - igdb id 74, steam id 2362420
-        # mass effect 2 - igdb id 74, steam id 24980
-        games.sort(key=lambda g: (g.steam_game_id, g.igdb_game_id))
-        igdb_games_seen = set()
-        games = [
-            g
-            for g in games
-            if g.igdb_game_id not in igdb_games_seen
-            and not igdb_games_seen.add(g.igdb_game_id)
-        ]
+        for g in games:
+            time_to_beat = igdb_game_id_to_game_time_to_beat.get(g.id, None)
+            if time_to_beat:
+                g.time_to_beat = time_to_beat.normally
 
         return games
+
+    def get_game_time_to_beats(self, igdb_game_ids: list[int]):
+        formatted_game_ids = ", ".join([str(id) for id in igdb_game_ids])
+        endpoint = "game_time_to_beats"
+        query = f"""
+            fields id, game_id, normally;
+            where game_id = ({formatted_game_ids});
+            offset 0;
+            limit {len(igdb_game_ids)};
+        """
+
+        response_bytes = self.igdb_wrapper.api_request(endpoint, query)
+        response_json = json.loads(response_bytes)
+        game_time_to_beats = [TimeToBeatResponse(**ttb) for ttb in response_json]
+
+        return game_time_to_beats
 
 
 IgdbClientDep: TypeAlias = Annotated[IgdbClient, Depends(IgdbClient)]
