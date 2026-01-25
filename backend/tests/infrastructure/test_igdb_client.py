@@ -161,6 +161,17 @@ def test_get_games_returns_empty_list_when_no_games_found(mocker: MockerFixture)
     assert actual == []
 
 
+def test_get_games_returns_empty_list_when_empty_input(mocker: MockerFixture):
+    igdb_wrapper_mock = mocker.Mock(spec=IGDBWrapper)
+
+    igdbClient: IgdbClient = IgdbClient(igdb_wrapper_mock)
+
+    actual = igdbClient.get_games(set())
+
+    assert actual == []
+    igdb_wrapper_mock.api_request.assert_not_called()
+
+
 def test_get_games_handles_missing_time_to_beat_data(mocker: MockerFixture):
     mock_games = [
         {
@@ -221,6 +232,19 @@ def test_get_game_time_to_beats_returns_empty_list_when_no_data(mocker: MockerFi
     assert actual == []
 
 
+def test_get_game_time_to_beats_returns_empty_list_when_empty_input(
+    mocker: MockerFixture,
+):
+    igdb_wrapper_mock = mocker.Mock(spec=IGDBWrapper)
+
+    igdbClient: IgdbClient = IgdbClient(igdb_wrapper_mock)
+
+    actual = igdbClient.get_game_time_to_beats([])
+
+    assert actual == []
+    igdb_wrapper_mock.api_request.assert_not_called()
+
+
 def test_get_external_games_is_successful(mocker: MockerFixture):
     mock_external_games = [
         {"id": 100, "game": 1, "uid": "111", "external_game_source": 1},
@@ -253,3 +277,14 @@ def test_get_external_games_returns_empty_list_when_no_data(mocker: MockerFixtur
     actual = igdbClient.get_external_games([999])
 
     assert actual == []
+
+
+def test_get_external_games_returns_empty_list_when_empty_input(mocker: MockerFixture):
+    igdb_wrapper_mock = mocker.Mock(spec=IGDBWrapper)
+
+    igdbClient: IgdbClient = IgdbClient(igdb_wrapper_mock)
+
+    actual = igdbClient.get_external_games([])
+
+    assert actual == []
+    igdb_wrapper_mock.api_request.assert_not_called()

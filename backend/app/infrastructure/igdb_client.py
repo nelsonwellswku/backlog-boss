@@ -68,6 +68,9 @@ class IgdbClient:
         return ", ".join([str(id) for id in ids])
 
     def get_games(self, steam_ids: set[int]) -> list[IgdbGameResponse]:
+        if not steam_ids:
+            return []
+
         formatted_steam_ids = ", ".join([str(id) for id in steam_ids])
         endpoint = "games"
         query = f"""
@@ -94,19 +97,21 @@ class IgdbClient:
             gttb.game_id: gttb for gttb in game_time_to_beats
         }
 
+        for group_game_id, ex_games in grouped_external_games:
+            for ex in ex_games:
+                game_id_to_game[group_game_id].external_games.append(ex)
+
         for g in games:
             time_to_beat = igdb_game_id_to_game_time_to_beat.get(g.id, None)
             if time_to_beat:
                 g.time_to_beat = time_to_beat
 
-            for group in grouped_external_games:
-                (group_game_id, ex_games) = group
-                for ex in ex_games:
-                    game_id_to_game[group_game_id].external_games.append(ex)
-
         return games
 
     def get_external_games(self, igdb_game_ids: list[int]):
+        if not igdb_game_ids:
+            return []
+
         formatted_game_ids = self._format_ids(igdb_game_ids)
         endpoint = "external_games"
         limit = 500  # TODO: paginate. for now, limit is set to max igdb supports because a game can have any number of external steam games
@@ -126,6 +131,9 @@ class IgdbClient:
         return external_games
 
     def get_game_time_to_beats(self, igdb_game_ids: list[int]):
+        if not igdb_game_ids:
+            return []
+
         formatted_game_ids = self._format_ids(igdb_game_ids)
         endpoint = "game_time_to_beats"
         query = f"""
