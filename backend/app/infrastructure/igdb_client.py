@@ -1,4 +1,5 @@
 import json
+from itertools import groupby
 from typing import Annotated, TypeAlias
 
 from expiring_dict import ExpiringDict
@@ -42,18 +43,19 @@ class ExternalGameSource(BaseModel):
     id: int
 
 
-class ExternalGame(BaseModel):
-    id: int
-    uid: str
-    external_game_source: ExternalGameSource
-
-
 class IgdbGameResponse(BaseModel):
     id: int
     name: str
     total_rating: float | None = None
-    external_games: list[ExternalGame] = []
+    external_games: list["ExternalGameResponse"] = []
     time_to_beat: "TimeToBeatResponse | None" = None
+
+
+class ExternalGameResponse(BaseModel):
+    id: int
+    game: int
+    uid: str
+    external_game_source: int
 
 
 class TimeToBeatResponse(BaseModel):
@@ -66,11 +68,14 @@ class IgdbClient:
     def __init__(self, igdb_wrapper: IGDBWrapper = Depends(get_igdb_wrapper)):
         self.igdb_wrapper = igdb_wrapper
 
+    def _format_ids(self, ids: list[int]):
+        return ", ".join([str(id) for id in ids])
+
     def get_games(self, steam_ids: set[int]) -> list[IgdbGameResponse]:
         formatted_steam_ids = ", ".join([str(id) for id in steam_ids])
         endpoint = "games"
         query = f"""
-            fields id, name, total_rating, external_games.uid, external_games.external_game_source.id;
+            fields id, name, total_rating;
             where external_games.uid = ({formatted_steam_ids}) & external_games.external_game_source = (1);
             offset 0;
             limit {len(steam_ids)};
@@ -81,11 +86,12 @@ class IgdbClient:
             return []
 
         games = [IgdbGameResponse.model_validate(game) for game in games_json]
-        for g in games:
-            external_games = [
-                eg for eg in g.external_games if eg.external_game_source.id == 1
-            ]
-            g.external_games = external_games
+        game_ids = [g.id for g in games]
+        game_id_to_game = {g.id: g for g in games}
+
+        external_games = self.get_external_games(game_ids)
+        external_games.sort(key=lambda x: x.game)
+        grouped_external_games = groupby(external_games, lambda x: x.game)
 
         game_time_to_beats = self.get_game_time_to_beats([g.id for g in games])
         igdb_game_id_to_game_time_to_beat = {
@@ -97,10 +103,33 @@ class IgdbClient:
             if time_to_beat:
                 g.time_to_beat = time_to_beat
 
+            for group in grouped_external_games:
+                (group_game_id, ex_games) = group
+                for ex in ex_games:
+                    game_id_to_game[group_game_id].external_games.append(ex)
+
         return games
 
+    def get_external_games(self, igdb_game_ids: list[int]):
+        formatted_game_ids = self._format_ids(igdb_game_ids)
+        endpoint = "external_games"
+        query = f"""
+            fields id, game, uid, external_game_source;
+            where game = ({formatted_game_ids}) & external_game_source = 1;
+            offset 0;
+            limit {len(igdb_game_ids)};
+        """
+
+        response_bytes = self.igdb_wrapper.api_request(endpoint, query)
+        response_json = json.loads(response_bytes)
+        external_games = [
+            ExternalGameResponse.model_validate(eg) for eg in response_json
+        ]
+
+        return external_games
+
     def get_game_time_to_beats(self, igdb_game_ids: list[int]):
-        formatted_game_ids = ", ".join([str(id) for id in igdb_game_ids])
+        formatted_game_ids = self._format_ids(igdb_game_ids)
         endpoint = "game_time_to_beats"
         query = f"""
             fields id, game_id, normally;

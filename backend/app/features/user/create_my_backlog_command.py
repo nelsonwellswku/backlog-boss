@@ -75,15 +75,21 @@ class CreateMyBacklogCommand:
                     normally=game.time_to_beat.normally,
                 )
             for steam_game in game.external_games:
-                external_game = IgdbExternalGame(
-                    igdb_external_game_id=steam_game.id,
-                    uid=int(steam_game.uid),
-                    igdb_external_game_source_id=1,
-                )
-                igdb_game.external_games.append(external_game)
+                try:
+                    external_game = IgdbExternalGame(
+                        igdb_external_game_id=steam_game.id,
+                        uid=int(steam_game.uid),
+                        igdb_external_game_source_id=1,
+                    )
+                    igdb_game.external_games.append(external_game)
+                except ValueError:
+                    # steam games should all have integer uids, but bad data can get into igdb sometimes
+                    # for example, the game that caused this problem had a uid of integers joined by commas
+                    pass
+
             games_to_add.append(igdb_game)
 
         self.db.add_all(games_to_add)
-        self.db.commit()
+        self.db.flush()
 
         return CreateMyBacklogResponse(backlog_id=backlog.backlog_id)
