@@ -89,7 +89,9 @@ class BacklogGame(Base):
 class IgdbGame(Base):
     __tablename__ = "IgdbGame"
 
-    igdb_game_id: Mapped[int] = mapped_column("Id", primary_key=True)
+    igdb_game_id: Mapped[int] = mapped_column(
+        "Id", primary_key=True, autoincrement=False
+    )
     name: Mapped[str] = mapped_column("Name", String(255))
     total_rating: Mapped[Optional[float]] = mapped_column("TotalRating")
 
@@ -104,7 +106,9 @@ class IgdbGame(Base):
 class IgdbExternalGame(Base):
     __tablename__ = "IgdbExternalGame"
 
-    igdb_external_game_id: Mapped[int] = mapped_column("Id", primary_key=True)
+    igdb_external_game_id: Mapped[int] = mapped_column(
+        "Id", primary_key=True, autoincrement=False
+    )
     uid: Mapped[int] = mapped_column("Uid")
     igdb_game_id: Mapped[int] = mapped_column("IgdbGameId", ForeignKey("IgdbGame.Id"))
     igdb_external_game_source_id: Mapped[int] = mapped_column(
@@ -120,14 +124,18 @@ class IgdbExternalGame(Base):
 class IgdbExternalGameSource(Base):
     __tablename__ = "IgdbExternalGameSource"
 
-    igdb_external_game_source_id: Mapped[int] = mapped_column("Id", primary_key=True)
+    igdb_external_game_source_id: Mapped[int] = mapped_column(
+        "Id", primary_key=True, autoincrement=False
+    )
     name: Mapped[str] = mapped_column("Name", String(32))
 
 
 class IgdbGameTimeToBeat(Base):
     __tablename__ = "IgdbGameTimeToBeat"
 
-    igdb_game_time_to_beat_id: Mapped[int] = mapped_column("Id", primary_key=True)
+    igdb_game_time_to_beat_id: Mapped[int] = mapped_column(
+        "Id", primary_key=True, autoincrement=False
+    )
     normally: Mapped[Optional[int]] = mapped_column("Normally")
     igdb_game_id: Mapped[int] = mapped_column("IgdbGameId", ForeignKey("IgdbGame.Id"))
 

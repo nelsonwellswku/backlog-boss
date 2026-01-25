@@ -68,7 +68,7 @@ def test_get_games_with_complete_data_is_successful(mocker: MockerFixture):
                     id=100, uid="12345", external_game_source=ExternalGameSource(id=1)
                 )
             ],
-            time_to_beat=18000,
+            time_to_beat=TimeToBeatResponse(id=1, game_id=1, normally=18000),
         )
     ]
 
@@ -110,10 +110,12 @@ def test_get_games_with_multiple_games_is_successful(mocker: MockerFixture):
     assert len(actual) == 2
     assert actual[0].id == 1
     assert actual[0].name == "Game One"
-    assert actual[0].time_to_beat == 10000
+    assert actual[0].time_to_beat is not None
+    assert actual[0].time_to_beat.normally == 10000
     assert actual[1].id == 2
     assert actual[1].name == "Game Two"
-    assert actual[1].time_to_beat == 15000
+    assert actual[1].time_to_beat is not None
+    assert actual[1].time_to_beat.normally == 15000
 
 
 def test_get_games_filters_non_steam_external_games(mocker: MockerFixture):

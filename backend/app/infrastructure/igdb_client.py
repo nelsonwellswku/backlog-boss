@@ -53,13 +53,13 @@ class IgdbGameResponse(BaseModel):
     name: str
     total_rating: float | None = None
     external_games: list[ExternalGame] = []
-    time_to_beat: int | None = None
+    time_to_beat: "TimeToBeatResponse | None" = None
 
 
 class TimeToBeatResponse(BaseModel):
     id: int
     game_id: int
-    normally: int
+    normally: int | None = None
 
 
 class IgdbClient:
@@ -80,7 +80,7 @@ class IgdbClient:
         if not games_json:
             return []
 
-        games = [IgdbGameResponse(**game) for game in games_json]
+        games = [IgdbGameResponse.model_validate(game) for game in games_json]
         for g in games:
             external_games = [
                 eg for eg in g.external_games if eg.external_game_source.id == 1
@@ -95,7 +95,7 @@ class IgdbClient:
         for g in games:
             time_to_beat = igdb_game_id_to_game_time_to_beat.get(g.id, None)
             if time_to_beat:
-                g.time_to_beat = time_to_beat.normally
+                g.time_to_beat = time_to_beat
 
         return games
 
@@ -111,7 +111,9 @@ class IgdbClient:
 
         response_bytes = self.igdb_wrapper.api_request(endpoint, query)
         response_json = json.loads(response_bytes)
-        game_time_to_beats = [TimeToBeatResponse(**ttb) for ttb in response_json]
+        game_time_to_beats = [
+            TimeToBeatResponse.model_validate(ttb) for ttb in response_json
+        ]
 
         return game_time_to_beats
 
