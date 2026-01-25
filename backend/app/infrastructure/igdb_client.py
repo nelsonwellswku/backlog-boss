@@ -83,7 +83,7 @@ class IgdbClient:
         games = [IgdbGameResponse(**game) for game in games_json]
         for g in games:
             external_games = [
-                eg for eg in g.external_games if eg.external_game_source == 1
+                eg for eg in g.external_games if eg.external_game_source.id == 1
             ]
             g.external_games = external_games
 
