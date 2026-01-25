@@ -4,6 +4,7 @@ from sqlalchemy import select
 from app.database.engine import DbSession
 from app.database.models import (
     Backlog,
+    BacklogGame,
     IgdbExternalGame,
     IgdbGame,
     IgdbGameTimeToBeat,
@@ -91,5 +92,25 @@ class CreateMyBacklogCommand:
 
         self.db.add_all(games_to_add)
         self.db.flush()
+
+        # get all the steam games (and thus igdb games) the user owns
+        # and add them to the backlog
+        # do this in case the game already existed in the database
+        stmt = (
+            select(IgdbGame)
+            .join(IgdbExternalGame)
+            .where(IgdbExternalGame.uid.in_(owned_game_steam_ids))
+        )
+
+        owned_games_to_add_to_backlog = self.db.scalars(stmt).all()
+
+        backlog_games = [
+            BacklogGame(igdb_game_id=og.igdb_game_id)
+            for og in owned_games_to_add_to_backlog
+        ]
+
+        backlog.backlog_games.extend(backlog_games)
+        self.db.add(backlog)
+        self.db.commit()
 
         return CreateMyBacklogResponse(backlog_id=backlog.backlog_id)
