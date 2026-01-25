@@ -100,12 +100,13 @@ class CreateMyBacklogCommand:
             select(IgdbGame)
             .join(IgdbExternalGame)
             .where(IgdbExternalGame.uid.in_(owned_game_steam_ids))
+            .distinct()
         )
 
         owned_games_to_add_to_backlog = self.db.scalars(stmt).all()
 
         backlog_games = [
-            BacklogGame(igdb_game_id=og.igdb_game_id)
+            BacklogGame(igdb_game_id=og.igdb_game_id, backlog_id=backlog.backlog_id)
             for og in owned_games_to_add_to_backlog
         ]
 

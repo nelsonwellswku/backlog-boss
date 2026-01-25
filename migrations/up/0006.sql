@@ -7,7 +7,7 @@ alter table BacklogGame
 drop constraint FK_BacklogGame_GameId;
 
 alter table BacklogGame
-drop column GameId
+drop column GameId;
 
 drop table Game;
 

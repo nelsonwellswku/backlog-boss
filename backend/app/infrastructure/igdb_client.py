@@ -76,8 +76,8 @@ class IgdbClient:
             offset 0;
             limit {len(steam_ids)};
         """
-        bytes = self.igdb_wrapper.api_request(endpoint, query)
-        games_json = json.loads(bytes)
+        response_bytes = self.igdb_wrapper.api_request(endpoint, query)
+        games_json = json.loads(response_bytes)
         if not games_json:
             return []
 
@@ -109,11 +109,12 @@ class IgdbClient:
     def get_external_games(self, igdb_game_ids: list[int]):
         formatted_game_ids = self._format_ids(igdb_game_ids)
         endpoint = "external_games"
+        limit = 500  # TODO: paginate. for now, limit is set to max igdb supports because a game can have any number of external steam games
         query = f"""
             fields id, game, uid, external_game_source;
             where game = ({formatted_game_ids}) & external_game_source = 1;
             offset 0;
-            limit {len(igdb_game_ids)};
+            limit {limit};
         """
 
         response_bytes = self.igdb_wrapper.api_request(endpoint, query)
