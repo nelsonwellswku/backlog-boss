@@ -42,23 +42,6 @@ class AppSession(Base):
     app_user: Mapped[AppUser] = relationship()
 
 
-class Game(Base):
-    __tablename__ = "Game"
-
-    game_id: Mapped[int] = mapped_column("GameId", primary_key=True)
-    title: Mapped[str] = mapped_column("Title", String(255))
-    total_rating: Mapped[Optional[float]] = mapped_column("TotalRating")
-    time_to_beat: Mapped[Optional[int]] = mapped_column("TimeToBeat")
-    steam_id: Mapped[int] = mapped_column("SteamGameId")
-    igdb_id: Mapped[int] = mapped_column("IgdbGameId")
-
-    def __str__(self):
-        return f"Game id: {self.game_id}, title: {self.title}, steam_id: {self.steam_id}, igdb_id: {self.igdb_id}"
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-
 class Backlog(Base):
     __tablename__ = "Backlog"
 
@@ -80,7 +63,65 @@ class BacklogGame(Base):
     backlog_id: Mapped[int] = mapped_column(
         "BacklogId", ForeignKey("Backlog.BacklogId")
     )
-    game_id: Mapped[int] = mapped_column("GameId", ForeignKey("Game.GameId"))
+    igdb_game_id: Mapped[int] = mapped_column("IgdbGameId", ForeignKey("IgdbGame.Id"))
 
     backlog: Mapped["Backlog"] = relationship("Backlog", back_populates="backlog_games")
-    game: Mapped["Game"] = relationship("Game")
+    igdb_game: Mapped["IgdbGame"] = relationship("IgdbGame")
+
+
+class IgdbGame(Base):
+    __tablename__ = "IgdbGame"
+
+    igdb_game_id: Mapped[int] = mapped_column(
+        "Id", primary_key=True, autoincrement=False
+    )
+    name: Mapped[str] = mapped_column("Name", String(255))
+    total_rating: Mapped[Optional[float]] = mapped_column("TotalRating")
+
+    external_games: Mapped[list["IgdbExternalGame"]] = relationship(
+        "IgdbExternalGame", back_populates="igdb_game"
+    )
+    time_to_beat: Mapped[Optional["IgdbGameTimeToBeat"]] = relationship(
+        "IgdbGameTimeToBeat", back_populates="igdb_game"
+    )
+
+
+class IgdbExternalGame(Base):
+    __tablename__ = "IgdbExternalGame"
+
+    igdb_external_game_id: Mapped[int] = mapped_column(
+        "Id", primary_key=True, autoincrement=False
+    )
+    uid: Mapped[int] = mapped_column("Uid")
+    igdb_game_id: Mapped[int] = mapped_column("IgdbGameId", ForeignKey("IgdbGame.Id"))
+    igdb_external_game_source_id: Mapped[int] = mapped_column(
+        "IgdbExternalGameSourceId", ForeignKey("IgdbExternalGameSource.Id")
+    )
+
+    igdb_game: Mapped["IgdbGame"] = relationship(
+        "IgdbGame", back_populates="external_games"
+    )
+    source: Mapped["IgdbExternalGameSource"] = relationship("IgdbExternalGameSource")
+
+
+class IgdbExternalGameSource(Base):
+    __tablename__ = "IgdbExternalGameSource"
+
+    igdb_external_game_source_id: Mapped[int] = mapped_column(
+        "Id", primary_key=True, autoincrement=False
+    )
+    name: Mapped[str] = mapped_column("Name", String(32))
+
+
+class IgdbGameTimeToBeat(Base):
+    __tablename__ = "IgdbGameTimeToBeat"
+
+    igdb_game_time_to_beat_id: Mapped[int] = mapped_column(
+        "Id", primary_key=True, autoincrement=False
+    )
+    normally: Mapped[Optional[int]] = mapped_column("Normally")
+    igdb_game_id: Mapped[int] = mapped_column("IgdbGameId", ForeignKey("IgdbGame.Id"))
+
+    igdb_game: Mapped["IgdbGame"] = relationship(
+        "IgdbGame", back_populates="time_to_beat"
+    )

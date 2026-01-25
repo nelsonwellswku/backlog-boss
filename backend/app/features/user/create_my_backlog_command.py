@@ -2,7 +2,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from app.database.engine import DbSession
-from app.database.models import Backlog, BacklogGame, Game
+from app.database.models import (
+    Backlog,
+    BacklogGame,
+    IgdbExternalGame,
+    IgdbGame,
+    IgdbGameTimeToBeat,
+)
 from app.features.auth.get_current_user import CurrentUser
 from app.infrastructure.igdb_client import IgdbClientDep
 from app.infrastructure.steam_client import SteamClientDep
@@ -47,51 +53,65 @@ class CreateMyBacklogCommand:
         owned_game_steam_ids = set([game.steam_game_id for game in owned_games])
 
         # query for games already in the database with these steam_ids
-        stmt = select(Game.steam_id).where(Game.steam_id.in_(owned_game_steam_ids))
+        stmt = select(IgdbExternalGame.uid).where(
+            IgdbExternalGame.uid.in_(owned_game_steam_ids)
+        )
         games_in_db = self.db.scalars(stmt).all()
         games_in_db_ids = set(games_in_db)
 
-        game_ids_to_insert = owned_game_steam_ids - games_in_db_ids
+        steam_game_ids_to_insert = owned_game_steam_ids - games_in_db_ids
 
         # fetch the games to insert from igdb and save them to the database
-        igdb_games = self.igdb_client.get_games(
-            game_ids_to_insert, len(game_ids_to_insert)
-        )
+        igdb_games = self.igdb_client.get_games(steam_game_ids_to_insert)
 
-        # we need to double check that the games we get back are not already in the db
-        # this is because when querying igdb for steam games, igdb will sometimes return
-        # two steam ids for a singular igdb id - one of these we'll _never_ insert
-        stmt = select(Game.igdb_id).where(
-            Game.igdb_id.in_([game.igdb_game_id for game in igdb_games])
-        )
-        igdb_ids_to_preclude_from_insert = set(self.db.scalars(stmt).all())
-
-        games_to_insert = [
-            Game(
-                title=game.title,
-                igdb_id=game.igdb_game_id,
-                steam_id=game.steam_game_id,
-                total_rating=game.total_rating,
-                time_to_beat=game.time_to_beat,
+        games_to_add: list[IgdbGame] = []
+        for game in igdb_games:
+            igdb_game = IgdbGame(
+                igdb_game_id=game.id, name=game.name, total_rating=game.total_rating
             )
-            for game in igdb_games
-            if game.igdb_game_id not in igdb_ids_to_preclude_from_insert
-        ]
+            if game.time_to_beat:
+                igdb_game.time_to_beat = IgdbGameTimeToBeat(
+                    igdb_game_time_to_beat_id=game.time_to_beat.id,
+                    igdb_game_id=game.id,
+                    normally=game.time_to_beat.normally,
+                )
+            for steam_game in game.external_games:
+                try:
+                    external_game = IgdbExternalGame(
+                        igdb_external_game_id=steam_game.id,
+                        uid=int(steam_game.uid),
+                        igdb_external_game_source_id=1,
+                    )
+                    igdb_game.external_games.append(external_game)
+                except ValueError:
+                    # steam games should all have integer uids, but bad data can get into igdb sometimes
+                    # for example, the game that caused this problem had a uid of integers joined by commas
+                    pass
 
-        self.db.add_all(games_to_insert)
+            games_to_add.append(igdb_game)
+
+        self.db.add_all(games_to_add)
         self.db.flush()
 
-        # re-query owned games by steam id in case a subset of the user's owned games
-        # already existed in the database when we inserted new Game records above
-        stmt = select(Game).where(Game.steam_id.in_(owned_game_steam_ids))
-        games_to_add_to_backlog = self.db.scalars(stmt).all()
+        # get all the steam games (and thus igdb games) the user owns
+        # and add them to the backlog
+        # do this in case the game already existed in the database
+        stmt = (
+            select(IgdbGame)
+            .join(IgdbExternalGame)
+            .where(IgdbExternalGame.uid.in_(owned_game_steam_ids))
+            .distinct()
+        )
+
+        owned_games_to_add_to_backlog = self.db.scalars(stmt).all()
 
         backlog_games = [
-            BacklogGame(backlog=backlog, game=game) for game in games_to_add_to_backlog
+            BacklogGame(igdb_game_id=og.igdb_game_id, backlog_id=backlog.backlog_id)
+            for og in owned_games_to_add_to_backlog
         ]
-        self.db.add(backlog)
-        self.db.add_all(backlog_games)
 
+        backlog.backlog_games.extend(backlog_games)
+        self.db.add(backlog)
         self.db.commit()
 
         return CreateMyBacklogResponse(backlog_id=backlog.backlog_id)

@@ -1,11 +1,12 @@
 import json
-from dataclasses import dataclass
-from typing import Annotated, TypeAlias, TypedDict
+from itertools import groupby
+from typing import Annotated, TypeAlias
 
 from expiring_dict import ExpiringDict
 from fastapi import Depends
 from httpx import QueryParams
 from igdb.wrapper import IGDBWrapper
+from pydantic import BaseModel
 
 from app.http_client import HttpClient
 from app.settings import AppSettings
@@ -38,89 +39,117 @@ def get_igdb_wrapper(
     return IGDBWrapper(settings.twitch_client_id, access_token)
 
 
-class IgdbGameDict(TypedDict):
+class IgdbGameResponse(BaseModel):
     id: int
     name: str
-    total_rating: float | None
+    total_rating: float | None = None
+    external_games: list["ExternalGameResponse"] = []
+    time_to_beat: "TimeToBeatResponse | None" = None
 
 
-class IgdbExternalGameDict(TypedDict):
+class ExternalGameResponse(BaseModel):
+    id: int
+    game: int
     uid: str
-    game: IgdbGameDict
+    external_game_source: int
 
 
-class IgdbTimeToBeat(TypedDict):
+class TimeToBeatResponse(BaseModel):
+    id: int
     game_id: int
-    normally: int | None
-
-
-@dataclass
-class IgdbGame:
-    igdb_game_id: int
-    steam_game_id: int
-    title: str
-    total_rating: float | None
-    time_to_beat: int | None
+    normally: int | None = None
 
 
 class IgdbClient:
     def __init__(self, igdb_wrapper: IGDBWrapper = Depends(get_igdb_wrapper)):
         self.igdb_wrapper = igdb_wrapper
 
-    def get_games(self, steam_ids: set[int], limit: int) -> list[IgdbGame]:
-        formatted_steam_ids = ", ".join([str(id) for id in steam_ids])
-        endpoint = "external_games"
-        query = f"""
-            fields uid, game.id, game.name, game.total_rating;
-            where external_game_source = 1 & uid = ({formatted_steam_ids});
-            offset 0;
-            limit {limit};
-        """
-        bytes = self.igdb_wrapper.api_request(endpoint, query)
-        games_json: list[IgdbExternalGameDict] = json.loads(bytes)
+    def _format_ids(self, ids: list[int]):
+        return ", ".join([str(id) for id in ids])
 
+    def get_games(self, steam_ids: set[int]) -> list[IgdbGameResponse]:
+        if not steam_ids:
+            return []
+
+        formatted_steam_ids = ", ".join([str(id) for id in steam_ids])
+        endpoint = "games"
+        query = f"""
+            fields id, name, total_rating;
+            where external_games.uid = ({formatted_steam_ids}) & external_games.external_game_source = (1);
+            offset 0;
+            limit {len(steam_ids)};
+        """
+        response_bytes = self.igdb_wrapper.api_request(endpoint, query)
+        games_json = json.loads(response_bytes)
         if not games_json:
             return []
 
-        formatted_game_ids = ", ".join([str(g["game"]["id"]) for g in games_json])
-        endpoint = "game_time_to_beats"
+        games = [IgdbGameResponse.model_validate(game) for game in games_json]
+        game_ids = [g.id for g in games]
+        game_id_to_game = {g.id: g for g in games}
+
+        external_games = self.get_external_games(game_ids)
+        external_games.sort(key=lambda x: x.game)
+        grouped_external_games = groupby(external_games, lambda x: x.game)
+
+        game_time_to_beats = self.get_game_time_to_beats([g.id for g in games])
+        igdb_game_id_to_game_time_to_beat = {
+            gttb.game_id: gttb for gttb in game_time_to_beats
+        }
+
+        for group_game_id, ex_games in grouped_external_games:
+            for ex in ex_games:
+                game_id_to_game[group_game_id].external_games.append(ex)
+
+        for g in games:
+            time_to_beat = igdb_game_id_to_game_time_to_beat.get(g.id, None)
+            if time_to_beat:
+                g.time_to_beat = time_to_beat
+
+        return games
+
+    def get_external_games(self, igdb_game_ids: list[int]):
+        if not igdb_game_ids:
+            return []
+
+        formatted_game_ids = self._format_ids(igdb_game_ids)
+        endpoint = "external_games"
+        limit = 500  # TODO: paginate. for now, limit is set to max igdb supports because a game can have any number of external steam games
         query = f"""
-            fields game_id, normally;
-            where game_id = ({formatted_game_ids});
+            fields id, game, uid, external_game_source;
+            where game = ({formatted_game_ids}) & external_game_source = 1;
             offset 0;
             limit {limit};
         """
-        time_to_beat_bytes = self.igdb_wrapper.api_request(endpoint, query)
-        time_to_beats: list[IgdbTimeToBeat] = json.loads(time_to_beat_bytes)
-        game_id_to_time_to_beat = {
-            ttb["game_id"]: ttb.get("normally", None) for ttb in time_to_beats
-        }
 
-        games = [
-            IgdbGame(
-                igdb_game_id=v["game"]["id"],
-                steam_game_id=int(v["uid"]),
-                title=v["game"]["name"],
-                total_rating=v["game"].get("total_rating", None),
-                time_to_beat=(game_id_to_time_to_beat.get(v["game"]["id"], None)),
-            )
-            for v in games_json
+        response_bytes = self.igdb_wrapper.api_request(endpoint, query)
+        response_json = json.loads(response_bytes)
+        external_games = [
+            ExternalGameResponse.model_validate(eg) for eg in response_json
         ]
 
-        # dedup the list - this is required because a single igdb game can
-        # be related to multiple steam games. for example,
-        # mass effect 2 (2010 edition) - igdb id 74, steam id 2362420
-        # mass effect 2 - igdb id 74, steam id 24980
-        games.sort(key=lambda g: (g.steam_game_id, g.igdb_game_id))
-        igdb_games_seen = set()
-        games = [
-            g
-            for g in games
-            if g.igdb_game_id not in igdb_games_seen
-            and not igdb_games_seen.add(g.igdb_game_id)
+        return external_games
+
+    def get_game_time_to_beats(self, igdb_game_ids: list[int]):
+        if not igdb_game_ids:
+            return []
+
+        formatted_game_ids = self._format_ids(igdb_game_ids)
+        endpoint = "game_time_to_beats"
+        query = f"""
+            fields id, game_id, normally;
+            where game_id = ({formatted_game_ids});
+            offset 0;
+            limit {len(igdb_game_ids)};
+        """
+
+        response_bytes = self.igdb_wrapper.api_request(endpoint, query)
+        response_json = json.loads(response_bytes)
+        game_time_to_beats = [
+            TimeToBeatResponse.model_validate(ttb) for ttb in response_json
         ]
 
-        return games
+        return game_time_to_beats
 
 
 IgdbClientDep: TypeAlias = Annotated[IgdbClient, Depends(IgdbClient)]
