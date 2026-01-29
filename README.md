@@ -43,7 +43,7 @@ Next, Navigate to `/frontend` and then run:
 
 ```
 npm install
-px @hey-api/openapi-ts -i ../backend/openapi.json -o src/client
+npm run genclient
 npm run dev
 ```
 

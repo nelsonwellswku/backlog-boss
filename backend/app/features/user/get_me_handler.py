@@ -9,11 +9,11 @@ class GetMeResponse(BaseModel):
     persona_name: str = Field(serialization_alias="personaName")
 
 
-class GetMeQuery:
+class GetMeHandler:
     def __init__(self, current_user: CurrentUser):
         self.current_user = current_user
 
-    def execute(self):
+    def handle(self):
         return GetMeResponse(
             app_user_id=self.current_user.app_user_id,
             steam_id=self.current_user.steam_id,
