@@ -17,9 +17,9 @@ export function createBlendedComparator(rawGames: BacklogGameRow[]) {
 
   // Normalize: higher score is better, shorter time is better
   const normalizeScore = (score: number | null) =>
-    score ? (score - minScore) / scoreRange : 0;
+    score ? (score - minScore) / scoreRange : -1;
   const normalizeTime = (time: number | null) =>
-    time ? (maxTime - time) / timeRange : 0;
+    time ? (maxTime - time) / timeRange : -1;
 
   return (a: BacklogGameRow, b: BacklogGameRow) => {
     // weight is 3 because that gave the blended results I was looking for
