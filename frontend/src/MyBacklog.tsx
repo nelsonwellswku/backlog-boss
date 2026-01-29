@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Typography,
   List,
@@ -15,11 +15,40 @@ import type { BacklogGameRow } from "./client";
 
 type SortType = "score" | "time" | "blended" | null;
 
+function createBlendedComparator(rawGames: BacklogGameRow[]) {
+  // Normalize scores and times to 0-1 range
+  const scores = rawGames.map(g => g.totalRating ?? 0);
+  const times = rawGames.map(g => g.timeToBeat ?? Infinity).filter(t => t !== Infinity);
+
+  const minScore = Math.min(...scores);
+  const maxScore = Math.max(...scores);
+  const minTime = Math.min(...times);
+  const maxTime = Math.max(...times);
+
+  const scoreRange = maxScore - minScore || 1;
+  const timeRange = maxTime - minTime || 1;
+
+  // Normalize: higher score is better, shorter time is better
+  const normalizeScore = (score: number | null) =>
+    score ? (score - minScore) / scoreRange : 0;
+  const normalizeTime = (time: number | null) =>
+    time ? (maxTime - time) / timeRange : 0;
+
+  return (a: BacklogGameRow, b: BacklogGameRow) => {
+    // weight is 3 because that gave the blended results I was looking for
+    const timeWeight = 3
+    const scoreA = normalizeScore(a.totalRating) + normalizeTime(a.timeToBeat) * timeWeight;
+    const scoreB = normalizeScore(b.totalRating) + normalizeTime(b.timeToBeat) * timeWeight;
+    return scoreB - scoreA;
+  };
+}
+
 export function MyBacklog() {
   const { data, isSuccess } = useGetMyBacklog();
   const [sortType, setSortType] = useState<SortType>(null);
 
   const rawGames: BacklogGameRow[] = data?.data?.games ?? [];
+  const blendedComparator = useMemo(() => createBlendedComparator(rawGames), [rawGames])
 
   const games = [...rawGames].sort((a, b) => {
     if (sortType === "score") {
@@ -27,28 +56,7 @@ export function MyBacklog() {
     } else if (sortType === "time") {
       return (a.timeToBeat ?? Infinity) - (b.timeToBeat ?? Infinity);
     } else if (sortType === "blended") {
-      // Normalize scores and times to 0-1 range
-      const scores = rawGames.map(g => g.totalRating ?? 0);
-      const times = rawGames.map(g => g.timeToBeat ?? Infinity).filter(t => t !== Infinity);
-
-      const minScore = Math.min(...scores);
-      const maxScore = Math.max(...scores);
-      const minTime = Math.min(...times);
-      const maxTime = Math.max(...times);
-
-      const scoreRange = maxScore - minScore || 1;
-      const timeRange = maxTime - minTime || 1;
-
-      // Normalize: higher score is better, shorter time is better
-      const normalizeScore = (score: number | null) =>
-        score ? (score - minScore) / scoreRange : 0;
-      const normalizeTime = (time: number | null) =>
-        time ? (maxTime - time) / timeRange : 0;
-
-      const scoreA = normalizeScore(a.totalRating) + normalizeTime(a.timeToBeat) * 3;
-      const scoreB = normalizeScore(b.totalRating) + normalizeTime(b.timeToBeat) * 3;
-
-      return scoreB - scoreA;
+      return blendedComparator(a, b);
     }
     return 0;
   });
