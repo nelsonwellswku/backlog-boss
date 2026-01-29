@@ -89,3 +89,219 @@ test("correctly sorts games with no rating to the bottom", () => {
   const sorted = backlogGames.sort(comparator);
   expect(sorted.map((x) => x.gameId)).toEqual([1, 3, 2]);
 });
+
+test("correctly sorts games with both null time and null rating to the bottom", () => {
+  const backlogGames: BacklogGameRow[] = [
+    {
+      gameId: 1,
+      title: "Game One",
+      timeToBeat: 500,
+      totalRating: 50,
+    },
+    {
+      gameId: 2,
+      title: "Game Two",
+      timeToBeat: null,
+      totalRating: null,
+    },
+    {
+      gameId: 3,
+      title: "Game Three",
+      timeToBeat: 600,
+      totalRating: 60,
+    },
+  ];
+
+  const comparator = createBlendedComparator(backlogGames);
+  const sorted = backlogGames.sort(comparator);
+  expect(sorted.map((x) => x.gameId)).toEqual([1, 3, 2]);
+});
+
+test("correctly sorts multiple games with null time to beat to the bottom", () => {
+  const backlogGames: BacklogGameRow[] = [
+    {
+      gameId: 1,
+      title: "Game One",
+      timeToBeat: null,
+      totalRating: 80,
+    },
+    {
+      gameId: 2,
+      title: "Game Two",
+      timeToBeat: 500,
+      totalRating: 50,
+    },
+    {
+      gameId: 3,
+      title: "Game Three",
+      timeToBeat: null,
+      totalRating: 90,
+    },
+  ];
+
+  const comparator = createBlendedComparator(backlogGames);
+  const sorted = backlogGames.sort(comparator);
+  // Game 2 should be first (has time), then the null-time games at the bottom
+  expect(sorted[0].gameId).toEqual(2);
+  expect([1, 3]).toContain(sorted[1].gameId);
+  expect([1, 3]).toContain(sorted[2].gameId);
+});
+
+test("handles list with single game", () => {
+  const backlogGames: BacklogGameRow[] = [
+    {
+      gameId: 1,
+      title: "Only Game",
+      timeToBeat: 500,
+      totalRating: 80,
+    },
+  ];
+
+  const comparator = createBlendedComparator(backlogGames);
+  const sorted = backlogGames.sort(comparator);
+  expect(sorted.map((x) => x.gameId)).toEqual([1]);
+});
+
+test("handles all games with null time to beat", () => {
+  const backlogGames: BacklogGameRow[] = [
+    {
+      gameId: 1,
+      title: "Game One",
+      timeToBeat: null,
+      totalRating: 50,
+    },
+    {
+      gameId: 2,
+      title: "Game Two",
+      timeToBeat: null,
+      totalRating: 80,
+    },
+    {
+      gameId: 3,
+      title: "Game Three",
+      timeToBeat: null,
+      totalRating: 60,
+    },
+  ];
+
+  const comparator = createBlendedComparator(backlogGames);
+  const sorted = backlogGames.sort(comparator);
+  // Should sort by rating when all times are null
+  expect(sorted.map((x) => x.gameId)).toEqual([2, 3, 1]);
+});
+
+test("handles all games with null rating", () => {
+  const backlogGames: BacklogGameRow[] = [
+    {
+      gameId: 1,
+      title: "Game One",
+      timeToBeat: 1000,
+      totalRating: null,
+    },
+    {
+      gameId: 2,
+      title: "Game Two",
+      timeToBeat: 500,
+      totalRating: null,
+    },
+    {
+      gameId: 3,
+      title: "Game Three",
+      timeToBeat: 2000,
+      totalRating: null,
+    },
+  ];
+
+  const comparator = createBlendedComparator(backlogGames);
+  const sorted = backlogGames.sort(comparator);
+  // Should sort by time when all ratings are null (shorter time first)
+  expect(sorted.map((x) => x.gameId)).toEqual([2, 1, 3]);
+});
+
+test("handles games with identical scores and times", () => {
+  const backlogGames: BacklogGameRow[] = [
+    {
+      gameId: 1,
+      title: "Game One",
+      timeToBeat: 500,
+      totalRating: 80,
+    },
+    {
+      gameId: 2,
+      title: "Game Two",
+      timeToBeat: 500,
+      totalRating: 80,
+    },
+    {
+      gameId: 3,
+      title: "Game Three",
+      timeToBeat: 500,
+      totalRating: 80,
+    },
+  ];
+
+  const comparator = createBlendedComparator(backlogGames);
+  const sorted = backlogGames.sort(comparator);
+  // All games have same score, so order doesn't matter but should not error
+  expect(sorted).toHaveLength(3);
+  expect(sorted.map((x) => x.gameId).sort()).toEqual([1, 2, 3]);
+});
+
+test("handles mix of null time and null rating across different games", () => {
+  const backlogGames: BacklogGameRow[] = [
+    {
+      gameId: 1,
+      title: "Game One",
+      timeToBeat: null,
+      totalRating: 90,
+    },
+    {
+      gameId: 2,
+      title: "Game Two",
+      timeToBeat: 500,
+      totalRating: null,
+    },
+    {
+      gameId: 3,
+      title: "Game Three",
+      timeToBeat: 600,
+      totalRating: 80,
+    },
+  ];
+
+  const comparator = createBlendedComparator(backlogGames);
+  const sorted = backlogGames.sort(comparator);
+  // TODO: not sure that this is actually the order I'd prefer, but
+  // it is good enough for now
+  expect(sorted.map((x) => x.gameId)).toEqual([2, 3, 1]);
+});
+
+test("handles extreme values without errors", () => {
+  const backlogGames: BacklogGameRow[] = [
+    {
+      gameId: 1,
+      title: "Very Long Game",
+      timeToBeat: 100000,
+      totalRating: 100,
+    },
+    {
+      gameId: 2,
+      title: "Very Short Game",
+      timeToBeat: 1,
+      totalRating: 50,
+    },
+    {
+      gameId: 3,
+      title: "Average Game",
+      timeToBeat: 500,
+      totalRating: 50,
+    },
+  ];
+
+  const comparator = createBlendedComparator(backlogGames);
+  const sorted = backlogGames.sort(comparator);
+  // Should not throw and should return all games
+  expect(sorted).toHaveLength(3);
+  // Short time is heavily weighted, so game 2 should be first despite low rating
+  expect(sorted[0].gameId).toEqual(2);
+});
