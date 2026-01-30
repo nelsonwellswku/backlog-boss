@@ -7,8 +7,8 @@ import {
   Typography,
 } from "@mui/material";
 import { Link, Outlet } from "react-router";
-import { GreetingOrLoginButton } from "./GreetingOrLoginButton";
-import { useCurrentUser } from "./hooks/useCurrentUser";
+import { GreetingOrLoginButton } from "@bb/GreetingOrLoginButton";
+import { useCurrentUser } from "@bb/hooks/useCurrentUser";
 
 export function Layout() {
   const { data, isSuccess } = useCurrentUser();

@@ -1,4 +1,4 @@
-import type { BacklogGameRow } from "./client";
+import type { BacklogGameRow } from "@bb/client";
 
 export function createBlendedComparator(rawGames: BacklogGameRow[]) {
   // Normalize scores and times to 0-1 range

@@ -10,9 +10,9 @@ import {
   Button,
   ButtonGroup,
 } from "@mui/material";
-import { useGetMyBacklog } from "./hooks/useGetMyBacklog";
-import type { BacklogGameRow } from "./client";
-import { createBlendedComparator } from "./blended-comparator";
+import { useGetMyBacklog } from "@bb/hooks/useGetMyBacklog";
+import type { BacklogGameRow } from "@bb/client";
+import { createBlendedComparator } from "@bb/blended-comparator";
 
 type SortType = "score" | "time" | "blended" | null;
 
