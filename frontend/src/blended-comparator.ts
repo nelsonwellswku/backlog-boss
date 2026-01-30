@@ -9,8 +9,10 @@ export function createBlendedComparator(rawGames: BacklogGameRow[]) {
 
   const minScore = Math.min(...scores);
   const maxScore = Math.max(...scores);
-  const minTime = Math.min(...times);
-  const maxTime = Math.max(...times);
+
+  const hasTimes = times.length > 0;
+  const minTime = hasTimes ? Math.min(...times) : 0;
+  const maxTime = hasTimes ? Math.max(...times) : 0;
 
   const scoreRange = maxScore - minScore || 1;
   const timeRange = maxTime - minTime || 1;

@@ -26,7 +26,7 @@ export function MyBacklog() {
     [rawGames],
   );
 
-  const games = [...rawGames].sort((a, b) => {
+  const games = rawGames.toSorted((a, b) => {
     if (sortType === "score") {
       return (b.totalRating ?? 0) - (a.totalRating ?? 0);
     } else if (sortType === "time") {
