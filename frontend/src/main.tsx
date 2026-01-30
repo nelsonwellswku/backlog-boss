@@ -1,10 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
-import { Layout } from "@bb/Layout.tsx";
-import { Home } from "@bb/Home.tsx";
+import { Layout } from "@bb/layouts/Layout";
+import { Home } from "@bb/pages/home/Home";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MyBacklog } from "@bb/MyBacklog.tsx";
+import { MyBacklog } from "@bb/pages/my-backlog/MyBacklog";
 
 const queryClient = new QueryClient();
 

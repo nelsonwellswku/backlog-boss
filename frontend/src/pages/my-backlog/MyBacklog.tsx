@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { useGetMyBacklog } from "@bb/hooks/useGetMyBacklog";
 import type { BacklogGameRow } from "@bb/client";
-import { createBlendedComparator } from "@bb/blended-comparator";
+import { createBlendedComparator } from "@bb/pages/home/blended-comparator";
 
 type SortType = "score" | "time" | "blended" | null;
 

@@ -1,6 +1,6 @@
 import { Typography } from "@mui/material";
-import { useCurrentUser } from "./hooks/useCurrentUser";
-import { SteamButton } from "@bb/SteamButton"
+import { useCurrentUser } from "@bb/hooks/useCurrentUser";
+import { SteamButton } from "@bb/layouts/SteamButton"
 
 export function GreetingOrLoginButton() {
   const { isError, isSuccess, data } = useCurrentUser(false);

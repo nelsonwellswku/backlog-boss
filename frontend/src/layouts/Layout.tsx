@@ -7,7 +7,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Link, Outlet } from "react-router";
-import { GreetingOrLoginButton } from "@bb/GreetingOrLoginButton";
+import { GreetingOrLoginButton } from "@bb/layouts/GreetingOrLoginButton";
 import { useCurrentUser } from "@bb/hooks/useCurrentUser";
 
 export function Layout() {
