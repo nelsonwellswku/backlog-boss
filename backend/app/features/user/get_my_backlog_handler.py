@@ -19,12 +19,12 @@ class BacklogGameRow(BaseModel):
     time_to_beat: int | None = Field(serialization_alias="timeToBeat")
 
 
-class GetMyBacklogQuery:
+class GetMyBacklogHandler:
     def __init__(self, db: DbSession, current_user: CurrentUser):
         self.db = db
         self.current_user = current_user
 
-    def execute(self):
+    def handle(self):
         stmt = (
             select(BacklogGame)
             .select_from(Backlog)

@@ -18,7 +18,7 @@ class CreateMyBacklogResponse(BaseModel):
     backlog_id: int = Field(..., serialization_alias="backlogId")
 
 
-class CreateMyBacklogCommand:
+class CreateMyBacklogHandler:
     def __init__(
         self,
         db: DbSession,
@@ -36,7 +36,7 @@ class CreateMyBacklogCommand:
     # 3. adds them to the game table in the database
     # 4. creates the user's backlog
     # 5. adds their owned games to the backlog
-    def execute(self) -> CreateMyBacklogResponse:
+    def handle(self) -> CreateMyBacklogResponse:
         # if the user already has a backlog, return early
         # adding / removing items from the backlog can happen elsewhere
         stmt = select(Backlog).where(
