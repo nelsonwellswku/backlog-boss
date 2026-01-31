@@ -13,8 +13,13 @@ const MESSAGES = [
 
 export function CreateMyBacklog() {
   const navigate = useNavigate();
-  const { data, isSuccess } = useCreateMyBacklog();
+  const { isSuccess, mutate } = useCreateMyBacklog();
   const [messageIndex, setMessageIndex] = useState(0);
+
+  // Trigger the mutation on mount
+  useEffect(() => {
+    mutate();
+  }, [mutate]);
 
   // Cycle through messages every 2 seconds until the last one
   useEffect(() => {

@@ -1,9 +1,9 @@
 import { userCreateMyBacklog } from "@bb/client";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 
 export function useCreateMyBacklog() {
-  return useQuery({
-    queryKey: ["create-my-backlog"],
-    queryFn: () => userCreateMyBacklog(),
+  return useMutation({
+    mutationKey: ["create-my-backlog"],
+    mutationFn: userCreateMyBacklog,
   });
 }
