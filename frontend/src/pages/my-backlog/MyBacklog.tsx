@@ -10,9 +10,9 @@ import {
   Button,
   ButtonGroup,
 } from "@mui/material";
-import { useGetMyBacklog } from "./hooks/useGetMyBacklog";
-import type { BacklogGameRow } from "./client";
-import { createBlendedComparator } from "./blended-comparator";
+import { useGetMyBacklog } from "@bb/hooks/useGetMyBacklog";
+import type { BacklogGameRow } from "@bb/client";
+import { createBlendedComparator } from "@bb/pages/home/blended-comparator";
 
 type SortType = "score" | "time" | "blended" | null;
 
@@ -95,9 +95,13 @@ export function MyBacklog() {
                   <ListItemText
                     primary={g.title}
                     secondary={
-                      <Box sx={{ display: "flex", gap: 2, mt: 0.5 }}>
+                      <Box
+                        component="span"
+                        sx={{ display: "flex", gap: 2, mt: 0.5 }}
+                      >
                         {g.timeToBeat && (
                           <Typography
+                            component="span"
                             variant="body2"
                             color="text.secondary"
                             sx={{
@@ -111,6 +115,7 @@ export function MyBacklog() {
                         )}
                         {g.totalRating && (
                           <Typography
+                            component="span"
                             variant="body2"
                             color="text.secondary"
                             sx={{
