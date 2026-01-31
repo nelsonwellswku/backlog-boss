@@ -13,8 +13,14 @@ const MESSAGES = [
 
 export function CreateMyBacklog() {
   const navigate = useNavigate();
-  const { data, isSuccess } = useCreateMyBacklog();
+  const { isSuccess, mutate } = useCreateMyBacklog();
   const [messageIndex, setMessageIndex] = useState(0);
+
+  // Trigger the mutation on mount - users are redirected here after login if they don't have a backlog
+  useEffect(() => {
+    mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Cycle through messages every 2 seconds until the last one
   useEffect(() => {
