@@ -10,7 +10,7 @@ from sqlalchemy import select
 from steam_web_api import Steam
 
 from app.database.engine import DbSession
-from app.database.models import AppSession, AppUser
+from app.database.models import AppSession, AppUser, Backlog
 from app.settings import AppSettings
 
 auth_router = APIRouter()
@@ -116,9 +116,14 @@ def steam_callback(
     db_session.flush()
     app_session_key = app_session.app_session_key
 
+    # check if the user already has a backlog, if they don't we'll redirect them to the page
+    stmt = select(Backlog.backlog_id).where(Backlog.app_user_id == app_user.app_user_id)
+    backlog_id = db_session.scalar(stmt)
+    redirect_url = "/my-backlog" if backlog_id else "/create-my-backlog"
+
     db_session.commit()
 
-    redirect = RedirectResponse("/")
+    redirect = RedirectResponse(redirect_url)
     redirect.set_cookie(
         "session_key", str(app_session_key), expires=expiration, secure=True
     )

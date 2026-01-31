@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { userGetMyBacklog } from "../client";
+import { userGetMyBacklog } from "@bb/client";
 
 export function useGetMyBacklog() {
   return useQuery({
