@@ -1,5 +1,5 @@
-import { createBlendedComparator } from "../src/blended-comparator";
-import { BacklogGameRow } from "../src/client";
+import { createBlendedComparator } from "@bb/pages/my-backlog/blended-comparator";
+import type { BacklogGameRow } from "@bb/client";
 import { expect, test } from "vitest";
 
 test("blended comparator correctly sorts games with weight given to time", () => {

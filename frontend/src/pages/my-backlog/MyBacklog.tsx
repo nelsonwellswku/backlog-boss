@@ -1,20 +1,13 @@
 import { useMemo, useState } from "react";
-import {
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-  Paper,
-  Box,
-  Divider,
-  Button,
-  ButtonGroup,
-} from "@mui/material";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+
 import { useGetMyBacklog } from "@bb/hooks/useGetMyBacklog";
 import type { BacklogGameRow } from "@bb/client";
-import { createBlendedComparator } from "@bb/pages/home/blended-comparator";
-
-type SortType = "score" | "time" | "blended" | null;
+import { createBlendedComparator } from "@bb/pages/my-backlog/blended-comparator";
+import { GameSortButtonGroup } from "@bb/pages/my-backlog/GameSortButtonGroup";
+import type { SortType } from "@bb/pages/my-backlog/SortType";
+import { BacklogList } from "./BacklogList";
 
 export function MyBacklog() {
   const { data, isSuccess } = useGetMyBacklog();
@@ -39,109 +32,14 @@ export function MyBacklog() {
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", mt: 4 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-          My Backlog
-        </Typography>
-        <ButtonGroup variant="outlined" size="small">
-          <Button
-            onClick={() => setSortType(sortType === "score" ? null : "score")}
-            variant={sortType === "score" ? "contained" : "outlined"}
-          >
-            ⭐ Highest Score
-          </Button>
-          <Button
-            onClick={() => setSortType(sortType === "time" ? null : "time")}
-            variant={sortType === "time" ? "contained" : "outlined"}
-          >
-            ⏱️ Shortest Time
-          </Button>
-          <Button
-            onClick={() =>
-              setSortType(sortType === "blended" ? null : "blended")
-            }
-            variant={sortType === "blended" ? "contained" : "outlined"}
-          >
-            🎯 Blended
-          </Button>
-        </ButtonGroup>
-      </Box>
+      <GameSortButtonGroup sortType={sortType} setSortType={setSortType} />
 
       {!isSuccess ? (
         <Typography>Loading…</Typography>
       ) : games.length === 0 ? (
         <Typography>No games in your backlog.</Typography>
       ) : (
-        <Paper elevation={2} sx={{ borderRadius: 2 }}>
-          <List sx={{ py: 0 }}>
-            {games.map((g, index) => (
-              <Box key={g.gameId}>
-                <ListItem
-                  sx={{
-                    py: 2,
-                    px: 3,
-                    "&:hover": {
-                      backgroundColor: "action.hover",
-                    },
-                  }}
-                >
-                  <ListItemText
-                    primary={g.title}
-                    secondary={
-                      <Box
-                        component="span"
-                        sx={{ display: "flex", gap: 2, mt: 0.5 }}
-                      >
-                        {g.timeToBeat && (
-                          <Typography
-                            component="span"
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 0.5,
-                            }}
-                          >
-                            ⏱️ {Math.round(g.timeToBeat / 3600)}h
-                          </Typography>
-                        )}
-                        {g.totalRating && (
-                          <Typography
-                            component="span"
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 0.5,
-                            }}
-                          >
-                            ⭐ {Math.round(g.totalRating)}/100
-                          </Typography>
-                        )}
-                      </Box>
-                    }
-                    slotProps={{
-                      primary: {
-                        variant: "body1",
-                        fontWeight: 500,
-                      },
-                    }}
-                  />
-                </ListItem>
-                {index < games.length - 1 && <Divider />}
-              </Box>
-            ))}
-          </List>
-        </Paper>
+        <BacklogList games={games} />
       )}
     </Box>
   );
