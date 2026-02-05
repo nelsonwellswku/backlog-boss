@@ -1,5 +1,6 @@
 import json
 from itertools import groupby
+from logging import getLogger
 from typing import Annotated, TypeAlias
 
 from expiring_dict import ExpiringDict
@@ -10,6 +11,9 @@ from pydantic import BaseModel
 
 from app.http_client import HttpClient
 from app.settings import AppSettings
+from app.timing import timed
+
+logger = getLogger(__name__)
 
 access_token_cache = ExpiringDict()
 access_token_key = "access_token"
@@ -67,6 +71,10 @@ class IgdbClient:
     def _format_ids(self, ids: list[int]):
         return ", ".join([str(id) for id in ids])
 
+    @timed
+    def _api_request(self, endpoint: str, query: str):
+        return self.igdb_wrapper.api_request(endpoint, query)
+
     def get_games(self, steam_ids: set[int]) -> list[IgdbGameResponse]:
         if not steam_ids:
             return []
@@ -85,7 +93,8 @@ class IgdbClient:
                 offset {offset};
                 limit {limit};
             """
-            response_bytes = self.igdb_wrapper.api_request(endpoint, query)
+
+            response_bytes = self._api_request(endpoint, query)
             games_json = json.loads(response_bytes)
 
             if not games_json:
@@ -145,7 +154,7 @@ class IgdbClient:
                 limit {limit};
             """
 
-            response_bytes = self.igdb_wrapper.api_request(endpoint, query)
+            response_bytes = self._api_request(endpoint, query)
             response_json = json.loads(response_bytes)
 
             if not response_json:
@@ -182,7 +191,7 @@ class IgdbClient:
                 limit {limit};
             """
 
-            response_bytes = self.igdb_wrapper.api_request(endpoint, query)
+            response_bytes = self._api_request(endpoint, query)
             response_json = json.loads(response_bytes)
 
             if not response_json:
