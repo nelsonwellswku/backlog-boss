@@ -151,9 +151,9 @@ class IgdbClient:
             if not response_json:
                 break
 
-            all_external_games.extend([
-                ExternalGameResponse.model_validate(eg) for eg in response_json
-            ])
+            all_external_games.extend(
+                [ExternalGameResponse.model_validate(eg) for eg in response_json]
+            )
 
             # If we got fewer results than the limit, we've reached the end
             if len(response_json) < limit:
@@ -188,9 +188,9 @@ class IgdbClient:
             if not response_json:
                 break
 
-            all_game_time_to_beats.extend([
-                TimeToBeatResponse.model_validate(ttb) for ttb in response_json
-            ])
+            all_game_time_to_beats.extend(
+                [TimeToBeatResponse.model_validate(ttb) for ttb in response_json]
+            )
 
             # If we got fewer results than the limit, we've reached the end
             if len(response_json) < limit:

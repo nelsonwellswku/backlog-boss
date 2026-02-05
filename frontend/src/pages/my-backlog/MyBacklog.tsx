@@ -10,7 +10,7 @@ import type { SortType } from "@bb/pages/my-backlog/SortType";
 import { BacklogList } from "./BacklogList";
 
 export function MyBacklog() {
-  const { data, isSuccess } = useGetMyBacklog();
+  const { data, isSuccess, isError } = useGetMyBacklog();
   const [sortType, setSortType] = useState<SortType>(null);
 
   const rawGames: BacklogGameRow[] = data?.data?.games ?? [];

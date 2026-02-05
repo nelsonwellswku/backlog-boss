@@ -26,14 +26,14 @@ class GetMyBacklogHandler:
 
     def handle(self):
         stmt = (
-            select(BacklogGame)
-            .select_from(Backlog)
+            select(Backlog)
             .join(BacklogGame)
             .join(IgdbGame)
             .where(Backlog.app_user_id == self.current_user.app_user_id)
+            .distinct()
         )
-        backlog_games = self.db.scalars(stmt).all()
-        if not backlog_games:
+        backlog = self.db.scalars(stmt).one_or_none()
+        if not backlog:
             raise HTTPException(404, "Backlog not found.")
 
         backlog_game_rows = [
@@ -45,9 +45,9 @@ class GetMyBacklogHandler:
                 if g.igdb_game.time_to_beat
                 else None,
             )
-            for g in backlog_games
+            for g in backlog.backlog_games
         ]
 
         return GetMyBacklogResponse(
-            backlog_id=backlog_games[0].backlog_id, games=backlog_game_rows
+            backlog_id=backlog.backlog_id, games=backlog_game_rows
         )
