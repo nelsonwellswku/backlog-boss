@@ -57,8 +57,6 @@ export function MyBacklog() {
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", mt: 4 }}>
-      <GameSortButtonGroup sortType={sortType} setSortType={setSortType} />
-
       {showCreating || isCreating ? (
         <BacklogCreatingLoader />
       ) : is404 ? (
@@ -68,7 +66,10 @@ export function MyBacklog() {
       ) : games.length === 0 ? (
         <Typography>No games in your backlog.</Typography>
       ) : (
-        <BacklogList games={games} />
+        <>
+          <GameSortButtonGroup sortType={sortType} setSortType={setSortType} />
+          <BacklogList games={games} />
+        </>
       )}
     </Box>
   );
