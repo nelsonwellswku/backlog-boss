@@ -1,7 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 
 import { useGetMyBacklog } from "@bb/hooks/useGetMyBacklog";
 import { useCreateMyBacklog } from "@bb/hooks/useCreateMyBacklog";
@@ -19,6 +18,7 @@ export function MyBacklog() {
     mutate: createBacklog,
     isPending: isCreating,
     isSuccess: createSuccess,
+    isError: createError,
   } = useCreateMyBacklog();
   const [sortType, setSortType] = useState<SortType>(null);
   const [showCreating, setShowCreating] = useState(false);
@@ -40,7 +40,7 @@ export function MyBacklog() {
     return 0;
   });
 
-  const is404 = data?.response.status == 404;
+  const is404 = data?.response.status === 404;
 
   // Refetch when creation is successful
   useEffect(() => {
@@ -59,6 +59,13 @@ export function MyBacklog() {
     <Box sx={{ maxWidth: 800, mx: "auto", mt: 4 }}>
       {showCreating || isCreating ? (
         <BacklogCreatingLoader />
+      ) : createError ? (
+        <>
+          <Typography color="error" sx={{ mb: 2 }}>
+            Failed to create backlog. Please try again.
+          </Typography>
+          <CreateBacklogPrompt onCreateBacklog={handleCreateBacklog} />
+        </>
       ) : is404 ? (
         <CreateBacklogPrompt onCreateBacklog={handleCreateBacklog} />
       ) : !isSuccess ? (

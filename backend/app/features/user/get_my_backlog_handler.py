@@ -1,10 +1,14 @@
+from logging import getLogger
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload, joinedload
 
 from app.database.engine import DbSession
-from app.database.models import Backlog, BacklogGame, IgdbGame
+from app.database.models import Backlog, BacklogGame, IgdbGame, IgdbGameTimeToBeat
 from app.features.auth.get_current_user import CurrentUser
+
+logger = getLogger(__name__)
 
 
 class GetMyBacklogResponse(BaseModel):
@@ -27,12 +31,15 @@ class GetMyBacklogHandler:
     def handle(self):
         stmt = (
             select(Backlog)
-            .join(BacklogGame)
-            .join(IgdbGame)
+            .options(
+                joinedload(Backlog.backlog_games)
+                .joinedload(BacklogGame.igdb_game)
+                .joinedload(IgdbGame.time_to_beat)
+            )
             .where(Backlog.app_user_id == self.current_user.app_user_id)
-            .distinct()
         )
-        backlog = self.db.scalars(stmt).one_or_none()
+
+        backlog = self.db.scalars(stmt).unique().one_or_none()
         if not backlog:
             raise HTTPException(404, "Backlog not found.")
 

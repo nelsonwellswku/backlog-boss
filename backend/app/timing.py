@@ -15,7 +15,6 @@ def timed(func: Callable[..., T]) -> Callable[..., T]:
         result = func(*args, **kwargs)
         elapsed_time = time.time() - start_time
         logger.info(f"{func.__name__} took {elapsed_time:.2f} seconds")
-        print(f"{func.__name__} took {elapsed_time:.2f} seconds")
         return result
 
     return wrapper
