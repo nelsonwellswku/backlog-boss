@@ -5,5 +5,6 @@ export function useGetMyBacklog() {
   return useQuery({
     queryKey: ["myBacklog"],
     queryFn: () => userGetMyBacklog(),
+    retry: false,
   });
 }

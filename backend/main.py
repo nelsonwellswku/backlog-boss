@@ -5,6 +5,10 @@ from app.features.health.health_router import health_router
 from app.features.user.user_router import user_router
 from app.http_client import configure_httpx_lifespan
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 app = FastAPI(
     title="Backlog Boss",
     docs_url="/api/docs",

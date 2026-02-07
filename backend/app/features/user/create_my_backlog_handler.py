@@ -96,10 +96,13 @@ class CreateMyBacklogHandler:
         # get all the steam games (and thus igdb games) the user owns
         # and add them to the backlog
         # do this in case the game already existed in the database
+        # additionally, only for the ones that have ratings and times
         stmt = (
             select(IgdbGame)
             .join(IgdbExternalGame)
             .where(IgdbExternalGame.uid.in_(owned_game_steam_ids))
+            .where(IgdbGame.time_to_beat != None)
+            .where(IgdbGame.total_rating != None)
             .distinct()
         )
 

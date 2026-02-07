@@ -52,7 +52,7 @@ class Backlog(Base):
 
     app_user: Mapped["AppUser"] = relationship("AppUser", back_populates="backlogs")
     backlog_games: Mapped[list["BacklogGame"]] = relationship(
-        "BacklogGame", back_populates="backlog"
+        "BacklogGame", back_populates="backlog", lazy="raise"
     )
 
 
@@ -66,7 +66,7 @@ class BacklogGame(Base):
     igdb_game_id: Mapped[int] = mapped_column("IgdbGameId", ForeignKey("IgdbGame.Id"))
 
     backlog: Mapped["Backlog"] = relationship("Backlog", back_populates="backlog_games")
-    igdb_game: Mapped["IgdbGame"] = relationship("IgdbGame")
+    igdb_game: Mapped["IgdbGame"] = relationship("IgdbGame", lazy="raise")
 
 
 class IgdbGame(Base):
@@ -82,7 +82,7 @@ class IgdbGame(Base):
         "IgdbExternalGame", back_populates="igdb_game"
     )
     time_to_beat: Mapped[Optional["IgdbGameTimeToBeat"]] = relationship(
-        "IgdbGameTimeToBeat", back_populates="igdb_game"
+        "IgdbGameTimeToBeat", back_populates="igdb_game", lazy="raise"
     )
 
 
@@ -99,7 +99,8 @@ class IgdbExternalGame(Base):
     )
 
     igdb_game: Mapped["IgdbGame"] = relationship(
-        "IgdbGame", back_populates="external_games"
+        "IgdbGame",
+        back_populates="external_games",
     )
     source: Mapped["IgdbExternalGameSource"] = relationship("IgdbExternalGameSource")
 

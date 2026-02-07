@@ -1,5 +1,6 @@
 import json
 from itertools import groupby
+from logging import getLogger
 from typing import Annotated, TypeAlias
 
 from expiring_dict import ExpiringDict
@@ -10,6 +11,9 @@ from pydantic import BaseModel
 
 from app.http_client import HttpClient
 from app.settings import AppSettings
+from app.timing import timed
+
+logger = getLogger(__name__)
 
 access_token_cache = ExpiringDict()
 access_token_key = "access_token"
@@ -67,24 +71,47 @@ class IgdbClient:
     def _format_ids(self, ids: list[int]):
         return ", ".join([str(id) for id in ids])
 
+    @timed
+    def _api_request(self, endpoint: str, query: str):
+        return self.igdb_wrapper.api_request(endpoint, query)
+
     def get_games(self, steam_ids: set[int]) -> list[IgdbGameResponse]:
         if not steam_ids:
             return []
 
         formatted_steam_ids = ", ".join([str(id) for id in steam_ids])
         endpoint = "games"
-        query = f"""
-            fields id, name, total_rating;
-            where external_games.uid = ({formatted_steam_ids}) & external_games.external_game_source = (1);
-            offset 0;
-            limit {len(steam_ids)};
-        """
-        response_bytes = self.igdb_wrapper.api_request(endpoint, query)
-        games_json = json.loads(response_bytes)
-        if not games_json:
+        limit = 500  # IGDB max limit per request
+        offset = 0
+        all_games = []
+
+        # Paginate through results
+        while True:
+            query = f"""
+                fields id, name, total_rating;
+                where external_games.uid = ({formatted_steam_ids}) & external_games.external_game_source = (1);
+                offset {offset};
+                limit {limit};
+            """
+
+            response_bytes = self._api_request(endpoint, query)
+            games_json = json.loads(response_bytes)
+
+            if not games_json:
+                break
+
+            all_games.extend(games_json)
+
+            # If we got fewer results than the limit, we've reached the end
+            if len(games_json) < limit:
+                break
+
+            offset += limit
+
+        if not all_games:
             return []
 
-        games = [IgdbGameResponse.model_validate(game) for game in games_json]
+        games = [IgdbGameResponse.model_validate(game) for game in all_games]
         game_ids = [g.id for g in games]
         game_id_to_game = {g.id: g for g in games}
 
@@ -114,21 +141,36 @@ class IgdbClient:
 
         formatted_game_ids = self._format_ids(igdb_game_ids)
         endpoint = "external_games"
-        limit = 500  # TODO: paginate. for now, limit is set to max igdb supports because a game can have any number of external steam games
-        query = f"""
-            fields id, game, uid, external_game_source;
-            where game = ({formatted_game_ids}) & external_game_source = 1;
-            offset 0;
-            limit {limit};
-        """
+        limit = 500  # IGDB max limit per request
+        offset = 0
+        all_external_games = []
 
-        response_bytes = self.igdb_wrapper.api_request(endpoint, query)
-        response_json = json.loads(response_bytes)
-        external_games = [
-            ExternalGameResponse.model_validate(eg) for eg in response_json
-        ]
+        # Paginate through results
+        while True:
+            query = f"""
+                fields id, game, uid, external_game_source;
+                where game = ({formatted_game_ids}) & external_game_source = 1;
+                offset {offset};
+                limit {limit};
+            """
 
-        return external_games
+            response_bytes = self._api_request(endpoint, query)
+            response_json = json.loads(response_bytes)
+
+            if not response_json:
+                break
+
+            all_external_games.extend(
+                [ExternalGameResponse.model_validate(eg) for eg in response_json]
+            )
+
+            # If we got fewer results than the limit, we've reached the end
+            if len(response_json) < limit:
+                break
+
+            offset += limit
+
+        return all_external_games
 
     def get_game_time_to_beats(self, igdb_game_ids: list[int]):
         if not igdb_game_ids:
@@ -136,20 +178,36 @@ class IgdbClient:
 
         formatted_game_ids = self._format_ids(igdb_game_ids)
         endpoint = "game_time_to_beats"
-        query = f"""
-            fields id, game_id, normally;
-            where game_id = ({formatted_game_ids});
-            offset 0;
-            limit {len(igdb_game_ids)};
-        """
+        limit = 500  # IGDB max limit per request
+        offset = 0
+        all_game_time_to_beats = []
 
-        response_bytes = self.igdb_wrapper.api_request(endpoint, query)
-        response_json = json.loads(response_bytes)
-        game_time_to_beats = [
-            TimeToBeatResponse.model_validate(ttb) for ttb in response_json
-        ]
+        # Paginate through results
+        while True:
+            query = f"""
+                fields id, game_id, normally;
+                where game_id = ({formatted_game_ids});
+                offset {offset};
+                limit {limit};
+            """
 
-        return game_time_to_beats
+            response_bytes = self._api_request(endpoint, query)
+            response_json = json.loads(response_bytes)
+
+            if not response_json:
+                break
+
+            all_game_time_to_beats.extend(
+                [TimeToBeatResponse.model_validate(ttb) for ttb in response_json]
+            )
+
+            # If we got fewer results than the limit, we've reached the end
+            if len(response_json) < limit:
+                break
+
+            offset += limit
+
+        return all_game_time_to_beats
 
 
 IgdbClientDep: TypeAlias = Annotated[IgdbClient, Depends(IgdbClient)]
