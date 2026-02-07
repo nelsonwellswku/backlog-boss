@@ -22,7 +22,7 @@ export function BacklogCreatingLoader() {
         }
         return prev;
       });
-    }, 2000);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
