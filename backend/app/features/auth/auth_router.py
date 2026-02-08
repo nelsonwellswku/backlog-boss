@@ -10,7 +10,7 @@ from sqlalchemy import select
 from steam_web_api import Steam
 
 from app.database.engine import DbSession
-from app.database.models import AppSession, AppUser, Backlog
+from app.database.models import AppSession, AppUser
 from app.settings import AppSettings
 
 auth_router = APIRouter()
