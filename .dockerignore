@@ -61,8 +61,6 @@ backend/__pycache__/
 backend/*.egg-info/
 
 # Docker
-.dockerignore
-Dockerfile
 docker-compose*.yml
 .docker/
 
