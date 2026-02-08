@@ -29,9 +29,7 @@ static_dir = Path(__file__).parent / "static"
 assets_dir = static_dir / "assets"
 if static_dir.exists():
     if assets_dir.exists():
-        app.mount(
-            "/assets", StaticFiles(directory=str(assets_dir)), name="assets"
-        )
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
 
     @app.get("/{full_path:path}")
     def serve_spa(full_path: str):
