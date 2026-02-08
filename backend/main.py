@@ -1,14 +1,13 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+import logging
 from pathlib import Path
 
 from app.features.auth.auth_router import auth_router
 from app.features.health.health_router import health_router
 from app.features.user.user_router import user_router
 from app.http_client import configure_httpx_lifespan
-
-import logging
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 logging.basicConfig(level=logging.INFO)
 

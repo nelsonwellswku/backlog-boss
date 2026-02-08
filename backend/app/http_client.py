@@ -1,10 +1,9 @@
+import logging
 from contextlib import asynccontextmanager
 from typing import Annotated, TypeAlias
 
 import httpx
 from fastapi import Depends, FastAPI, Request
-
-import logging
 
 # turn off httpx logger because it will print the client secret when calling steam's auth endpoint
 logging.getLogger("httpx").disabled = True
