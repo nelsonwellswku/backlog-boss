@@ -36,7 +36,7 @@ if static_dir.exists():
     async def serve_spa(full_path: str):
         """Serve the React SPA for all non-API routes"""
         # Return 404 for API paths that aren't real API routes
-        if full_path.startswith("api/"):
+        if full_path.startswith("api/") or full_path == "api":
             raise HTTPException(status_code=404, detail="Not found")
 
         file_path = static_dir / full_path
