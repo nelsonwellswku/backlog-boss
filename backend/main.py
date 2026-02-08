@@ -32,14 +32,19 @@ if static_dir.exists():
         "/assets", StaticFiles(directory=str(static_dir / "assets")), name="assets"
     )
 
-    @app.get("/{full_path:path}", include_in_schema=False)
-    async def serve_spa(full_path: str):
+    @app.get("/{full_path:path}")
+    def serve_spa(full_path: str):
         """Serve the React SPA for all non-API routes"""
-        # Return 404 for API paths that aren't real API routes
-        if full_path.startswith("api/") or full_path == "api":
-            raise HTTPException(status_code=404, detail="Not found")
+        file_path = (static_dir / full_path).resolve()
+        static_dir_resolved = static_dir.resolve()
 
-        file_path = static_dir / full_path
+        # Ensure the resolved path is within the static directory
+        try:
+            file_path.relative_to(static_dir_resolved)
+        except ValueError:
+            # Path is outside static directory, return index.html
+            return FileResponse(static_dir / "index.html")
+
         if file_path.is_file():
             return FileResponse(file_path)
         # For all other routes, return index.html (SPA fallback)

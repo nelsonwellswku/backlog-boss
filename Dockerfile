@@ -8,12 +8,12 @@ RUN apt-get update && \
     unixodbc \
     unixodbc-dev \
     curl \
-    gnupg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Microsoft ODBC Driver for SQL Server
-RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg && \
-    echo "deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list && \
+RUN curl -fsSL https://packages.microsoft.com/config/debian/13/packages-microsoft-prod.deb -o packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    rm packages-microsoft-prod.deb && \
     apt-get update && \
     ACCEPT_EULA=Y apt-get install -y msodbcsql18 && \
     rm -rf /var/lib/apt/lists/*
@@ -51,12 +51,12 @@ RUN apt-get update && \
     unixodbc \
     unixodbc-dev \
     curl \
-    gnupg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Microsoft ODBC Driver for SQL Server
-RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg && \
-    echo "deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list && \
+RUN curl -fsSL https://packages.microsoft.com/config/debian/13/packages-microsoft-prod.deb -o packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    rm packages-microsoft-prod.deb && \
     apt-get update && \
     ACCEPT_EULA=Y apt-get install -y msodbcsql18 && \
     rm -rf /var/lib/apt/lists/*
