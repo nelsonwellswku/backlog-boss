@@ -5,7 +5,7 @@ from app.features.auth.auth_router import auth_router
 from app.features.health.health_router import health_router
 from app.features.user.user_router import user_router
 from app.http_client import configure_httpx_lifespan
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
