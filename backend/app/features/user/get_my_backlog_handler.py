@@ -1,11 +1,12 @@
 from logging import getLogger
+
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.orm import joinedload
 
 from app.database.engine import DbSession
-from app.database.models import Backlog, BacklogGame, IgdbGame, IgdbGameTimeToBeat
+from app.database.models import Backlog, BacklogGame, IgdbGame
 from app.features.auth.get_current_user import CurrentUser
 
 logger = getLogger(__name__)

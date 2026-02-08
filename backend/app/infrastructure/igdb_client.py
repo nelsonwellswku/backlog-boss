@@ -3,15 +3,14 @@ from itertools import groupby
 from logging import getLogger
 from typing import Annotated, TypeAlias
 
+from app.http_client import HttpClient
+from app.settings import AppSettings
+from app.timing import timed
 from expiring_dict import ExpiringDict
 from fastapi import Depends
 from httpx import QueryParams
 from igdb.wrapper import IGDBWrapper
 from pydantic import BaseModel
-
-from app.http_client import HttpClient
-from app.settings import AppSettings
-from app.timing import timed
 
 logger = getLogger(__name__)
 

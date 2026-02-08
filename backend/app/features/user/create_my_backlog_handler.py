@@ -101,8 +101,8 @@ class CreateMyBacklogHandler:
             select(IgdbGame)
             .join(IgdbExternalGame)
             .where(IgdbExternalGame.uid.in_(owned_game_steam_ids))
-            .where(IgdbGame.time_to_beat != None)
-            .where(IgdbGame.total_rating != None)
+            .where(IgdbGame.time_to_beat != None)  # noqa: E711
+            .where(IgdbGame.total_rating != None)  # noqa: E711
             .distinct()
         )
 

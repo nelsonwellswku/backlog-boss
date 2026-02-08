@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 from typing import Annotated, TypeAlias
 
+from app.settings import AppSettings
 from fastapi import Depends
 from steam_web_api import Steam
-
-from app.settings import AppSettings
 
 
 def get_steam(settings: AppSettings) -> Steam:
