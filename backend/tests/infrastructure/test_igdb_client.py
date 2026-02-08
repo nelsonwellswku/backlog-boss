@@ -1,13 +1,14 @@
 import json
 
+from igdb.wrapper import IGDBWrapper
+from pytest_mock import MockerFixture
+
 from app.infrastructure.igdb_client import (
     ExternalGameResponse,
     IgdbClient,
     IgdbGameResponse,
     TimeToBeatResponse,
 )
-from igdb.wrapper import IGDBWrapper
-from pytest_mock import MockerFixture
 
 
 def test_get_games_with_minimal_data_is_successful(mocker: MockerFixture):
