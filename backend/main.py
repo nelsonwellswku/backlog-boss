@@ -26,10 +26,12 @@ app.include_router(user_router, tags=["User"])
 
 # Serve static files and SPA fallback (only if static directory exists)
 static_dir = Path(__file__).parent / "static"
+assets_dir = static_dir / "assets"
 if static_dir.exists():
-    app.mount(
-        "/assets", StaticFiles(directory=str(static_dir / "assets")), name="assets"
-    )
+    if assets_dir.exists():
+        app.mount(
+            "/assets", StaticFiles(directory=str(assets_dir)), name="assets"
+        )
 
     @app.get("/{full_path:path}")
     def serve_spa(full_path: str):
