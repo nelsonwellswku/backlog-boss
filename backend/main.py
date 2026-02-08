@@ -5,7 +5,7 @@ from app.features.auth.auth_router import auth_router
 from app.features.health.health_router import health_router
 from app.features.user.user_router import user_router
 from app.http_client import configure_httpx_lifespan
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -34,6 +34,10 @@ if static_dir.exists():
     @app.get("/{full_path:path}")
     def serve_spa(full_path: str):
         """Serve the React SPA for all non-API routes"""
+        # Don't intercept API routes - let FastAPI return 404 for unknown API endpoints
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404)
+
         file_path = (static_dir / full_path).resolve()
         static_dir_resolved = static_dir.resolve()
 
