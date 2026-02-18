@@ -62,7 +62,7 @@ class CreateMyBacklogHandler:
         steam_game_ids_to_insert = owned_game_steam_ids - games_in_db_ids
 
         # fetch the games to insert from igdb and save them to the database
-        igdb_games = self.igdb_client.get_games(steam_game_ids_to_insert)
+        igdb_games = self.igdb_client.get_games_by_steam_id(steam_game_ids_to_insert)
 
         games_to_add: list[IgdbGame] = []
         for game in igdb_games:

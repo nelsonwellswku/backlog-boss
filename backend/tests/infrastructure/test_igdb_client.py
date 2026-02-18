@@ -1,21 +1,25 @@
 import json
 
+from igdb.wrapper import IGDBWrapper
+from pytest_mock import MockerFixture
+
 from app.infrastructure.igdb_client import (
     ExternalGameResponse,
     IgdbClient,
     IgdbGameResponse,
     TimeToBeatResponse,
 )
-from igdb.wrapper import IGDBWrapper
-from pytest_mock import MockerFixture
 
 
 def test_get_games_with_minimal_data_is_successful(mocker: MockerFixture):
     mock_games = [
         {
-            "id": 1,
-            "name": "Mockingbird Jam",
-        },
+            "id": 100,
+            "game": {
+                "id": 1,
+                "name": "Mockingbird Jam",
+            },
+        }
     ]
     igdb_wrapper_mock = mocker.Mock(spec=IGDBWrapper)
     igdb_wrapper_mock.api_request.return_value = json.dumps(mock_games).encode("utf-8")
@@ -24,7 +28,7 @@ def test_get_games_with_minimal_data_is_successful(mocker: MockerFixture):
     mocker.patch.object(igdbClient, "get_external_games", return_value=[])
     mocker.patch.object(igdbClient, "get_game_time_to_beats", return_value=[])
 
-    actual = igdbClient.get_games(set([1]))
+    actual = igdbClient.get_games_by_steam_id(set([1]))
 
     expected = [IgdbGameResponse(id=1, name="Mockingbird Jam", external_games=[])]
 
@@ -34,9 +38,12 @@ def test_get_games_with_minimal_data_is_successful(mocker: MockerFixture):
 def test_get_games_with_complete_data_is_successful(mocker: MockerFixture):
     mock_games = [
         {
-            "id": 1,
-            "name": "The Legend of Zelda: Breath of the Wild",
-            "total_rating": 97.5,
+            "id": 100,
+            "game": {
+                "id": 1,
+                "name": "The Legend of Zelda: Breath of the Wild",
+                "total_rating": 97.5,
+            },
         },
     ]
     mock_external_games = [
@@ -55,7 +62,7 @@ def test_get_games_with_complete_data_is_successful(mocker: MockerFixture):
         igdbClient, "get_game_time_to_beats", return_value=mock_time_to_beat
     )
 
-    actual = igdbClient.get_games(set([12345]))
+    actual = igdbClient.get_games_by_steam_id(set([12345]))
 
     expected = [
         IgdbGameResponse(
@@ -77,14 +84,20 @@ def test_get_games_with_complete_data_is_successful(mocker: MockerFixture):
 def test_get_games_with_multiple_games_is_successful(mocker: MockerFixture):
     mock_games = [
         {
-            "id": 1,
-            "name": "Game One",
-            "total_rating": 85.0,
+            "id": 100,
+            "game": {
+                "id": 1,
+                "name": "Game One",
+                "total_rating": 85.0,
+            },
         },
         {
-            "id": 2,
-            "name": "Game Two",
-            "total_rating": 90.0,
+            "id": 101,
+            "game": {
+                "id": 2,
+                "name": "Game Two",
+                "total_rating": 90.0,
+            },
         },
     ]
     mock_external_games = [
@@ -107,7 +120,7 @@ def test_get_games_with_multiple_games_is_successful(mocker: MockerFixture):
         igdbClient, "get_game_time_to_beats", return_value=mock_time_to_beat
     )
 
-    actual = igdbClient.get_games(set([111, 222]))
+    actual = igdbClient.get_games_by_steam_id(set([111, 222]))
 
     assert len(actual) == 2
     assert actual[0].id == 1
@@ -123,9 +136,12 @@ def test_get_games_with_multiple_games_is_successful(mocker: MockerFixture):
 def test_get_games_filters_non_steam_external_games(mocker: MockerFixture):
     mock_games = [
         {
-            "id": 1,
-            "name": "Multi-Platform Game",
-        },
+            "id": 101,
+            "game": {
+                "id": 1,
+                "name": "Multi-Platform Game",
+            },
+        }
     ]
     # Only Steam external game (source id 1) should be included
     mock_external_games = [
@@ -141,7 +157,7 @@ def test_get_games_filters_non_steam_external_games(mocker: MockerFixture):
     )
     mocker.patch.object(igdbClient, "get_game_time_to_beats", return_value=[])
 
-    actual = igdbClient.get_games(set([111]))
+    actual = igdbClient.get_games_by_steam_id(set([111]))
 
     assert len(actual) == 1
     assert len(actual[0].external_games) == 1
@@ -155,7 +171,7 @@ def test_get_games_returns_empty_list_when_no_games_found(mocker: MockerFixture)
     igdbClient: IgdbClient = IgdbClient(igdb_wrapper_mock)
     # No need to mock get_external_games or get_game_time_to_beats since they won't be called
 
-    actual = igdbClient.get_games(set([99999]))
+    actual = igdbClient.get_games_by_steam_id(set([99999]))
 
     assert actual == []
 
@@ -165,7 +181,7 @@ def test_get_games_returns_empty_list_when_empty_input(mocker: MockerFixture):
 
     igdbClient: IgdbClient = IgdbClient(igdb_wrapper_mock)
 
-    actual = igdbClient.get_games(set())
+    actual = igdbClient.get_games_by_steam_id(set())
 
     assert actual == []
     igdb_wrapper_mock.api_request.assert_not_called()
@@ -174,9 +190,12 @@ def test_get_games_returns_empty_list_when_empty_input(mocker: MockerFixture):
 def test_get_games_handles_missing_time_to_beat_data(mocker: MockerFixture):
     mock_games = [
         {
-            "id": 1,
-            "name": "Game Without Time To Beat",
-        },
+            "id": 100,
+            "game": {
+                "id": 1,
+                "name": "Game Without Time To Beat",
+            },
+        }
     ]
     mock_external_games = [
         ExternalGameResponse(id=100, game=1, uid="111", external_game_source=1)
@@ -191,7 +210,7 @@ def test_get_games_handles_missing_time_to_beat_data(mocker: MockerFixture):
     )
     mocker.patch.object(igdbClient, "get_game_time_to_beats", return_value=[])
 
-    actual = igdbClient.get_games(set([111]))
+    actual = igdbClient.get_games_by_steam_id(set([111]))
 
     assert len(actual) == 1
     assert actual[0].time_to_beat is None
@@ -287,3 +306,54 @@ def test_get_external_games_returns_empty_list_when_empty_input(mocker: MockerFi
 
     assert actual == []
     igdb_wrapper_mock.api_request.assert_not_called()
+
+
+def test_get_games_deduplicates_when_multiple_steam_games_map_to_same_igdb_game(
+    mocker: MockerFixture,
+):
+    mock_games = [
+        {
+            "id": 100,
+            "game": {
+                "id": 1,
+                "name": "Shared Game",
+                "total_rating": 88.5,
+            },
+        },
+        {
+            "id": 101,
+            "game": {
+                "id": 1,
+                "name": "Shared Game (Updated version)",
+                "total_rating": 88.5,
+            },
+        },
+    ]
+    mock_external_games = [
+        ExternalGameResponse(id=100, game=1, uid="11", external_game_source=1),
+        ExternalGameResponse(id=101, game=1, uid="12", external_game_source=1),
+    ]
+    mock_time_to_beat = [TimeToBeatResponse(id=1, game_id=1, normally=20000)]
+
+    igdb_wrapper_mock = mocker.Mock(spec=IGDBWrapper)
+    igdb_wrapper_mock.api_request.return_value = json.dumps(mock_games).encode("utf-8")
+
+    igdbClient: IgdbClient = IgdbClient(igdb_wrapper_mock)
+    mocker.patch.object(
+        igdbClient, "get_external_games", return_value=mock_external_games
+    )
+    mocker.patch.object(
+        igdbClient, "get_game_time_to_beats", return_value=mock_time_to_beat
+    )
+
+    actual = igdbClient.get_games_by_steam_id(set([11, 12]))
+
+    assert len(actual) == 1
+    assert actual[0].id == 1
+    assert actual[0].name == "Shared Game"
+    assert actual[0].total_rating == 88.5
+    assert actual[0].time_to_beat is not None
+    assert actual[0].time_to_beat.normally == 20000
+
+    assert len(actual[0].external_games) == 2
+    assert [eg.id for eg in actual[0].external_games] == [100, 101]
