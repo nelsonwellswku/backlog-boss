@@ -74,21 +74,25 @@ class IgdbClient:
     def _api_request(self, endpoint: str, query: str):
         return self.igdb_wrapper.api_request(endpoint, query)
 
-    def get_games(self, steam_ids: set[int]) -> list[IgdbGameResponse]:
+    def get_games_by_steam_id(self, steam_ids: set[int]) -> list[IgdbGameResponse]:
         if not steam_ids:
             return []
 
         formatted_steam_ids = ", ".join([str(id) for id in steam_ids])
-        endpoint = "games"
+        # user external games endpoint instead of games endpoint
+        # because filtering games endpoint by steam id is MUCH slower
+        # than projecting game data from external games endpoint
+        endpoint = "external_games"
         limit = 500  # IGDB max limit per request
         offset = 0
         all_games = []
+        seen_games = set()
 
         # Paginate through results
         while True:
             query = f"""
-                fields id, name, total_rating;
-                where external_games.uid = ({formatted_steam_ids}) & external_games.external_game_source = (1);
+                fields game.id, game.name, game.total_rating;
+                where uid = ({formatted_steam_ids}) & external_game_source = 1;
                 offset {offset};
                 limit {limit};
             """
@@ -99,7 +103,17 @@ class IgdbClient:
             if not games_json:
                 break
 
-            all_games.extend(games_json)
+            # keep track of igdb game ids we have already processed because
+            # igdb sometimes has multiple steam games for a single igdb game
+            # we'll reconcile this further down
+            all_games.extend(
+                [
+                    g["game"]
+                    for g in games_json
+                    if g["game"]["id"] not in seen_games
+                    and not seen_games.add(g["game"]["id"])
+                ]
+            )
 
             # If we got fewer results than the limit, we've reached the end
             if len(games_json) < limit:
