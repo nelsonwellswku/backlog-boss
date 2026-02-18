@@ -3,14 +3,15 @@ from itertools import groupby
 from logging import getLogger
 from typing import Annotated, TypeAlias
 
-from app.http_client import HttpClient
-from app.settings import AppSettings
-from app.timing import timed
 from expiring_dict import ExpiringDict
 from fastapi import Depends
 from httpx import QueryParams
 from igdb.wrapper import IGDBWrapper
 from pydantic import BaseModel
+
+from app.http_client import HttpClient
+from app.settings import AppSettings
+from app.timing import timed
 
 logger = getLogger(__name__)
 
@@ -79,7 +80,7 @@ class IgdbClient:
             return []
 
         formatted_steam_ids = ", ".join([str(id) for id in steam_ids])
-        # user external games endpoint instead of games endpoint
+        # use external games endpoint instead of games endpoint
         # because filtering games endpoint by steam id is MUCH slower
         # than projecting game data from external games endpoint
         endpoint = "external_games"
@@ -103,17 +104,25 @@ class IgdbClient:
             if not games_json:
                 break
 
-            # keep track of igdb game ids we have already processed because
-            # igdb sometimes has multiple steam games for a single igdb game
-            # we'll reconcile this further down
-            all_games.extend(
-                [
-                    g["game"]
-                    for g in games_json
-                    if g["game"]["id"] not in seen_games
-                    and not seen_games.add(g["game"]["id"])
-                ]
-            )
+            for game_response in games_json:
+                if not game_response.get("game", None) or not game_response["game"].get(
+                    "id", None
+                ):
+                    logger.warning(
+                        "Malformed response from igdb when fetching external game."
+                    )
+                    continue
+
+                game = game_response["game"]
+                game_id = game["id"]
+                if game_id in seen_games:
+                    # keep track of igdb game ids we have already processed because
+                    # igdb sometimes has multiple steam games for a single igdb game
+                    # we'll reconcile this further down
+                    continue
+
+                all_games.append(game)
+                seen_games.add(game_id)
 
             # If we got fewer results than the limit, we've reached the end
             if len(games_json) < limit:

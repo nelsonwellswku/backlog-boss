@@ -1,13 +1,14 @@
 import json
 
+from igdb.wrapper import IGDBWrapper
+from pytest_mock import MockerFixture
+
 from app.infrastructure.igdb_client import (
     ExternalGameResponse,
     IgdbClient,
     IgdbGameResponse,
     TimeToBeatResponse,
 )
-from igdb.wrapper import IGDBWrapper
-from pytest_mock import MockerFixture
 
 
 def test_get_games_with_minimal_data_is_successful(mocker: MockerFixture):
@@ -91,7 +92,7 @@ def test_get_games_with_multiple_games_is_successful(mocker: MockerFixture):
             },
         },
         {
-            "id": 100,
+            "id": 101,
             "game": {
                 "id": 2,
                 "name": "Game Two",
@@ -305,3 +306,54 @@ def test_get_external_games_returns_empty_list_when_empty_input(mocker: MockerFi
 
     assert actual == []
     igdb_wrapper_mock.api_request.assert_not_called()
+
+
+def test_get_games_deduplicates_when_multiple_steam_games_map_to_same_igdb_game(
+    mocker: MockerFixture,
+):
+    mock_games = [
+        {
+            "id": 100,
+            "game": {
+                "id": 1,
+                "name": "Shared Game",
+                "total_rating": 88.5,
+            },
+        },
+        {
+            "id": 101,
+            "game": {
+                "id": 1,
+                "name": "Shared Game (Updated version)",
+                "total_rating": 88.5,
+            },
+        },
+    ]
+    mock_external_games = [
+        ExternalGameResponse(id=100, game=1, uid="11", external_game_source=1),
+        ExternalGameResponse(id=101, game=1, uid="12", external_game_source=1),
+    ]
+    mock_time_to_beat = [TimeToBeatResponse(id=1, game_id=1, normally=20000)]
+
+    igdb_wrapper_mock = mocker.Mock(spec=IGDBWrapper)
+    igdb_wrapper_mock.api_request.return_value = json.dumps(mock_games).encode("utf-8")
+
+    igdbClient: IgdbClient = IgdbClient(igdb_wrapper_mock)
+    mocker.patch.object(
+        igdbClient, "get_external_games", return_value=mock_external_games
+    )
+    mocker.patch.object(
+        igdbClient, "get_game_time_to_beats", return_value=mock_time_to_beat
+    )
+
+    actual = igdbClient.get_games_by_steam_id(set([11, 12]))
+
+    assert len(actual) == 1
+    assert actual[0].id == 1
+    assert actual[0].name == "Shared Game"
+    assert actual[0].total_rating == 88.5
+    assert actual[0].time_to_beat is not None
+    assert actual[0].time_to_beat.normally == 20000
+
+    assert len(actual[0].external_games) == 2
+    assert [eg.id for eg in actual[0].external_games] == [100, 101]
