@@ -28,6 +28,7 @@ services:
       - --transaction=true
       - --silent=false
       - --createdatabase=true
+      - --schema=bbgrate
       - --environment=LOCAL
     depends_on:
       sqlserver:

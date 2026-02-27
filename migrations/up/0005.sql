@@ -1,11 +1,11 @@
-create table IgdbGame(
+create table bb.IgdbGame(
     Id int not null,
     [Name] nvarchar(255) not null,
     TotalRating decimal(8, 5) null,
     constraint PK_IgdbGame_Id primary key clustered (Id)
 );
 
-create table IgdbExternalGame(
+create table bb.IgdbExternalGame(
     Id int not null,
     [Uid] int not null,
     IgdbGameId int not null,
@@ -13,29 +13,29 @@ create table IgdbExternalGame(
     constraint PK_IgdbExternalGame_Id primary key clustered (Id)
 );
 
-create table IgdbExternalGameSource(
+create table bb.IgdbExternalGameSource(
     Id int not null,
     [Name] varchar(32) not null,
     constraint PK_IgdbExternalGameSource_Id primary key clustered (Id)
 );
 
-create table IgdbGameTimeToBeat(
+create table bb.IgdbGameTimeToBeat(
     Id int not null,
     IgdbGameId int not null,
     Normally int null,
     constraint PK_IgdbGameTimeToBeat_Id primary key clustered (Id)
 );
 
-alter table IgdbExternalGame
-add constraint FK_IgdbExternalGame_IgdbGameId foreign key (IgdbGameId) references IgdbGame(Id);
+alter table bb.IgdbExternalGame
+add constraint FK_IgdbExternalGame_IgdbGameId foreign key (IgdbGameId) references bb.IgdbGame(Id);
 
-alter table IgdbExternalGame
-add constraint FK_IgdbExternalGame_IgdbExternalGameSourceId foreign key (IgdbExternalGameSourceId) references IgdbExternalGameSource(Id);
+alter table bb.IgdbExternalGame
+add constraint FK_IgdbExternalGame_IgdbExternalGameSourceId foreign key (IgdbExternalGameSourceId) references bb.IgdbExternalGameSource(Id);
 
-alter table IgdbGameTimeToBeat
-add constraint FK_IgdbGameTimeToBeat_IdgbGameId foreign key (IgdbGameId) references IgdbGame(Id);
+alter table bb.IgdbGameTimeToBeat
+add constraint FK_IgdbGameTimeToBeat_IdgbGameId foreign key (IgdbGameId) references bb.IgdbGame(Id);
 
-insert into IgdbExternalGameSource (Id, [Name]) values
+insert into bb.IgdbExternalGameSource (Id, [Name]) values
 (1, 'Steam'),
 (3, 'GiantBomb'),
 (5, 'GOG'),

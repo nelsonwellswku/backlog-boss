@@ -13,6 +13,7 @@ class Base(DeclarativeBase):
 
 class AppUser(Base):
     __tablename__ = "AppUser"
+    __table_args__ = {"schema": "bb"}
 
     app_user_id: Mapped[int] = mapped_column("AppUserId", primary_key=True)
     steam_id: Mapped[str] = mapped_column("SteamId", String(17))
@@ -27,6 +28,7 @@ class AppUser(Base):
 
 class AppSession(Base):
     __tablename__ = "AppSession"
+    __table_args__ = {"schema": "bb"}
 
     app_session_id: Mapped[int] = mapped_column(
         "AppSessionId", BigInteger, primary_key=True
@@ -37,17 +39,18 @@ class AppSession(Base):
     expiration_date: Mapped[datetime] = mapped_column("ExpirationDate", DATETIMEOFFSET)
 
     app_user_id: Mapped[int] = mapped_column(
-        "AppUserId", ForeignKey("AppUser.AppUserId")
+        "AppUserId", ForeignKey("bb.AppUser.AppUserId")
     )
     app_user: Mapped[AppUser] = relationship()
 
 
 class Backlog(Base):
     __tablename__ = "Backlog"
+    __table_args__ = {"schema": "bb"}
 
     backlog_id: Mapped[int] = mapped_column("BacklogId", primary_key=True)
     app_user_id: Mapped[int] = mapped_column(
-        "AppUserId", ForeignKey("AppUser.AppUserId")
+        "AppUserId", ForeignKey("bb.AppUser.AppUserId")
     )
 
     app_user: Mapped["AppUser"] = relationship("AppUser", back_populates="backlogs")
@@ -58,12 +61,15 @@ class Backlog(Base):
 
 class BacklogGame(Base):
     __tablename__ = "BacklogGame"
+    __table_args__ = {"schema": "bb"}
 
     backlog_game_id: Mapped[int] = mapped_column("BacklogGameId", primary_key=True)
     backlog_id: Mapped[int] = mapped_column(
-        "BacklogId", ForeignKey("Backlog.BacklogId")
+        "BacklogId", ForeignKey("bb.Backlog.BacklogId")
     )
-    igdb_game_id: Mapped[int] = mapped_column("IgdbGameId", ForeignKey("IgdbGame.Id"))
+    igdb_game_id: Mapped[int] = mapped_column(
+        "IgdbGameId", ForeignKey("bb.IgdbGame.Id")
+    )
 
     backlog: Mapped["Backlog"] = relationship("Backlog", back_populates="backlog_games")
     igdb_game: Mapped["IgdbGame"] = relationship("IgdbGame", lazy="raise")
@@ -71,6 +77,7 @@ class BacklogGame(Base):
 
 class IgdbGame(Base):
     __tablename__ = "IgdbGame"
+    __table_args__ = {"schema": "bb"}
 
     igdb_game_id: Mapped[int] = mapped_column(
         "Id", primary_key=True, autoincrement=False
@@ -88,14 +95,17 @@ class IgdbGame(Base):
 
 class IgdbExternalGame(Base):
     __tablename__ = "IgdbExternalGame"
+    __table_args__ = {"schema": "bb"}
 
     igdb_external_game_id: Mapped[int] = mapped_column(
         "Id", primary_key=True, autoincrement=False
     )
     uid: Mapped[int] = mapped_column("Uid")
-    igdb_game_id: Mapped[int] = mapped_column("IgdbGameId", ForeignKey("IgdbGame.Id"))
+    igdb_game_id: Mapped[int] = mapped_column(
+        "IgdbGameId", ForeignKey("bb.IgdbGame.Id")
+    )
     igdb_external_game_source_id: Mapped[int] = mapped_column(
-        "IgdbExternalGameSourceId", ForeignKey("IgdbExternalGameSource.Id")
+        "IgdbExternalGameSourceId", ForeignKey("bb.IgdbExternalGameSource.Id")
     )
 
     igdb_game: Mapped["IgdbGame"] = relationship(
@@ -107,6 +117,7 @@ class IgdbExternalGame(Base):
 
 class IgdbExternalGameSource(Base):
     __tablename__ = "IgdbExternalGameSource"
+    __table_args__ = {"schema": "bb"}
 
     igdb_external_game_source_id: Mapped[int] = mapped_column(
         "Id", primary_key=True, autoincrement=False
@@ -116,12 +127,15 @@ class IgdbExternalGameSource(Base):
 
 class IgdbGameTimeToBeat(Base):
     __tablename__ = "IgdbGameTimeToBeat"
+    __table_args__ = {"schema": "bb"}
 
     igdb_game_time_to_beat_id: Mapped[int] = mapped_column(
         "Id", primary_key=True, autoincrement=False
     )
     normally: Mapped[Optional[int]] = mapped_column("Normally")
-    igdb_game_id: Mapped[int] = mapped_column("IgdbGameId", ForeignKey("IgdbGame.Id"))
+    igdb_game_id: Mapped[int] = mapped_column(
+        "IgdbGameId", ForeignKey("bb.IgdbGame.Id")
+    )
 
     igdb_game: Mapped["IgdbGame"] = relationship(
         "IgdbGame", back_populates="time_to_beat"

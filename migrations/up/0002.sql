@@ -1,4 +1,4 @@
-create table Game (
+create table bb.Game (
     GameId int identity(1, 1) not null,
     Title nvarchar(255) not null,
     SteamGameId int not null,

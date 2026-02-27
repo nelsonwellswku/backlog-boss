@@ -1,5 +1,5 @@
-drop index if exists IX_AppSession_AppSessionKey_AppUserId_ExpirationDate on AppSession
+drop index if exists IX_AppSession_AppSessionKey_AppUserId_ExpirationDate on bb.AppSession
 
 create nonclustered index IX_AppSession_AppSessionKey_AppUserId_ExpirationDate
-    on AppSession (AppSessionKey, ExpirationDate)
+    on bb.AppSession (AppSessionKey, ExpirationDate)
     include (AppUserId);

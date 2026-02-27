@@ -1,4 +1,7 @@
-create table AppUser (
+create schema bb
+go
+
+create table bb.AppUser (
     AppUserId int identity(1, 1) not null,
     SteamId nvarchar(17) not null,
     PersonaName  nvarchar(32) not null,
@@ -8,11 +11,11 @@ create table AppUser (
     constraint UQ_AppUser_SteamId unique (SteamId)
 )
 
-create table AppSession (
+create table bb.AppSession (
     AppSessionId bigint identity(1, 1) not null,
     AppSessionKey uniqueidentifier not null default newsequentialid(),
     AppUserId int not null,
     ExpirationDate datetimeoffset(7) not null,
     constraint PK_AppSession_AppSessionId primary key clustered (AppSessionId),
-    constraint FK_AppSession_AppUserId foreign key (AppUserId) references AppUser(AppUserId)
+    constraint FK_AppSession_AppUserId foreign key (AppUserId) references bb.AppUser(AppUserId)
 )
