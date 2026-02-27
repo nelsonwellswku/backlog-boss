@@ -2,18 +2,17 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import BigInteger, ForeignKey, String
+from sqlalchemy import BigInteger, ForeignKey, MetaData, String
 from sqlalchemy.dialects.mssql import DATETIMEOFFSET
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
-    pass
+    metadata = MetaData(schema="bb")
 
 
 class AppUser(Base):
     __tablename__ = "AppUser"
-    __table_args__ = {"schema": "bb"}
 
     app_user_id: Mapped[int] = mapped_column("AppUserId", primary_key=True)
     steam_id: Mapped[str] = mapped_column("SteamId", String(17))
@@ -28,7 +27,6 @@ class AppUser(Base):
 
 class AppSession(Base):
     __tablename__ = "AppSession"
-    __table_args__ = {"schema": "bb"}
 
     app_session_id: Mapped[int] = mapped_column(
         "AppSessionId", BigInteger, primary_key=True
@@ -46,7 +44,6 @@ class AppSession(Base):
 
 class Backlog(Base):
     __tablename__ = "Backlog"
-    __table_args__ = {"schema": "bb"}
 
     backlog_id: Mapped[int] = mapped_column("BacklogId", primary_key=True)
     app_user_id: Mapped[int] = mapped_column(
@@ -61,7 +58,6 @@ class Backlog(Base):
 
 class BacklogGame(Base):
     __tablename__ = "BacklogGame"
-    __table_args__ = {"schema": "bb"}
 
     backlog_game_id: Mapped[int] = mapped_column("BacklogGameId", primary_key=True)
     backlog_id: Mapped[int] = mapped_column(
@@ -77,7 +73,6 @@ class BacklogGame(Base):
 
 class IgdbGame(Base):
     __tablename__ = "IgdbGame"
-    __table_args__ = {"schema": "bb"}
 
     igdb_game_id: Mapped[int] = mapped_column(
         "Id", primary_key=True, autoincrement=False
@@ -95,7 +90,6 @@ class IgdbGame(Base):
 
 class IgdbExternalGame(Base):
     __tablename__ = "IgdbExternalGame"
-    __table_args__ = {"schema": "bb"}
 
     igdb_external_game_id: Mapped[int] = mapped_column(
         "Id", primary_key=True, autoincrement=False
@@ -117,7 +111,6 @@ class IgdbExternalGame(Base):
 
 class IgdbExternalGameSource(Base):
     __tablename__ = "IgdbExternalGameSource"
-    __table_args__ = {"schema": "bb"}
 
     igdb_external_game_source_id: Mapped[int] = mapped_column(
         "Id", primary_key=True, autoincrement=False
@@ -127,7 +120,6 @@ class IgdbExternalGameSource(Base):
 
 class IgdbGameTimeToBeat(Base):
     __tablename__ = "IgdbGameTimeToBeat"
-    __table_args__ = {"schema": "bb"}
 
     igdb_game_time_to_beat_id: Mapped[int] = mapped_column(
         "Id", primary_key=True, autoincrement=False
