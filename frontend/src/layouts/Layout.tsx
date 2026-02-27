@@ -58,6 +58,13 @@ export function Layout() {
               <Box flexGrow={1} />
               <Typography
                 component="a"
+                href="https://github.com/nelsonwellswku/backlog-boss"
+                sx={{ textDecoration: "none", color: "inherit", mr: 3 }}
+              >
+                Source
+              </Typography>
+              <Typography
+                component="a"
                 href="/api/docs"
                 sx={{ textDecoration: "none", color: "inherit" }}
               >
