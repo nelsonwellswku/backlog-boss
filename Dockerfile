@@ -43,6 +43,9 @@ RUN npm run build
 
 # Stage 3: Backend - Final production image
 FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim AS backend-final
+LABEL "org.opencontainers.image.source"="https://github.com/nelsonwellswku/backlog-boss" \
+      "org.opencontainers.image.description" = "Backlog Boss container image" \
+      "org.opencontainers.image.licenses=AGPL"
 WORKDIR /app
 
 # Install system dependencies for pyodbc (MSSQL)
