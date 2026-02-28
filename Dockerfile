@@ -24,7 +24,15 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY backend/ ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen
-RUN uv run python export_openapi.py
+# Dummy env vars satisfy Pydantic settings validation at import time;
+# they are not used — the script only inspects route/model definitions.
+RUN DB_HOST=dummy \
+    DB_USER=dummy \
+    DB_PASSWORD=dummy \
+    TWITCH_CLIENT_ID=dummy \
+    TWITCH_CLIENT_SECRET=dummy \
+    STEAM_API_KEY=dummy \
+    uv run python export_openapi.py
 
 # Stage 2: Frontend - Build static files
 FROM node:22-slim AS frontend-builder
