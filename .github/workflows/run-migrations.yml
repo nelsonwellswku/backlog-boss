@@ -32,4 +32,5 @@ jobs:
             --silent=false \
             --createdatabase=true \
             --schema=bbgrate \
-            --environment=${{ inputs.environment }}
+            --environment=${{ inputs.environment }} \
+            --dryrun=true
