@@ -1,0 +1,35 @@
+name: Run Database Migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "PRODUCTION"
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run migrations
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/migrations:/db" \
+            --entrypoint ./grate \
+            erikbra/grate:2.0.0 \
+            --connstring="Server=${{ vars.DB_HOST }};Database=${{ vars.DB_NAME }};User Id=${{ vars.DB_USER }};Password=${{ secrets.DB_PASSWORD }};TrustServerCertificate=True" \
+            --sqlfilesdirectory=/db \
+            --databasetype=sqlserver \
+            --transaction=true \
+            --silent=false \
+            --createdatabase=true \
+            --schema=bbgrate \
+            --environment=${{ inputs.environment }}
