@@ -28,16 +28,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get latest git tag
+        id: gittag
+        run: |
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "untagged")
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha
+            type=raw,value=latest
+            type=raw,value=${{ steps.gittag.outputs.tag }}
 
       - name: Build and push Docker image
         id: push
