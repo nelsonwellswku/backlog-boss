@@ -34,7 +34,12 @@ jobs:
         id: gittag
         run: |
           TAG=$(git tag --points-at HEAD | head -n 1)
-          echo "tag=${TAG:-untagged}" >> "$GITHUB_OUTPUT"
+          TAG="${TAG:-untagged}"
+          if [[ ! "$TAG" =~ ^[a-zA-Z0-9.]+$ ]]; then
+            echo "Error: git tag '$TAG' contains invalid characters. Only letters, numbers, and periods are allowed."
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Extract metadata (tags, labels)
         id: meta
