@@ -33,10 +33,15 @@ jobs:
       - name: Get git tag for current commit
         id: gittag
         run: |
-          TAG=$(git tag --points-at HEAD | head -n 1)
-          TAG="${TAG:-untagged}"
-          if [[ ! "$TAG" =~ ^[a-zA-Z0-9.]+$ ]]; then
-            echo "Error: git tag '$TAG' contains invalid characters. Only letters, numbers, and periods are allowed."
+          TAGS=$(git tag --points-at HEAD)
+          TAG_COUNT=$(echo "$TAGS" | grep -c . || true)
+          if [[ "$TAG_COUNT" -gt 1 ]]; then
+            echo "Error: $TAG_COUNT tags found on current commit. Expected exactly 1. Tags: $(echo $TAGS | tr '\n' ' ')"
+            exit 1
+          fi
+          TAG="${TAGS:-untagged}"
+          if [[ ! "$TAG" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$ ]]; then
+            echo "Error: git tag '$TAG' is not a valid Docker tag. Must start with a letter or number, contain only letters, numbers, underscores, periods, or hyphens, and be 128 characters or fewer."
             exit 1
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
@@ -47,7 +52,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ steps.gittag.outputs.tag != 'untagged' }}
             type=raw,value=${{ steps.gittag.outputs.tag }}
 
       - name: Build and push Docker image
