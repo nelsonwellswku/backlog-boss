@@ -28,11 +28,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get latest git tag
+      - name: Get git tag for current commit
         id: gittag
         run: |
-          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "untagged")
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          TAG=$(git tag --points-at HEAD | head -n 1)
+          echo "tag=${TAG:-untagged}" >> "$GITHUB_OUTPUT"
 
       - name: Extract metadata (tags, labels)
         id: meta
