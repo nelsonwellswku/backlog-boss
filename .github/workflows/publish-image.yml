@@ -21,7 +21,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-tags: true
+          ref: ${{ github.ref }}
+          fetch-depth: 0
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
