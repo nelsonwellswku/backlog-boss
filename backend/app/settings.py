@@ -2,6 +2,7 @@ from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,6 +16,13 @@ class Settings(BaseSettings):
     twitch_client_id: str
     twitch_client_secret: str
     steam_api_key: str
+
+    base_url: str = "http://localhost:5173"
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        return v.rstrip("/")
 
 
 @lru_cache
