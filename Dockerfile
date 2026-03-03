@@ -29,6 +29,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 RUN DB_HOST=dummy \
     DB_USER=dummy \
     DB_PASSWORD=dummy \
+    DB_DATABASE=dummy \
     TWITCH_CLIENT_ID=dummy \
     TWITCH_CLIENT_SECRET=dummy \
     STEAM_API_KEY=dummy \

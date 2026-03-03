@@ -16,7 +16,7 @@ connection_url = URL.create(
     password=settings.db_password,
     host=settings.db_host,
     port=1433,
-    database="BacklogBoss",
+    database=settings.db_database,
     query={"driver": "ODBC Driver 18 for SQL Server", "TrustServerCertificate": "yes"},
 )
 
