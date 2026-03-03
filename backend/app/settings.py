@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     db_host: str
     db_user: str
     db_password: str
+    db_database: str
 
     twitch_client_id: str
     twitch_client_secret: str
