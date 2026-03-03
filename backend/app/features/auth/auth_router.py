@@ -30,9 +30,9 @@ class OpenIdCallbackParams(BaseModel):
 
 
 @auth_router.get("/api/auth/steam")
-def auth_with_steam():
-    return_url = "http://localhost:5173/api/auth/steam/callback"
-    realm = "http://localhost:5173/"
+def auth_with_steam(settings: AppSettings):
+    return_url = f"{settings.base_url}/api/auth/steam/callback"
+    realm = f"{settings.base_url}/"
 
     query_params: QueryParams = QueryParams(
         {
