@@ -37,7 +37,12 @@ export function Home() {
       >
         <Container maxWidth="md">
           <EmojiEvents sx={{ fontSize: 80, mb: 2 }} />
-          <Typography variant="h2" component="h1" gutterBottom fontWeight="bold">
+          <Typography
+            variant="h2"
+            component="h1"
+            gutterBottom
+            fontWeight="bold"
+          >
             Conquer Your Gaming Backlog
           </Typography>
           <Typography variant="h5" sx={{ mb: 4, opacity: 0.95 }}>

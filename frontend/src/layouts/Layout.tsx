@@ -9,6 +9,7 @@ import {
 import { Link, Outlet } from "react-router";
 import { GreetingOrLoginButton } from "@bb/layouts/GreetingOrLoginButton";
 import { useCurrentUser } from "@bb/hooks/useCurrentUser";
+import { LogoutLink } from "@bb/layouts/LogoutLink";
 
 export function Layout() {
   const { data, isSuccess } = useCurrentUser();
@@ -41,6 +42,10 @@ export function Layout() {
               ) : null}
               <Box flexGrow={1} />
               <GreetingOrLoginButton />
+              {isSuccess && data?.data ? (
+                <Typography sx={{ mx: 1, opacity: 0.4 }}>•</Typography>
+              ) : null}
+              <LogoutLink />
             </Toolbar>
           </Container>
         </AppBar>
