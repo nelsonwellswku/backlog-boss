@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Query, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
 from pydantic import BaseModel, Field
@@ -11,6 +11,7 @@ from steam_web_api import Steam
 
 from app.database.engine import DbSession
 from app.database.models import AppSession, AppUser
+from app.features.auth.auth_with_steam_handler import AuthWithSteamHandler
 from app.settings import AppSettings
 
 auth_router = APIRouter()
@@ -29,25 +30,12 @@ class OpenIdCallbackParams(BaseModel):
     sig: str = Field(alias="openid.sig")
 
 
-@auth_router.get("/api/auth/steam")
-def auth_with_steam(settings: AppSettings):
-    return_url = f"{settings.base_url}/api/auth/steam/callback"
-    realm = f"{settings.base_url}/"
-
-    query_params: QueryParams = QueryParams(
-        {
-            "openid.ns": "http://specs.openid.net/auth/2.0",
-            "openid.mode": "checkid_setup",
-            "openid.return_to": return_url,
-            "openid.realm": realm,
-            "openid.identity": "http://specs.openid.net/auth/2.0/identifier_select",
-            "openid.claimed_id": "http://specs.openid.net/auth/2.0/identifier_select",
-        }
-    )
-
-    redirect_url = f"https://steamcommunity.com/openid/login?{query_params.__str__()}"
-
-    return RedirectResponse(url=redirect_url)
+@auth_router.get(
+    "/api/auth/steam",
+    description="Redirects the user to the Steam OpenID login page to begin the authentication process.",
+)
+def auth_with_steam(handler: AuthWithSteamHandler = Depends()) -> RedirectResponse:
+    return handler.handle()
 
 
 @auth_router.get("/api/auth/steam/callback")
