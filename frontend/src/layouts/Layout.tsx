@@ -12,7 +12,7 @@ import { useCurrentUser } from "@bb/hooks/useCurrentUser";
 import { LogoutLink } from "@bb/layouts/LogoutLink";
 
 export function Layout() {
-  const { data, isSuccess } = useCurrentUser();
+  const { data, isSuccess } = useCurrentUser(false);
 
   return (
     <CssBaseline enableColorScheme>
@@ -42,7 +42,7 @@ export function Layout() {
               ) : null}
               <Box flexGrow={1} />
               <GreetingOrLoginButton />
-              {isSuccess && data?.data ? (
+              {isSuccess && data?.data?.appUserId ? (
                 <Typography sx={{ mx: 1, opacity: 0.4 }}>•</Typography>
               ) : null}
               <LogoutLink />

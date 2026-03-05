@@ -1,14 +1,26 @@
-import { Typography } from "@mui/material";
 import { useCurrentUser } from "@bb/hooks/useCurrentUser";
+import { useLogoutMutation } from "@bb/hooks/useLogOut";
+import { Typography } from "@mui/material";
+import { Navigate } from "react-router";
 
 export function LogoutLink() {
-  const { data } = useCurrentUser();
+  const {
+    isError,
+    data: currentUserData,
+    refetch: refectCurrentUser,
+  } = useCurrentUser(false);
+  const { mutate: logout } = useLogoutMutation();
 
-  if (data?.data) {
+  if (isError) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (currentUserData?.data?.appUserId) {
     return (
       <Typography
-        component="a"
-        href="/logout"
+        onClick={() =>
+          logout(undefined, { onSuccess: () => refectCurrentUser() })
+        }
         sx={{
           color: "rgba(255,255,255,0.6)",
           textDecoration: "none",
@@ -16,6 +28,7 @@ export function LogoutLink() {
           "&:hover": {
             color: "rgba(255,255,255,1)",
             textDecoration: "underline",
+            cursor: "pointer",
           },
         }}
       >

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request, Response
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
 from pydantic import BaseModel, Field
@@ -124,3 +124,20 @@ def steam_callback(
     )
 
     return redirect
+
+
+@auth_router.get("/api/auth/logout")
+def logout(request: Request, db_session: DbSession):
+    session_key = request.cookies.get("session_key")
+    if session_key:
+        app_session = db_session.scalars(
+            select(AppSession).where(AppSession.app_session_key == session_key)
+        ).one_or_none()
+        if app_session:
+            db_session.delete(app_session)
+            db_session.commit()
+
+    response = Response()
+    response.delete_cookie("session_key")
+
+    return response
