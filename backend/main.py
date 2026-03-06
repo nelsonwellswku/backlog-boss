@@ -21,9 +21,9 @@ app = FastAPI(
     lifespan=configure_httpx_lifespan,
 )
 
-app.include_router(health_router, tags=["Health"])
-app.include_router(auth_router, tags=["Auth"])
-app.include_router(user_router, tags=["User"])
+app.include_router(health_router)
+app.include_router(auth_router)
+app.include_router(user_router)
 
 # Serve static files and SPA fallback (only if static directory exists)
 static_dir = Path(__file__).parent / "static"
