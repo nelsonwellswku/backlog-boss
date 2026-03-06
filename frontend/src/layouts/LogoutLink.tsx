@@ -7,7 +7,7 @@ export function LogoutLink() {
   const {
     isError,
     data: currentUserData,
-    refetch: refectCurrentUser,
+    refetch: refetchCurrentUser,
   } = useCurrentUser(false);
   const { mutate: logout } = useLogoutMutation();
 
@@ -19,7 +19,7 @@ export function LogoutLink() {
     return (
       <Typography
         onClick={() =>
-          logout(undefined, { onSuccess: () => refectCurrentUser() })
+          logout(undefined, { onSuccess: () => refetchCurrentUser() })
         }
         sx={{
           color: "rgba(255,255,255,0.6)",
