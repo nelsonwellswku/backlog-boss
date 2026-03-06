@@ -1,6 +1,6 @@
 import { useCurrentUser } from "@bb/hooks/useCurrentUser";
 import { useLogoutMutation } from "@bb/hooks/useLogOut";
-import { Typography } from "@mui/material";
+import { Link } from "@mui/material";
 import { Navigate } from "react-router";
 
 export function LogoutLink() {
@@ -17,7 +17,8 @@ export function LogoutLink() {
 
   if (currentUserData?.data?.appUserId) {
     return (
-      <Typography
+      <Link
+        component="button"
         onClick={() =>
           logout(undefined, { onSuccess: () => refetchCurrentUser() })
         }
@@ -28,12 +29,11 @@ export function LogoutLink() {
           "&:hover": {
             color: "rgba(255,255,255,1)",
             textDecoration: "underline",
-            cursor: "pointer",
           },
         }}
       >
         Logout
-      </Typography>
+      </Link>
     );
   }
 
