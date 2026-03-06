@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
+from logging import getLogger
 
+from fastapi import HTTPException
 import httpx
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
@@ -47,14 +49,15 @@ class SteamCallbackHandler:
         )
 
         check_auth_response = httpx.post(
-            "https://steamcommunity.com/openid/login",
-            params=outgoing_query_params,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            "https://steamcommunity.com/openid/login", params=outgoing_query_params
         )
-        if "is_valid:true" not in check_auth_response.text:
-            raise ValueError("Log in is not valid.")
+        if (
+            not check_auth_response.is_success
+            or "is_valid:true" not in check_auth_response.text
+            or not openid_params.identity
+        ):
+            raise HTTPException(401, "Unauthorized")
 
-        assert openid_params.identity
         steam_id = openid_params.identity.split("/")[-1]
 
         steam = Steam(self.app_settings.steam_api_key)
@@ -62,9 +65,10 @@ class SteamCallbackHandler:
         # create the user record if it doesn't already exist
         user_details = steam.users.get_user_details(steam_id)
         persona_name = user_details["player"]["personaname"]
-        real_name = user_details["player"]["realname"]
+        real_name = user_details["player"].get("realname", "")
         split_name = real_name.split(" ")
-        first_name, last_name = split_name[1], split_name[-1]
+        first_name = split_name[0] if len(split_name) >= 1 else None
+        last_name = split_name[-1] if len(split_name) >= 2 else None
 
         # start the user's session by creating a session in the database
         # and setting a session id cookie
@@ -95,7 +99,12 @@ class SteamCallbackHandler:
 
         redirect = RedirectResponse("/my-backlog")
         redirect.set_cookie(
-            "session_key", str(app_session_key), expires=expiration, secure=True
+            "session_key",
+            str(app_session_key),
+            expires=expiration,
+            secure=True,
+            httponly=True,
+            samesite="lax",
         )
 
         return redirect

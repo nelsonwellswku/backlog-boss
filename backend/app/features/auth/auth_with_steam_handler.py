@@ -23,8 +23,6 @@ class AuthWithSteamHandler:
             }
         )
 
-        redirect_url = (
-            f"https://steamcommunity.com/openid/login?{query_params.__str__()}"
-        )
+        redirect_url = f"https://steamcommunity.com/openid/login?{str(query_params)}"
 
         return RedirectResponse(url=redirect_url)
