@@ -32,7 +32,7 @@ def steam_callback(
     return handler.handle(openid_params)
 
 
-@auth_router.get(
+@auth_router.post(
     "/api/auth/logout",
     description="Logs the user out by invalidating their session and clearing the session cookie.",
 )
