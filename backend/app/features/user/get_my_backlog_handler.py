@@ -1,3 +1,4 @@
+from datetime import datetime
 from logging import getLogger
 
 from fastapi import HTTPException
@@ -22,6 +23,7 @@ class BacklogGameRow(BaseModel):
     title: str
     total_rating: float | None = Field(serialization_alias="totalRating")
     time_to_beat: int | None = Field(serialization_alias="timeToBeat")
+    completed_on: datetime | None = Field(serialization_alias="completedOn")
 
 
 class GetMyBacklogHandler:
@@ -33,7 +35,7 @@ class GetMyBacklogHandler:
         stmt = (
             select(Backlog)
             .options(
-                joinedload(Backlog.backlog_games)
+                joinedload(Backlog.backlog_games.and_(BacklogGame.removed_on.is_(None)))
                 .joinedload(BacklogGame.igdb_game)
                 .joinedload(IgdbGame.time_to_beat)
             )
@@ -52,6 +54,7 @@ class GetMyBacklogHandler:
                 time_to_beat=g.igdb_game.time_to_beat.normally
                 if g.igdb_game.time_to_beat
                 else None,
+                completed_on=g.completed_on,
             )
             for g in backlog.backlog_games
         ]
