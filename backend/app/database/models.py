@@ -71,7 +71,9 @@ class BacklogGame(Base):
     )
     removed_on: Mapped[Optional[datetime]] = mapped_column("RemovedOn", DATETIMEOFFSET)
 
-    backlog: Mapped["Backlog"] = relationship("Backlog", back_populates="backlog_games")
+    backlog: Mapped["Backlog"] = relationship(
+        "Backlog", back_populates="backlog_games", lazy="raise"
+    )
     igdb_game: Mapped["IgdbGame"] = relationship("IgdbGame", lazy="raise")
 
 

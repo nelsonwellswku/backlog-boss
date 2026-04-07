@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
 
-from fastapi import HTTPException
 import httpx
+from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
 from pydantic import BaseModel, Field
