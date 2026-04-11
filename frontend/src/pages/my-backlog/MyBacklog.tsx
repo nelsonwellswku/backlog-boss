@@ -1,17 +1,17 @@
-import { useMemo, useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 
 import { useGetMyBacklog } from "@bb/hooks/useGetMyBacklog";
 import { useCreateMyBacklog } from "@bb/hooks/useCreateMyBacklog";
+import { useUpdateBacklogGame } from "@bb/hooks/useUpdateBacklogGame";
 import type { BacklogGameRow } from "@bb/client";
 import { createBlendedComparator } from "@bb/pages/my-backlog/blended-comparator";
 import { GameSortButtonGroup } from "@bb/pages/my-backlog/GameSortButtonGroup";
 import type { SortType } from "@bb/pages/my-backlog/SortType";
-import { useUpdateBacklogGame } from "../../hooks/useUpdateBacklogGame";
-import { BacklogList } from "./BacklogList";
-import { BacklogCreatingLoader } from "./BacklogCreatingLoader";
-import { CreateBacklogPrompt } from "./CreateBacklogPrompt";
+import { BacklogList } from "@bb/pages/my-backlog/BacklogList";
+import { BacklogCreatingLoader } from "@bb/pages/my-backlog/BacklogCreatingLoader";
+import { CreateBacklogPrompt } from "@bb/pages/my-backlog/CreateBacklogPrompt";
 
 export function MyBacklog() {
   const { data, isSuccess, refetch } = useGetMyBacklog();
@@ -28,7 +28,9 @@ export function MyBacklog() {
   } = useUpdateBacklogGame();
   const [sortType, setSortType] = useState<SortType>(null);
   const [showCreating, setShowCreating] = useState(false);
-  const [completedInSessionIds, setCompletedInSessionIds] = useState<number[]>([]);
+  const [completedInSessionIds, setCompletedInSessionIds] = useState<number[]>(
+    [],
+  );
 
   const rawGames: BacklogGameRow[] = data?.data?.games ?? [];
   const blendedComparator = useMemo(
@@ -36,23 +38,41 @@ export function MyBacklog() {
     [rawGames],
   );
 
-  const games = rawGames.toSorted((a, b) => {
-    if (sortType === "score") {
-      return (b.totalRating ?? 0) - (a.totalRating ?? 0);
-    } else if (sortType === "time") {
-      return (a.timeToBeat ?? Infinity) - (b.timeToBeat ?? Infinity);
-    } else if (sortType === "blended") {
-      return blendedComparator(a, b);
-    }
-    return 0;
-  });
-  const completedInSessionSet = new Set(completedInSessionIds);
-  const activeGames = games.filter(
-    (game) => !game.completedOn || completedInSessionSet.has(game.backlogGameId),
+  const games = useMemo(
+    () =>
+      rawGames.toSorted((a, b) => {
+        if (sortType === "score") {
+          return (b.totalRating ?? 0) - (a.totalRating ?? 0);
+        }
+        if (sortType === "time") {
+          return (a.timeToBeat ?? Infinity) - (b.timeToBeat ?? Infinity);
+        }
+        if (sortType === "blended") {
+          return blendedComparator(a, b);
+        }
+        return 0;
+      }),
+    [blendedComparator, rawGames, sortType],
   );
-  const completedGames = games.filter(
-    (game) => game.completedOn && !completedInSessionSet.has(game.backlogGameId),
+  const completedInSessionSet = useMemo(
+    () => new Set(completedInSessionIds),
+    [completedInSessionIds],
   );
+  const { activeGames, completedGames } = useMemo(() => {
+    const nextActiveGames = games.filter(
+      (game) =>
+        !game.completedOn || completedInSessionSet.has(game.backlogGameId),
+    );
+    const nextCompletedGames = games.filter(
+      (game) =>
+        game.completedOn && !completedInSessionSet.has(game.backlogGameId),
+    );
+
+    return {
+      activeGames: nextActiveGames,
+      completedGames: nextCompletedGames,
+    };
+  }, [completedInSessionSet, games]);
   const updatingBacklogGameId = isUpdating
     ? (updateVariables?.backlogGameId ?? null)
     : null;
@@ -72,49 +92,53 @@ export function MyBacklog() {
     createBacklog();
   };
 
-  const handleToggleCompleted = (game: BacklogGameRow) => {
-    const isMarkingCompleted = !game.completedOn;
+  const handleToggleCompleted = useCallback(
+    (game: BacklogGameRow) => {
+      const isMarkingCompleted = !game.completedOn;
 
-    updateBacklogGame({
-      backlogGameId: game.backlogGameId,
-      completedOn: game.completedOn ? null : new Date().toISOString(),
-      removedOn: null,
-    }, {
-      onSuccess: () => {
-        setCompletedInSessionIds((current) => {
-          if (isMarkingCompleted) {
-            return current.includes(game.backlogGameId)
-              ? current
-              : [...current, game.backlogGameId];
-          }
+      updateBacklogGame(
+        {
+          backlogGameId: game.backlogGameId,
+          completedOn: game.completedOn ? null : new Date().toISOString(),
+          removedOn: null,
+        },
+        {
+          onSuccess: () => {
+            setCompletedInSessionIds((current) => {
+              if (isMarkingCompleted) {
+                return current.includes(game.backlogGameId)
+                  ? current
+                  : [...current, game.backlogGameId];
+              }
 
-          return current.filter((id) => id !== game.backlogGameId);
-        });
-      },
-    });
-  };
+              return current.filter((id) => id !== game.backlogGameId);
+            });
+          },
+        },
+      );
+    },
+    [updateBacklogGame],
+  );
 
-  const handleRemoveGame = (game: BacklogGameRow) => {
-    const confirmed = window.confirm(
-      `Remove ${game.title} from your backlog? This will hide it from the list.`,
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    updateBacklogGame({
-      backlogGameId: game.backlogGameId,
-      completedOn: game.completedOn,
-      removedOn: new Date().toISOString(),
-    }, {
-      onSuccess: () => {
-        setCompletedInSessionIds((current) =>
-          current.filter((id) => id !== game.backlogGameId),
-        );
-      },
-    });
-  };
+  const handleRemoveGame = useCallback(
+    (game: BacklogGameRow) => {
+      updateBacklogGame(
+        {
+          backlogGameId: game.backlogGameId,
+          completedOn: game.completedOn,
+          removedOn: new Date().toISOString(),
+        },
+        {
+          onSuccess: () => {
+            setCompletedInSessionIds((current) =>
+              current.filter((id) => id !== game.backlogGameId),
+            );
+          },
+        },
+      );
+    },
+    [updateBacklogGame],
+  );
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", mt: 4 }}>

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { userGetMe } from "../client";
+import { userGetMe } from "@bb/client";
 
 export function useCurrentUser(retry: boolean | number = 3) {
   return useQuery({

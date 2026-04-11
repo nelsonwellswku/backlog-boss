@@ -1,9 +1,15 @@
+import { memo, useState } from "react";
 import type { BacklogGameRow } from "@bb/client";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
@@ -23,7 +29,7 @@ type PropType = {
   updatingBacklogGameId: number | null;
 };
 
-function BacklogListItem({
+const BacklogListItem = memo(function BacklogListItem({
   game,
   isCompleted,
   isUpdating,
@@ -142,7 +148,7 @@ function BacklogListItem({
       </Box>
     </ListItem>
   );
-}
+});
 
 export function BacklogList({
   activeGames,
@@ -151,14 +157,38 @@ export function BacklogList({
   onRemoveGame,
   updatingBacklogGameId,
 }: PropType) {
-  const renderGame = (game: BacklogGameRow, index: number, games: BacklogGameRow[]) => (
+  const [gamePendingRemoval, setGamePendingRemoval] =
+    useState<BacklogGameRow | null>(null);
+
+  const handleRemoveRequested = (game: BacklogGameRow) => {
+    setGamePendingRemoval(game);
+  };
+
+  const handleCancelRemoveGame = () => {
+    setGamePendingRemoval(null);
+  };
+
+  const handleConfirmRemoveGame = () => {
+    if (!gamePendingRemoval) {
+      return;
+    }
+
+    onRemoveGame(gamePendingRemoval);
+    setGamePendingRemoval(null);
+  };
+
+  const renderGame = (
+    game: BacklogGameRow,
+    index: number,
+    games: BacklogGameRow[],
+  ) => (
     <Box key={game.backlogGameId}>
       <BacklogListItem
         game={game}
         isCompleted={Boolean(game.completedOn)}
         isUpdating={updatingBacklogGameId === game.backlogGameId}
         onToggleCompleted={onToggleCompleted}
-        onRemoveGame={onRemoveGame}
+        onRemoveGame={handleRemoveRequested}
       />
       {index < games.length - 1 && <Divider />}
     </Box>
@@ -207,7 +237,8 @@ export function BacklogList({
             <Box>
               <Typography variant="h6">Active Backlog</Typography>
               <Typography variant="body2" color="text.secondary">
-                {activeGames.length} game{activeGames.length === 1 ? "" : "s"} to work through
+                {activeGames.length} game{activeGames.length === 1 ? "" : "s"}{" "}
+                to work through
               </Typography>
             </Box>
             {completedGames.length > 0 && (
@@ -223,7 +254,9 @@ export function BacklogList({
           </Box>
         </Box>
         <List sx={{ py: 0 }}>
-          {activeGames.map((game, index) => renderGame(game, index, activeGames))}
+          {activeGames.map((game, index) =>
+            renderGame(game, index, activeGames),
+          )}
         </List>
       </Paper>
 
@@ -259,7 +292,8 @@ export function BacklogList({
                 Completed Games
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {completedGames.length} completed game{completedGames.length === 1 ? "" : "s"}
+                {completedGames.length} completed game
+                {completedGames.length === 1 ? "" : "s"}
               </Typography>
             </Box>
             <Button
@@ -277,6 +311,35 @@ export function BacklogList({
           </List>
         </Paper>
       )}
+      <Dialog
+        open={gamePendingRemoval !== null}
+        onClose={updatingBacklogGameId ? undefined : handleCancelRemoveGame}
+      >
+        <DialogTitle>Remove game from backlog?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {gamePendingRemoval
+              ? `Remove ${gamePendingRemoval.title} from your backlog? It will be hidden from this page, but can be re-added later.`
+              : ""}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            disabled={updatingBacklogGameId !== null}
+            onClick={handleCancelRemoveGame}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            disabled={updatingBacklogGameId !== null}
+            variant="contained"
+            onClick={handleConfirmRemoveGame}
+          >
+            Remove
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }

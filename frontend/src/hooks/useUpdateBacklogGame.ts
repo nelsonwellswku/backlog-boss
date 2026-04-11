@@ -12,7 +12,11 @@ export function useUpdateBacklogGame() {
 
   return useMutation({
     mutationKey: ["update-backlog-game"],
-    mutationFn: ({ backlogGameId, completedOn, removedOn }: UpdateBacklogGameParams) =>
+    mutationFn: ({
+      backlogGameId,
+      completedOn,
+      removedOn,
+    }: UpdateBacklogGameParams) =>
       backlogGameUpdateGame({
         path: { backlog_game_id: backlogGameId },
         body: { completedOn, removedOn },
