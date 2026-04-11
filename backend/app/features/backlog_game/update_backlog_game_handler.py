@@ -1,21 +1,21 @@
 from datetime import datetime
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from app.database.engine import DbSession
 from app.database.models import Backlog, BacklogGame
+from app.features.api_model import ApiRequestModel, ApiResponseModel
 from app.features.auth.get_current_user import CurrentUser
 
 
-class UpdateBacklogGameRequest(BaseModel):
+class UpdateBacklogGameRequest(ApiRequestModel):
     completed_on: datetime | None
     removed_on: datetime | None
 
 
-class UpdateBacklogGameResponse(BaseModel):
+class UpdateBacklogGameResponse(ApiResponseModel):
     backlog_game_id: int
 
 

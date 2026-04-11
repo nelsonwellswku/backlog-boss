@@ -2,28 +2,29 @@ from datetime import datetime
 from logging import getLogger
 
 from fastapi import HTTPException
-from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from app.database.engine import DbSession
 from app.database.models import Backlog, BacklogGame, IgdbGame
+from app.features.api_model import ApiResponseModel
 from app.features.auth.get_current_user import CurrentUser
 
 logger = getLogger(__name__)
 
 
-class GetMyBacklogResponse(BaseModel):
-    backlog_id: int = Field(serialization_alias="backlogId")
+class GetMyBacklogResponse(ApiResponseModel):
+    backlog_id: int
     games: list["BacklogGameRow"]
 
 
-class BacklogGameRow(BaseModel):
-    game_id: int = Field(serialization_alias="gameId")
+class BacklogGameRow(ApiResponseModel):
+    backlog_game_id: int
+    game_id: int
     title: str
-    total_rating: float | None = Field(serialization_alias="totalRating")
-    time_to_beat: int | None = Field(serialization_alias="timeToBeat")
-    completed_on: datetime | None = Field(serialization_alias="completedOn")
+    total_rating: float | None
+    time_to_beat: int | None
+    completed_on: datetime | None
 
 
 class GetMyBacklogHandler:
@@ -48,6 +49,7 @@ class GetMyBacklogHandler:
 
         backlog_game_rows = [
             BacklogGameRow(
+                backlog_game_id=g.backlog_game_id,
                 game_id=g.igdb_game_id,
                 title=g.igdb_game.name,
                 total_rating=g.igdb_game.total_rating,

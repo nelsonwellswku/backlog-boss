@@ -2,26 +2,39 @@ import { createBlendedComparator } from "@bb/pages/my-backlog/blended-comparator
 import type { BacklogGameRow } from "@bb/client";
 import { expect, test } from "vitest";
 
+function createBacklogGameRow(
+  overrides: Partial<BacklogGameRow>,
+): BacklogGameRow {
+  return {
+    backlogGameId: overrides.backlogGameId ?? overrides.gameId ?? 1,
+    gameId: overrides.gameId ?? 1,
+    title: overrides.title ?? "Game",
+    timeToBeat: overrides.timeToBeat ?? null,
+    totalRating: overrides.totalRating ?? null,
+    completedOn: overrides.completedOn ?? null,
+  };
+}
+
 test("blended comparator correctly sorts games with weight given to time", () => {
   const backlogGames: BacklogGameRow[] = [
-    {
+    createBacklogGameRow({
       gameId: 2,
       title: "Legend of Zelda",
       timeToBeat: 1000,
       totalRating: 98,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 1,
       title: "Mario Bros.",
       timeToBeat: 600,
       totalRating: 95,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 3,
       title: "Metroid",
       timeToBeat: 2000,
       totalRating: 99,
-    },
+    }),
   ];
 
   const comparator = createBlendedComparator(backlogGames);
@@ -38,24 +51,24 @@ test("does not error when empty list is passed in", () => {
 
 test("correctly sorts games with no time to beat to the bottom", () => {
   const backlogGames: BacklogGameRow[] = [
-    {
+    createBacklogGameRow({
       gameId: 1,
       title: "Game One",
       timeToBeat: 500,
       totalRating: 50,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 2,
       title: "Game Two",
       timeToBeat: null,
       totalRating: 100,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 3,
       title: "Game Three",
       timeToBeat: 1200,
       totalRating: 50,
-    },
+    }),
   ];
 
   const comparator = createBlendedComparator(backlogGames);
@@ -65,24 +78,24 @@ test("correctly sorts games with no time to beat to the bottom", () => {
 
 test("correctly sorts games with no rating to the bottom", () => {
   const backlogGames: BacklogGameRow[] = [
-    {
+    createBacklogGameRow({
       gameId: 1,
       title: "Game One",
       timeToBeat: 500,
       totalRating: 50,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 2,
       title: "Game Two",
       timeToBeat: 500,
       totalRating: null,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 3,
       title: "Game Three",
       timeToBeat: 500,
       totalRating: 50,
-    },
+    }),
   ];
 
   const comparator = createBlendedComparator(backlogGames);
@@ -92,24 +105,24 @@ test("correctly sorts games with no rating to the bottom", () => {
 
 test("correctly sorts games with both null time and null rating to the bottom", () => {
   const backlogGames: BacklogGameRow[] = [
-    {
+    createBacklogGameRow({
       gameId: 1,
       title: "Game One",
       timeToBeat: 500,
       totalRating: 50,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 2,
       title: "Game Two",
       timeToBeat: null,
       totalRating: null,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 3,
       title: "Game Three",
       timeToBeat: 600,
       totalRating: 60,
-    },
+    }),
   ];
 
   const comparator = createBlendedComparator(backlogGames);
@@ -119,24 +132,24 @@ test("correctly sorts games with both null time and null rating to the bottom", 
 
 test("correctly sorts multiple games with null time to beat to the bottom", () => {
   const backlogGames: BacklogGameRow[] = [
-    {
+    createBacklogGameRow({
       gameId: 1,
       title: "Game One",
       timeToBeat: null,
       totalRating: 80,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 2,
       title: "Game Two",
       timeToBeat: 500,
       totalRating: 50,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 3,
       title: "Game Three",
       timeToBeat: null,
       totalRating: 90,
-    },
+    }),
   ];
 
   const comparator = createBlendedComparator(backlogGames);
@@ -149,12 +162,12 @@ test("correctly sorts multiple games with null time to beat to the bottom", () =
 
 test("handles list with single game", () => {
   const backlogGames: BacklogGameRow[] = [
-    {
+    createBacklogGameRow({
       gameId: 1,
       title: "Only Game",
       timeToBeat: 500,
       totalRating: 80,
-    },
+    }),
   ];
 
   const comparator = createBlendedComparator(backlogGames);
@@ -164,24 +177,24 @@ test("handles list with single game", () => {
 
 test("handles all games with null time to beat", () => {
   const backlogGames: BacklogGameRow[] = [
-    {
+    createBacklogGameRow({
       gameId: 1,
       title: "Game One",
       timeToBeat: null,
       totalRating: 50,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 2,
       title: "Game Two",
       timeToBeat: null,
       totalRating: 80,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 3,
       title: "Game Three",
       timeToBeat: null,
       totalRating: 60,
-    },
+    }),
   ];
 
   const comparator = createBlendedComparator(backlogGames);
@@ -192,24 +205,24 @@ test("handles all games with null time to beat", () => {
 
 test("handles all games with null rating", () => {
   const backlogGames: BacklogGameRow[] = [
-    {
+    createBacklogGameRow({
       gameId: 1,
       title: "Game One",
       timeToBeat: 1000,
       totalRating: null,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 2,
       title: "Game Two",
       timeToBeat: 500,
       totalRating: null,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 3,
       title: "Game Three",
       timeToBeat: 2000,
       totalRating: null,
-    },
+    }),
   ];
 
   const comparator = createBlendedComparator(backlogGames);
@@ -220,24 +233,24 @@ test("handles all games with null rating", () => {
 
 test("handles games with identical scores and times", () => {
   const backlogGames: BacklogGameRow[] = [
-    {
+    createBacklogGameRow({
       gameId: 1,
       title: "Game One",
       timeToBeat: 500,
       totalRating: 80,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 2,
       title: "Game Two",
       timeToBeat: 500,
       totalRating: 80,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 3,
       title: "Game Three",
       timeToBeat: 500,
       totalRating: 80,
-    },
+    }),
   ];
 
   const comparator = createBlendedComparator(backlogGames);
@@ -249,24 +262,24 @@ test("handles games with identical scores and times", () => {
 
 test("handles mix of null time and null rating across different games", () => {
   const backlogGames: BacklogGameRow[] = [
-    {
+    createBacklogGameRow({
       gameId: 1,
       title: "Game One",
       timeToBeat: null,
       totalRating: 90,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 2,
       title: "Game Two",
       timeToBeat: 500,
       totalRating: null,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 3,
       title: "Game Three",
       timeToBeat: 600,
       totalRating: 80,
-    },
+    }),
   ];
 
   const comparator = createBlendedComparator(backlogGames);
@@ -278,24 +291,24 @@ test("handles mix of null time and null rating across different games", () => {
 
 test("handles extreme values without errors", () => {
   const backlogGames: BacklogGameRow[] = [
-    {
+    createBacklogGameRow({
       gameId: 1,
       title: "Very Long Game",
       timeToBeat: 100000,
       totalRating: 100,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 2,
       title: "Very Short Game",
       timeToBeat: 1,
       totalRating: 50,
-    },
-    {
+    }),
+    createBacklogGameRow({
       gameId: 3,
       title: "Average Game",
       timeToBeat: 500,
       totalRating: 50,
-    },
+    }),
   ];
 
   const comparator = createBlendedComparator(backlogGames);

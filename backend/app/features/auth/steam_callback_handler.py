@@ -5,16 +5,17 @@ import httpx
 from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
-from pydantic import BaseModel, Field
+from pydantic import Field
 from sqlalchemy import select
 from steam_web_api import Steam
 
 from app.database.engine import DbSession
 from app.database.models import AppSession, AppUser
+from app.features.api_model import ApiRequestModel
 from app.settings import AppSettings
 
 
-class OpenIdCallbackParams(BaseModel):
+class OpenIdCallbackParams(ApiRequestModel):
     ns: str = Field(alias="openid.ns")
     mode: str = Field(alias="openid.mode")
     op_endpoint: str = Field(alias="openid.op_endpoint")
