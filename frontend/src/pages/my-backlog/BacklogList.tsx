@@ -138,6 +138,7 @@ const BacklogListItem = memo(function BacklogListItem({
           <span>
             <IconButton
               color="error"
+              aria-label="Remove from backlog"
               disabled={isUpdating}
               onClick={() => onRemoveGame(game)}
             >

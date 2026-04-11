@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from app.database.engine import DbSession
-from app.database.models import Backlog, BacklogGame
+from app.database.models import BacklogGame
 from app.features.api_model import ApiRequestModel, ApiResponseModel
 from app.features.auth.get_current_user import CurrentUser
 
@@ -19,7 +19,7 @@ class UpdateBacklogGameResponse(ApiResponseModel):
     backlog_game_id: int
 
 
-class UpdateBacklogHandler:
+class UpdateBacklogGameHandler:
     def __init__(self, db: DbSession, current_user: CurrentUser):
         self.db = db
         self.current_user = current_user

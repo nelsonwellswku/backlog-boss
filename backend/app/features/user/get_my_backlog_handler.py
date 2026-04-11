@@ -10,8 +10,6 @@ from app.database.models import Backlog, BacklogGame, IgdbGame
 from app.features.api_model import ApiResponseModel
 from app.features.auth.get_current_user import CurrentUser
 
-logger = getLogger(__name__)
-
 
 class GetMyBacklogResponse(ApiResponseModel):
     backlog_id: int
