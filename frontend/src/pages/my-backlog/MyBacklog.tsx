@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 
@@ -18,7 +18,6 @@ export function MyBacklog() {
   const {
     mutate: createBacklog,
     isPending: isCreating,
-    isSuccess: createSuccess,
     isError: createError,
   } = useCreateMyBacklog();
   const {
@@ -32,7 +31,11 @@ export function MyBacklog() {
     [],
   );
 
-  const rawGames: BacklogGameRow[] = data?.data?.games ?? [];
+  const serverGames = data?.data?.games;
+  const rawGames: BacklogGameRow[] = useMemo(
+    () => serverGames ?? [],
+    [serverGames],
+  );
   const blendedComparator = useMemo(
     () => createBlendedComparator(rawGames),
     [rawGames],
@@ -79,17 +82,17 @@ export function MyBacklog() {
 
   const is404 = data?.response.status === 404;
 
-  // Refetch when creation is successful
-  useEffect(() => {
-    if (createSuccess) {
-      setShowCreating(false);
-      refetch();
-    }
-  }, [createSuccess, refetch]);
-
   const handleCreateBacklog = () => {
     setShowCreating(true);
-    createBacklog();
+    createBacklog(undefined, {
+      onSuccess: async () => {
+        await refetch();
+        setShowCreating(false);
+      },
+      onError: () => {
+        setShowCreating(false);
+      },
+    });
   };
 
   const handleToggleCompleted = useCallback(
