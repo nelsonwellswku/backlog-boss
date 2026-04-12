@@ -1,0 +1,41 @@
+name: Backend PR Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: backend/.python-version
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.0.0
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run Ruff check
+        run: uv run ruff check .
+
+      - name: Run Ruff format
+        run: uv run ruff format .
+
+      - name: Fail on formatting changes
+        run: git diff --exit-code -- .
