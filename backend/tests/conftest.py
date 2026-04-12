@@ -7,11 +7,12 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.network import Network
 from testcontainers.mssql import SqlServerContainer
 
-from app.database.engine import create_db_session, get_db_engine, reset_db_engine
+from app.database.engine import get_db_engine, reset_db_engine
 from app.settings import Settings, clear_settings_cache
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -150,9 +151,19 @@ def database_engine(database_container: None) -> Iterator[Engine]:
 
 
 @pytest.fixture
-def db_session(database_engine: Engine):
-    with create_db_session(database_engine) as session:
-        yield session
+def db_session(database_engine: Engine) -> Iterator[Session]:
+    with database_engine.connect() as connection:
+        transaction = connection.begin()
+        session = Session(
+            bind=connection,
+            join_transaction_mode="create_savepoint",
+        )
+
+        try:
+            yield session
+        finally:
+            session.close()
+            transaction.rollback()
 
 
 @pytest.fixture
