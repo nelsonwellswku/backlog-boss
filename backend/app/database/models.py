@@ -66,8 +66,14 @@ class BacklogGame(Base):
     igdb_game_id: Mapped[int] = mapped_column(
         "IgdbGameId", ForeignKey("bb.IgdbGame.Id")
     )
+    completed_on: Mapped[Optional[datetime]] = mapped_column(
+        "CompletedOn", DATETIMEOFFSET
+    )
+    removed_on: Mapped[Optional[datetime]] = mapped_column("RemovedOn", DATETIMEOFFSET)
 
-    backlog: Mapped["Backlog"] = relationship("Backlog", back_populates="backlog_games")
+    backlog: Mapped["Backlog"] = relationship(
+        "Backlog", back_populates="backlog_games", lazy="raise"
+    )
     igdb_game: Mapped["IgdbGame"] = relationship("IgdbGame", lazy="raise")
 
 

@@ -1,4 +1,3 @@
-from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from app.database.engine import DbSession
@@ -9,13 +8,14 @@ from app.database.models import (
     IgdbGame,
     IgdbGameTimeToBeat,
 )
+from app.features.api_model import ApiResponseModel
 from app.features.auth.get_current_user import CurrentUser
 from app.infrastructure.igdb_client import IgdbClientDep
 from app.infrastructure.steam_client import SteamClientDep
 
 
-class CreateMyBacklogResponse(BaseModel):
-    backlog_id: int = Field(..., serialization_alias="backlogId")
+class CreateMyBacklogResponse(ApiResponseModel):
+    backlog_id: int
 
 
 class CreateMyBacklogHandler:

@@ -1,12 +1,11 @@
-from pydantic import BaseModel, Field
-
+from app.features.api_model import ApiResponseModel
 from app.features.auth.get_current_user import CurrentUser
 
 
-class GetMeResponse(BaseModel):
-    app_user_id: int = Field(serialization_alias="appUserId")
-    steam_id: str = Field(serialization_alias="steamId")
-    persona_name: str = Field(serialization_alias="personaName")
+class GetMeResponse(ApiResponseModel):
+    app_user_id: int
+    steam_id: str
+    persona_name: str
 
 
 class GetMeHandler:
