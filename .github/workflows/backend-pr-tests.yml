@@ -28,6 +28,14 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.0.0
 
+      - name: Install SQL Server ODBC driver
+        run: |
+          curl -fsSL -O "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release && echo "${VERSION_ID}")/packages-microsoft-prod.deb"
+          sudo dpkg -i packages-microsoft-prod.deb
+          rm packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18
+
       - name: Install dependencies
         run: uv sync --frozen
 
