@@ -5,7 +5,7 @@ from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine, URL
+from sqlalchemy.engine import URL, Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.settings import Settings, get_settings

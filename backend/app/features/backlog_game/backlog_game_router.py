@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 
 from app.features.backlog_game.update_backlog_game_handler import (
+    UpdateBacklogGameHandler,
     UpdateBacklogGameRequest,
     UpdateBacklogGameResponse,
-    UpdateBacklogGameHandler,
 )
 
 backlog_game_router = APIRouter(tags=["Backlog Game"])

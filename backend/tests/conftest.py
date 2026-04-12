@@ -12,7 +12,7 @@ from testcontainers.core.network import Network
 from testcontainers.mssql import SqlServerContainer
 
 from app.database.engine import create_db_session, get_db_engine, reset_db_engine
-from app.settings import clear_settings_cache
+from app.settings import Settings, clear_settings_cache
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MIGRATIONS_ROOT = REPO_ROOT / "migrations"
@@ -153,3 +153,17 @@ def database_engine(database_container: None) -> Iterator[Engine]:
 def db_session(database_engine: Engine):
     with create_db_session(database_engine) as session:
         yield session
+
+
+@pytest.fixture
+def dummy_settings() -> Settings:
+    return Settings(
+        db_host="localhost",
+        db_user="sa",
+        db_password="password",
+        db_database="BacklogBoss",
+        twitch_client_id="twitch-client-id",
+        twitch_client_secret="twitch-client-secret",
+        steam_api_key="steam-api-key",
+        base_url="https://backlogboss.example.com/",
+    )
