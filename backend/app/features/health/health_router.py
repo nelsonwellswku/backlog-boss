@@ -1,19 +1,24 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from app.features.api_model import ApiResponseModel
+from app.features.health.get_liveness_handler import (
+    GetLivenessHandler,
+    GetLivenessResponse,
+)
+from app.features.health.get_readiness_handler import (
+    GetReadinessHandler,
+    GetReadinessResponse,
+)
 
 health_router = APIRouter(tags=["Health"])
 
 
-class HealthResponse(ApiResponseModel):
-    message: str
-
-
 @health_router.get("/api/health/liveness")
-def liveness() -> HealthResponse:
-    return HealthResponse(message="ready")
+def liveness(handler: GetLivenessHandler = Depends()) -> GetLivenessResponse:
+    return handler.handle()
 
 
 @health_router.get("/api/health/readiness")
-def readiness() -> HealthResponse:
-    return HealthResponse(message="ready")
+def readiness(
+    handler: GetReadinessHandler = Depends(),
+) -> GetReadinessResponse:
+    return handler.handle()
