@@ -34,13 +34,12 @@ export function Layout() {
                 <Typography
                   component={Link}
                   to="/my-backlog"
-                  marginLeft={5}
-                  sx={{ textDecoration: "none", color: "inherit" }}
+                  sx={{ ml: 5, textDecoration: "none", color: "inherit" }}
                 >
                   My Backlog
                 </Typography>
               ) : null}
-              <Box flexGrow={1} />
+              <Box sx={{ flexGrow: 1 }} />
               <GreetingOrLoginButton />
               {isSuccess && data?.data?.appUserId ? (
                 <Typography sx={{ mx: 1, opacity: 0.4 }}>•</Typography>
@@ -60,7 +59,7 @@ export function Layout() {
               <Typography variant="h6">
                 Copyright &copy; 2026 Nelson Wells
               </Typography>
-              <Box flexGrow={1} />
+              <Box sx={{ flexGrow: 1 }} />
               <Typography
                 component="a"
                 href="https://github.com/nelsonwellswku/backlog-boss"

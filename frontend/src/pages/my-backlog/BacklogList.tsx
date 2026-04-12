@@ -1,7 +1,7 @@
 import { memo, useState } from "react";
 import type { BacklogGameRow } from "@bb/client";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -19,7 +19,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 
 type PropType = {
   activeGames: BacklogGameRow[];
@@ -104,8 +104,8 @@ const BacklogListItem = memo(function BacklogListItem({
         slotProps={{
           primary: {
             variant: "body1",
-            fontWeight: 500,
             sx: {
+              fontWeight: 500,
               textDecoration: isCompleted ? "line-through" : "none",
             },
           },
@@ -126,7 +126,7 @@ const BacklogListItem = memo(function BacklogListItem({
               color={isCompleted ? "success" : "inherit"}
               disabled={isUpdating}
               startIcon={
-                isCompleted ? <CheckCircleIcon /> : <CheckCircleOutlineIcon />
+                isCompleted ? <CheckCircleIcon /> : <CheckCircleOutlinedIcon />
               }
               onClick={() => onToggleCompleted(game)}
             >
@@ -142,7 +142,7 @@ const BacklogListItem = memo(function BacklogListItem({
               disabled={isUpdating}
               onClick={() => onRemoveGame(game)}
             >
-              <DeleteOutlineIcon />
+              <DeleteOutlinedIcon />
             </IconButton>
           </span>
         </Tooltip>
