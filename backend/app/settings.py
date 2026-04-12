@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     db_host: str
+    db_port: int = 1433
     db_user: str
     db_password: str
     db_database: str
@@ -31,6 +32,10 @@ def get_settings():
     # type is ignored because the constructor "requires" each fields to be passed in
     # but those values are automatically provided via env vars
     return Settings()  # type: ignore
+
+
+def clear_settings_cache() -> None:
+    get_settings.cache_clear()
 
 
 AppSettings = Annotated[Settings, Depends(get_settings)]
