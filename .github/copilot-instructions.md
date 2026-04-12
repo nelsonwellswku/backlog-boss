@@ -44,7 +44,7 @@ uv run ruff format .
 
 Backend tests use Testcontainers plus a short-lived Grate container, so Docker must be available locally even when running an individual test.
 
-When creating backend tests, do not mock the SQLALchemy session or other database connections. Tests that exercise database code should _actually run the database code_.
+When creating backend tests, do not mock the SQLAlchemy session or other database connections. Tests that exercise database code should _actually run the database code_.
 
 ### Frontend (`/frontend`)
 
