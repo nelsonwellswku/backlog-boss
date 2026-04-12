@@ -67,7 +67,9 @@ def _run_grate(*, network: Network, database: str) -> None:
         )
 
 
-def _set_test_environment(*, host: str, port: int, database: str) -> dict[str, str | None]:
+def _set_test_environment(
+    *, host: str, port: int, database: str
+) -> dict[str, str | None]:
     original_env = {key: os.environ.get(key) for key in ENV_KEYS}
     os.environ.update(
         {
