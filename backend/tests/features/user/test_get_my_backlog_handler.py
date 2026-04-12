@@ -4,7 +4,13 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.database.models import AppUser, Backlog, BacklogGame, IgdbGame, IgdbGameTimeToBeat
+from app.database.models import (
+    AppUser,
+    Backlog,
+    BacklogGame,
+    IgdbGame,
+    IgdbGameTimeToBeat,
+)
 from app.features.auth.get_current_user import User
 from app.features.user.get_my_backlog_handler import GetMyBacklogHandler
 
@@ -65,7 +71,9 @@ def test_handle_returns_backlog_games_excluding_removed_entries(db_session: Sess
     rows = sorted(actual.games, key=lambda game: game.game_id)
 
     assert actual.backlog_id == backlog.backlog_id
-    assert [(row.game_id, row.title, row.time_to_beat, row.completed_on) for row in rows] == [
+    assert [
+        (row.game_id, row.title, row.time_to_beat, row.completed_on) for row in rows
+    ] == [
         (1, "Keep Me", 5400, completed_on),
         (2, "No Time", None, None),
     ]

@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 
 from app.database.models import AppUser
 
-
 TEST_STEAM_ID = "76561198000000042"
 
 

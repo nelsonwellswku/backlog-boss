@@ -39,7 +39,9 @@ def test_handle_updates_backlog_game_dates(db_session: Session):
     db_session.add_all([backlog, igdb_game])
     db_session.flush()
 
-    backlog_game = BacklogGame(backlog_id=backlog.backlog_id, igdb_game_id=igdb_game.igdb_game_id)
+    backlog_game = BacklogGame(
+        backlog_id=backlog.backlog_id, igdb_game_id=igdb_game.igdb_game_id
+    )
     db_session.add(backlog_game)
     db_session.commit()
 
@@ -53,7 +55,9 @@ def test_handle_updates_backlog_game_dates(db_session: Session):
     actual = handler.handle(backlog_game.backlog_game_id, request)
 
     persisted = db_session.scalars(
-        select(BacklogGame).where(BacklogGame.backlog_game_id == backlog_game.backlog_game_id)
+        select(BacklogGame).where(
+            BacklogGame.backlog_game_id == backlog_game.backlog_game_id
+        )
     ).one()
 
     assert actual.backlog_game_id == backlog_game.backlog_game_id
@@ -83,7 +87,9 @@ def test_handle_raises_unauthorized_for_other_users_backlog_game(db_session: Ses
     db_session.add_all([backlog, igdb_game])
     db_session.flush()
 
-    backlog_game = BacklogGame(backlog_id=backlog.backlog_id, igdb_game_id=igdb_game.igdb_game_id)
+    backlog_game = BacklogGame(
+        backlog_id=backlog.backlog_id, igdb_game_id=igdb_game.igdb_game_id
+    )
     db_session.add(backlog_game)
     db_session.commit()
 
@@ -97,4 +103,3 @@ def test_handle_raises_unauthorized_for_other_users_backlog_game(db_session: Ses
 
     assert exc_info.value.status_code == 401
     assert exc_info.value.detail == "Unauthorized"
-

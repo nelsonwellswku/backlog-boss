@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, timezone
 
-import httpx
 from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 from httpx import QueryParams
@@ -10,6 +9,7 @@ from sqlalchemy import select
 from app.database.engine import DbSession
 from app.database.models import AppSession, AppUser
 from app.features.api_model import ApiRequestModel
+from app.http_client import HttpClient
 from app.infrastructure.steam_client import SteamClientDep
 
 
@@ -27,8 +27,11 @@ class OpenIdCallbackParams(ApiRequestModel):
 
 
 class SteamCallbackHandler:
-    def __init__(self, steam: SteamClientDep, db_session: DbSession) -> None:
+    def __init__(
+        self, steam: SteamClientDep, http_client: HttpClient, db_session: DbSession
+    ) -> None:
         self.steam = steam
+        self.http_client = http_client
         self.db_session = db_session
 
     def handle(self, openid_params: "OpenIdCallbackParams"):
@@ -47,7 +50,7 @@ class SteamCallbackHandler:
             }
         )
 
-        check_auth_response = httpx.post(
+        check_auth_response = self.http_client.post(
             "https://steamcommunity.com/openid/login", params=outgoing_query_params
         )
         if (

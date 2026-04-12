@@ -50,7 +50,9 @@ def test_handle_returns_existing_backlog_without_fetching_external_data(
 
     steam_client = mocker.Mock()
     igdb_client = mocker.Mock()
-    handler = CreateMyBacklogHandler(db_session, steam_client, current_user, igdb_client)
+    handler = CreateMyBacklogHandler(
+        db_session, steam_client, current_user, igdb_client
+    )
 
     actual = handler.handle()
 
@@ -93,7 +95,9 @@ def test_handle_creates_backlog_and_adds_only_games_with_rating_and_time_to_beat
             name="New Complete Game",
             total_rating=91.0,
             external_games=[
-                ExternalGameResponse(id=2001, game=2, uid="222", external_game_source=1),
+                ExternalGameResponse(
+                    id=2001, game=2, uid="222", external_game_source=1
+                ),
                 ExternalGameResponse(
                     id=2002,
                     game=2,
@@ -113,7 +117,9 @@ def test_handle_creates_backlog_and_adds_only_games_with_rating_and_time_to_beat
             time_to_beat=None,
         ),
     ]
-    handler = CreateMyBacklogHandler(db_session, steam_client, current_user, igdb_client)
+    handler = CreateMyBacklogHandler(
+        db_session, steam_client, current_user, igdb_client
+    )
 
     actual = handler.handle()
 
@@ -121,7 +127,9 @@ def test_handle_creates_backlog_and_adds_only_games_with_rating_and_time_to_beat
         select(Backlog).where(Backlog.backlog_id == actual.backlog_id)
     ).one()
     backlog_game_ids = db_session.scalars(
-        select(BacklogGame.igdb_game_id).where(BacklogGame.backlog_id == backlog.backlog_id)
+        select(BacklogGame.igdb_game_id).where(
+            BacklogGame.backlog_id == backlog.backlog_id
+        )
     ).all()
     inserted_external_uids = db_session.scalars(
         select(IgdbExternalGame.uid).where(IgdbExternalGame.igdb_game_id == 2)
@@ -132,4 +140,3 @@ def test_handle_creates_backlog_and_adds_only_games_with_rating_and_time_to_beat
     assert inserted_external_uids == [222]
     steam_client.get_owned_games.assert_called_once_with(current_user.steam_id)
     igdb_client.get_games_by_steam_id.assert_called_once_with({222, 333})
-
