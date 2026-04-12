@@ -41,7 +41,7 @@ export function Home() {
             variant="h2"
             component="h1"
             gutterBottom
-            fontWeight="bold"
+            sx={{ fontWeight: "bold" }}
           >
             Conquer Your Gaming Backlog
           </Typography>
@@ -81,9 +81,8 @@ export function Home() {
         <Typography
           variant="h3"
           component="h2"
-          textAlign="center"
           gutterBottom
-          sx={{ mb: 5 }}
+          sx={{ mb: 5, textAlign: "center" }}
         >
           Why Backlog Boss?
         </Typography>
@@ -165,9 +164,8 @@ export function Home() {
           <Typography
             variant="h3"
             component="h2"
-            textAlign="center"
             gutterBottom
-            sx={{ mb: 4 }}
+            sx={{ mb: 4, textAlign: "center" }}
           >
             How It Works
           </Typography>

@@ -14,7 +14,7 @@ export function CreateBacklogPrompt({
       <Typography variant="h6" gutterBottom>
         You don't currently have a backlog.
       </Typography>
-      <Typography color="text.secondary" paragraph>
+      <Typography component="p" color="text.secondary" sx={{ mb: 2 }}>
         Would you like to create one?
       </Typography>
       <Button variant="contained" onClick={onCreateBacklog}>
