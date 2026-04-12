@@ -6,12 +6,11 @@ from fastapi.responses import RedirectResponse
 from httpx import QueryParams
 from pydantic import Field
 from sqlalchemy import select
-from steam_web_api import Steam
 
 from app.database.engine import DbSession
 from app.database.models import AppSession, AppUser
 from app.features.api_model import ApiRequestModel
-from app.settings import AppSettings
+from app.infrastructure.steam_client import SteamClientDep
 
 
 class OpenIdCallbackParams(ApiRequestModel):
@@ -28,8 +27,8 @@ class OpenIdCallbackParams(ApiRequestModel):
 
 
 class SteamCallbackHandler:
-    def __init__(self, settings: AppSettings, db_session: DbSession) -> None:
-        self.app_settings = settings
+    def __init__(self, steam: SteamClientDep, db_session: DbSession) -> None:
+        self.steam = steam
         self.db_session = db_session
 
     def handle(self, openid_params: "OpenIdCallbackParams"):
@@ -60,12 +59,10 @@ class SteamCallbackHandler:
 
         steam_id = openid_params.identity.split("/")[-1]
 
-        steam = Steam(self.app_settings.steam_api_key)
-
         # create the user record if it doesn't already exist
-        user_details = steam.users.get_user_details(steam_id)
-        persona_name = user_details["player"]["personaname"]
-        real_name = user_details["player"].get("realname", "")
+        user_details = self.steam.get_user_details(steam_id)
+        persona_name = user_details.persona_name
+        real_name = user_details.real_name or ""
         split_name = real_name.split(" ")
         first_name = split_name[0] if len(split_name) >= 1 else None
         last_name = split_name[-1] if len(split_name) >= 2 else None
