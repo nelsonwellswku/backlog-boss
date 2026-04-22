@@ -1,0 +1,247 @@
+name: Deploy to Azure App Service
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "GitHub environment with Azure deployment settings"
+        required: true
+        default: "PRODUCTION"
+      image_tag_source:
+        description: "Which published image should be deployed"
+        required: true
+        type: choice
+        default: latest-untagged
+        options:
+          - latest-untagged
+          - tag
+      tag_name:
+        description: "Published image tag to deploy when image_tag_source is 'tag'"
+        required: false
+        default: ""
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
+
+    permissions:
+      contents: read
+      id-token: write
+      packages: read
+
+    steps:
+      - name: Validate required deployment configuration
+        env:
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+          DB_HOST: ${{ vars.DB_HOST }}
+          DB_USER: ${{ vars.DB_USER }}
+          DB_DATABASE: ${{ vars.DB_DATABASE }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+          TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
+          STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          REQUIRED_VARS=(
+            AZURE_RESOURCE_GROUP
+            AZURE_WEBAPP_NAME
+            DB_HOST
+            DB_USER
+            DB_DATABASE
+            DB_PASSWORD
+            TWITCH_CLIENT_ID
+            TWITCH_CLIENT_SECRET
+            STEAM_API_KEY
+            AZURE_CLIENT_ID
+            AZURE_TENANT_ID
+            AZURE_SUBSCRIPTION_ID
+          )
+
+          for var_name in "${REQUIRED_VARS[@]}"; do
+            if [ -z "${!var_name}" ]; then
+              echo "Missing required GitHub configuration: ${var_name}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Resolve published image reference
+        id: image
+        run: |
+          REPOSITORY_LOWER="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+          IMAGE_TAG_SOURCE="${{ inputs.image_tag_source }}"
+          TAG_NAME="${{ inputs.tag_name }}"
+
+          case "${IMAGE_TAG_SOURCE}" in
+            latest-untagged)
+              IMAGE_TAG="latest-untagged"
+              ;;
+            tag)
+              if [ -z "${TAG_NAME}" ]; then
+                echo "tag_name is required when image_tag_source is 'tag'." >&2
+                exit 1
+              fi
+              IMAGE_TAG="${TAG_NAME}"
+              ;;
+            *)
+              echo "Unsupported image_tag_source '${IMAGE_TAG_SOURCE}'." >&2
+              exit 1
+              ;;
+          esac
+
+          if [[ ! "$IMAGE_TAG" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$ ]]; then
+            echo "Error: image tag '${IMAGE_TAG}' is not a valid Docker tag. Must start with a letter or number, contain only letters, numbers, underscores, periods, or hyphens, and be 128 characters or fewer." >&2
+            exit 1
+          fi
+
+          echo "name=${REGISTRY}/${REPOSITORY_LOWER}" >> "$GITHUB_OUTPUT"
+          echo "tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "ref=${REGISTRY}/${REPOSITORY_LOWER}:${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify published image exists
+        run: docker buildx imagetools inspect "${{ steps.image.outputs.ref }}" >/dev/null
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Update App Service container image
+        env:
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+          AZURE_WEBAPP_SLOT: ${{ vars.AZURE_WEBAPP_SLOT }}
+          GHCR_REGISTRY_USERNAME: ${{ secrets.GHCR_REGISTRY_USERNAME }}
+          GHCR_REGISTRY_PASSWORD: ${{ secrets.GHCR_REGISTRY_PASSWORD }}
+        run: |
+          SLOT_ARGS=()
+          if [ -n "${AZURE_WEBAPP_SLOT}" ] && [ "${AZURE_WEBAPP_SLOT}" != "production" ]; then
+            SLOT_ARGS+=(--slot "${AZURE_WEBAPP_SLOT}")
+          fi
+
+          REGISTRY_ARGS=(--container-registry-url "https://${REGISTRY}")
+          if [ -n "${GHCR_REGISTRY_USERNAME}" ] && [ -n "${GHCR_REGISTRY_PASSWORD}" ]; then
+            REGISTRY_ARGS+=(
+              --container-registry-user "${GHCR_REGISTRY_USERNAME}"
+              --container-registry-password "${GHCR_REGISTRY_PASSWORD}"
+            )
+          fi
+
+          az webapp config container set \
+            --name "${AZURE_WEBAPP_NAME}" \
+            --resource-group "${AZURE_RESOURCE_GROUP}" \
+            "${SLOT_ARGS[@]}" \
+            --container-image-name "${{ steps.image.outputs.ref }}" \
+            "${REGISTRY_ARGS[@]}"
+
+      - name: Ensure App Service uses port 9000
+        env:
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+          AZURE_WEBAPP_SLOT: ${{ vars.AZURE_WEBAPP_SLOT }}
+        run: |
+          SLOT_ARGS=()
+          if [ -n "${AZURE_WEBAPP_SLOT}" ] && [ "${AZURE_WEBAPP_SLOT}" != "production" ]; then
+            SLOT_ARGS+=(--slot "${AZURE_WEBAPP_SLOT}")
+          fi
+
+          az webapp config appsettings set \
+            --name "${AZURE_WEBAPP_NAME}" \
+            --resource-group "${AZURE_RESOURCE_GROUP}" \
+            "${SLOT_ARGS[@]}" \
+            --settings WEBSITES_PORT=9000
+
+      - name: Sync App Service app settings from GitHub
+        env:
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+          AZURE_WEBAPP_SLOT: ${{ vars.AZURE_WEBAPP_SLOT }}
+          DB_HOST: ${{ vars.DB_HOST }}
+          DB_PORT: ${{ vars.DB_PORT }}
+          DB_USER: ${{ vars.DB_USER }}
+          DB_DATABASE: ${{ vars.DB_DATABASE }}
+          BASE_URL: ${{ vars.BASE_URL }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+          TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
+          STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
+        run: |
+          SLOT_ARGS=()
+          if [ -n "${AZURE_WEBAPP_SLOT}" ] && [ "${AZURE_WEBAPP_SLOT}" != "production" ]; then
+            SLOT_ARGS+=(--slot "${AZURE_WEBAPP_SLOT}")
+          fi
+
+          APP_SETTINGS=(
+            "DB_HOST=${DB_HOST}"
+            "DB_USER=${DB_USER}"
+            "DB_PASSWORD=${DB_PASSWORD}"
+            "DB_DATABASE=${DB_DATABASE}"
+            "TWITCH_CLIENT_ID=${TWITCH_CLIENT_ID}"
+            "TWITCH_CLIENT_SECRET=${TWITCH_CLIENT_SECRET}"
+            "STEAM_API_KEY=${STEAM_API_KEY}"
+          )
+
+          if [ -n "${DB_PORT}" ]; then
+            APP_SETTINGS+=("DB_PORT=${DB_PORT}")
+          fi
+
+          if [ -n "${BASE_URL}" ]; then
+            APP_SETTINGS+=("BASE_URL=${BASE_URL}")
+          fi
+
+          az webapp config appsettings set \
+            --name "${AZURE_WEBAPP_NAME}" \
+            --resource-group "${AZURE_RESOURCE_GROUP}" \
+            "${SLOT_ARGS[@]}" \
+            --settings "${APP_SETTINGS[@]}"
+
+          DELETE_SETTINGS=()
+          if [ -z "${DB_PORT}" ]; then
+            DELETE_SETTINGS+=(DB_PORT)
+          fi
+
+          if [ -z "${BASE_URL}" ]; then
+            DELETE_SETTINGS+=(BASE_URL)
+          fi
+
+          if [ "${#DELETE_SETTINGS[@]}" -gt 0 ]; then
+            az webapp config appsettings delete \
+              --name "${AZURE_WEBAPP_NAME}" \
+              --resource-group "${AZURE_RESOURCE_GROUP}" \
+              "${SLOT_ARGS[@]}" \
+              --setting-names "${DELETE_SETTINGS[@]}"
+          fi
+
+      - name: Restart App Service
+        env:
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+          AZURE_WEBAPP_SLOT: ${{ vars.AZURE_WEBAPP_SLOT }}
+        run: |
+          SLOT_ARGS=()
+          if [ -n "${AZURE_WEBAPP_SLOT}" ] && [ "${AZURE_WEBAPP_SLOT}" != "production" ]; then
+            SLOT_ARGS+=(--slot "${AZURE_WEBAPP_SLOT}")
+          fi
+
+          az webapp restart \
+            --name "${AZURE_WEBAPP_NAME}" \
+            --resource-group "${AZURE_RESOURCE_GROUP}" \
+            "${SLOT_ARGS[@]}"
