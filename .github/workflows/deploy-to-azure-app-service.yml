@@ -128,15 +128,9 @@ jobs:
         env:
           AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
           AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
-          AZURE_WEBAPP_SLOT: ${{ vars.AZURE_WEBAPP_SLOT }}
           GHCR_REGISTRY_USERNAME: ${{ secrets.GHCR_REGISTRY_USERNAME }}
           GHCR_REGISTRY_PASSWORD: ${{ secrets.GHCR_REGISTRY_PASSWORD }}
         run: |
-          SLOT_ARGS=()
-          if [ -n "${AZURE_WEBAPP_SLOT}" ] && [ "${AZURE_WEBAPP_SLOT}" != "production" ]; then
-            SLOT_ARGS+=(--slot "${AZURE_WEBAPP_SLOT}")
-          fi
-
           REGISTRY_ARGS=(--container-registry-url "https://${REGISTRY}")
           if [ -n "${GHCR_REGISTRY_USERNAME}" ] && [ -n "${GHCR_REGISTRY_PASSWORD}" ]; then
             REGISTRY_ARGS+=(
@@ -148,7 +142,6 @@ jobs:
           az webapp config container set \
             --name "${AZURE_WEBAPP_NAME}" \
             --resource-group "${AZURE_RESOURCE_GROUP}" \
-            "${SLOT_ARGS[@]}" \
             --container-image-name "${{ steps.image.outputs.ref }}" \
             "${REGISTRY_ARGS[@]}"
 
@@ -156,24 +149,16 @@ jobs:
         env:
           AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
           AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
-          AZURE_WEBAPP_SLOT: ${{ vars.AZURE_WEBAPP_SLOT }}
         run: |
-          SLOT_ARGS=()
-          if [ -n "${AZURE_WEBAPP_SLOT}" ] && [ "${AZURE_WEBAPP_SLOT}" != "production" ]; then
-            SLOT_ARGS+=(--slot "${AZURE_WEBAPP_SLOT}")
-          fi
-
           az webapp config appsettings set \
             --name "${AZURE_WEBAPP_NAME}" \
             --resource-group "${AZURE_RESOURCE_GROUP}" \
-            "${SLOT_ARGS[@]}" \
             --settings WEBSITES_PORT=9000
 
       - name: Sync App Service app settings from GitHub
         env:
           AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
           AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
-          AZURE_WEBAPP_SLOT: ${{ vars.AZURE_WEBAPP_SLOT }}
           DB_HOST: ${{ vars.DB_HOST }}
           DB_PORT: ${{ vars.DB_PORT }}
           DB_USER: ${{ vars.DB_USER }}
@@ -184,11 +169,6 @@ jobs:
           TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
           STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
         run: |
-          SLOT_ARGS=()
-          if [ -n "${AZURE_WEBAPP_SLOT}" ] && [ "${AZURE_WEBAPP_SLOT}" != "production" ]; then
-            SLOT_ARGS+=(--slot "${AZURE_WEBAPP_SLOT}")
-          fi
-
           APP_SETTINGS=(
             "DB_HOST=${DB_HOST}"
             "DB_USER=${DB_USER}"
@@ -210,7 +190,6 @@ jobs:
           az webapp config appsettings set \
             --name "${AZURE_WEBAPP_NAME}" \
             --resource-group "${AZURE_RESOURCE_GROUP}" \
-            "${SLOT_ARGS[@]}" \
             --settings "${APP_SETTINGS[@]}"
 
           DELETE_SETTINGS=()
@@ -226,7 +205,6 @@ jobs:
             az webapp config appsettings delete \
               --name "${AZURE_WEBAPP_NAME}" \
               --resource-group "${AZURE_RESOURCE_GROUP}" \
-              "${SLOT_ARGS[@]}" \
               --setting-names "${DELETE_SETTINGS[@]}"
           fi
 
@@ -234,14 +212,7 @@ jobs:
         env:
           AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
           AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
-          AZURE_WEBAPP_SLOT: ${{ vars.AZURE_WEBAPP_SLOT }}
         run: |
-          SLOT_ARGS=()
-          if [ -n "${AZURE_WEBAPP_SLOT}" ] && [ "${AZURE_WEBAPP_SLOT}" != "production" ]; then
-            SLOT_ARGS+=(--slot "${AZURE_WEBAPP_SLOT}")
-          fi
-
           az webapp restart \
             --name "${AZURE_WEBAPP_NAME}" \
-            --resource-group "${AZURE_RESOURCE_GROUP}" \
-            "${SLOT_ARGS[@]}"
+            --resource-group "${AZURE_RESOURCE_GROUP}"
