@@ -72,7 +72,7 @@ jobs:
           esac
 
           if [[ ! "$IMAGE_TAG" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$ ]]; then
-            echo "Error: image tag '${IMAGE_TAG}' is not a valid Docker tag. Must start with a letter or number, contain only letters, numbers, underscores, periods, or hyphens, and be 128 characters or fewer."
+            echo "Error: image tag '${IMAGE_TAG}' is not a valid Docker tag. Must start with a letter or number, contain only letters, numbers, underscores, periods, or hyphens, and be 128 characters or fewer." >&2
             exit 1
           fi
 

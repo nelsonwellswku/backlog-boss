@@ -143,6 +143,8 @@ jobs:
             --name "${AZURE_WEBAPP_NAME}" \
             --resource-group "${AZURE_RESOURCE_GROUP}" \
             --container-image-name "${{ steps.image.outputs.ref }}" \
+            --only-show-errors \
+            --output none \
             "${REGISTRY_ARGS[@]}"
 
       - name: Ensure App Service uses port 9000
@@ -153,6 +155,8 @@ jobs:
           az webapp config appsettings set \
             --name "${AZURE_WEBAPP_NAME}" \
             --resource-group "${AZURE_RESOURCE_GROUP}" \
+            --only-show-errors \
+            --output none \
             --settings WEBSITES_PORT=9000
 
       - name: Sync App Service app settings from GitHub
@@ -190,6 +194,8 @@ jobs:
           az webapp config appsettings set \
             --name "${AZURE_WEBAPP_NAME}" \
             --resource-group "${AZURE_RESOURCE_GROUP}" \
+            --only-show-errors \
+            --output none \
             --settings "${APP_SETTINGS[@]}"
 
           DELETE_SETTINGS=()
@@ -205,6 +211,8 @@ jobs:
             az webapp config appsettings delete \
               --name "${AZURE_WEBAPP_NAME}" \
               --resource-group "${AZURE_RESOURCE_GROUP}" \
+              --only-show-errors \
+              --output none \
               --setting-names "${DELETE_SETTINGS[@]}"
           fi
 
