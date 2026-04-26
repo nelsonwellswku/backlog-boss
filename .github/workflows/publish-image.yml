@@ -2,10 +2,22 @@ name: Publish Container Image
 
 on:
   workflow_dispatch:
+    inputs:
+      ref_type:
+        description: "Publish from a branch or a tag"
+        required: true
+        type: choice
+        default: branch
+        options:
+          - branch
+          - tag
+      ref_name:
+        description: "Branch name or tag name to publish"
+        required: true
+        default: main
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-and-push:
@@ -18,10 +30,18 @@ jobs:
       id-token: write
 
     steps:
-      - name: Checkout repository
+      - name: Checkout branch
+        if: ${{ inputs.ref_type == 'branch' }}
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.ref }}
+          ref: refs/heads/${{ inputs.ref_name }}
+          fetch-depth: 0
+
+      - name: Checkout tag
+        if: ${{ inputs.ref_type == 'tag' }}
+        uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ inputs.ref_name }}
           fetch-depth: 0
 
       - name: Log in to the Container registry
@@ -31,30 +51,41 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get git tag for current commit
-        id: gittag
+      - name: Resolve image reference
+        id: image
         run: |
-          TAGS=$(git tag --points-at HEAD)
-          TAG_COUNT=$(echo "$TAGS" | grep -c . || true)
-          if [[ "$TAG_COUNT" -gt 1 ]]; then
-            echo "Error: $TAG_COUNT tags found on current commit. Expected exactly 1. Tags: $(echo $TAGS | tr '\n' ' ')"
+          REF_TYPE="${{ inputs.ref_type }}"
+          REF_NAME="${{ inputs.ref_name }}"
+          REPOSITORY_LOWER="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+
+          case "${REF_TYPE}" in
+            branch)
+              IMAGE_TAG="latest-untagged"
+              ;;
+            tag)
+              IMAGE_TAG="${REF_NAME}"
+              ;;
+            *)
+              echo "Error: unsupported ref type '${REF_TYPE}'." >&2
+              exit 1
+              ;;
+          esac
+
+          if [[ ! "$IMAGE_TAG" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$ ]]; then
+            echo "Error: image tag '${IMAGE_TAG}' is not a valid Docker tag. Must start with a letter or number, contain only letters, numbers, underscores, periods, or hyphens, and be 128 characters or fewer." >&2
             exit 1
           fi
-          TAG="${TAGS:-untagged}"
-          if [[ ! "$TAG" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$ ]]; then
-            echo "Error: git tag '$TAG' is not a valid Docker tag. Must start with a letter or number, contain only letters, numbers, underscores, periods, or hyphens, and be 128 characters or fewer."
-            exit 1
-          fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          echo "name=${REGISTRY}/${REPOSITORY_LOWER}" >> "$GITHUB_OUTPUT"
+          echo "tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ steps.image.outputs.name }}
           tags: |
-            type=raw,value=latest,enable=${{ steps.gittag.outputs.tag != 'untagged' }}
-            type=raw,value=${{ steps.gittag.outputs.tag }}
+            type=raw,value=${{ steps.image.outputs.tag }}
 
       - name: Build and push Docker image
         id: push
@@ -68,6 +99,6 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-name: ${{ steps.image.outputs.name }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
