@@ -25,7 +25,7 @@ jobs:
             -v "${{ github.workspace }}/migrations:/db" \
             --entrypoint ./grate \
             erikbra/grate:2.0.0 \
-            --connstring="Server=${{ vars.DB_HOST }};Database=${{ vars.DB_NAME }};User Id=${{ vars.DB_USER }};Password=${{ secrets.DB_PASSWORD }};TrustServerCertificate=True" \
+            --connstring="Server=${{ vars.DB_HOST }};Database=${{ vars.DB_DATABASE }};User Id=${{ vars.DB_USER }};Password=${{ secrets.DB_PASSWORD }};TrustServerCertificate=True" \
             --sqlfilesdirectory=/db \
             --databasetype=sqlserver \
             --transaction=true \

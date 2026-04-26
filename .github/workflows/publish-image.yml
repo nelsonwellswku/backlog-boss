@@ -18,7 +18,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-and-push:
@@ -52,11 +51,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve image tag
+      - name: Resolve image reference
         id: image
         run: |
           REF_TYPE="${{ inputs.ref_type }}"
           REF_NAME="${{ inputs.ref_name }}"
+          REPOSITORY_LOWER="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
 
           case "${REF_TYPE}" in
             branch)
@@ -76,13 +76,14 @@ jobs:
             exit 1
           fi
 
+          echo "name=${REGISTRY}/${REPOSITORY_LOWER}" >> "$GITHUB_OUTPUT"
           echo "tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ steps.image.outputs.name }}
           tags: |
             type=raw,value=${{ steps.image.outputs.tag }}
 
@@ -98,6 +99,6 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-name: ${{ steps.image.outputs.name }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
