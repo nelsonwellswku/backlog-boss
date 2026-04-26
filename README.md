@@ -92,3 +92,13 @@ Once running, access the application at:
 
 * [Application](http://localhost:9000)
 * [API Docs](http://localhost:9000/api/docs)
+
+## Azure OIDC Setup
+
+To create or update the Azure federated credential used by the GitHub Actions deploy workflow, run:
+
+```bash
+bash scripts/setup-azure-github-oidc.sh
+```
+
+The script configures branch-based GitHub OIDC trust for this repository, can optionally assign Azure RBAC to the service principal, and prints the repository secrets and variables you need to set in GitHub.
