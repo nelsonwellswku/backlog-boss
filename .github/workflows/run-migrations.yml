@@ -2,11 +2,6 @@ name: Run Database Migrations
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: "Target environment"
-        required: true
-        default: "PRODUCTION"
 
 jobs:
   migrate:
@@ -32,4 +27,4 @@ jobs:
             --silent=false \
             --createdatabase=true \
             --schema=bbgrate \
-            --environment=${{ inputs.environment }}
+            --environment=prod

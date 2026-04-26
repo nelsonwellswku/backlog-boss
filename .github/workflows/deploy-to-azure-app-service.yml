@@ -3,10 +3,6 @@ name: Deploy to Azure App Service
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: "GitHub environment with Azure deployment settings"
-        required: true
-        default: "PRODUCTION"
       image_tag_source:
         description: "Which published image should be deployed"
         required: true
@@ -26,9 +22,8 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
     concurrency:
-      group: deploy-${{ inputs.environment }}
+      group: deploy
       cancel-in-progress: false
 
     permissions:
