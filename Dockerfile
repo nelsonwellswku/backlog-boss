@@ -36,7 +36,7 @@ RUN DB_HOST=dummy \
     uv run python export_openapi.py
 
 # Stage 2: Frontend - Build static files
-FROM node:22-slim AS frontend-builder
+FROM node:24-slim AS frontend-builder
 WORKDIR /frontend
 # Copy package files first for better caching
 COPY frontend/package.json frontend/package-lock.json* ./
