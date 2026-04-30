@@ -7,7 +7,7 @@ from expiring_dict import ExpiringDict
 from fastapi import Depends
 from httpx import QueryParams
 from igdb.wrapper import IGDBWrapper
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.http_client import HttpClient
 from app.settings import AppSettings
@@ -47,7 +47,7 @@ class IgdbGameResponse(BaseModel):
     id: int
     name: str
     total_rating: float | None = None
-    external_games: list["ExternalGameResponse"] = []
+    external_games: list["ExternalGameResponse"] = Field(default_factory=list)
     time_to_beat: "TimeToBeatResponse | None" = None
 
 
@@ -134,6 +134,34 @@ class IgdbClient:
             return []
 
         games = [IgdbGameResponse.model_validate(game) for game in all_games]
+        return self._hydrate_games(games)
+
+    def search_games_by_name(self, name: str) -> list[IgdbGameResponse]:
+        normalized_name = name.strip()
+        if not normalized_name:
+            return []
+
+        endpoint = "games"
+        query = f"""
+            fields id, name, total_rating;
+            search {json.dumps(normalized_name)};
+            where external_games != null & external_games.external_game_source = (1);
+            limit 50;
+        """
+        response_bytes = self._api_request(endpoint, query)
+        response_json = json.loads(response_bytes)
+        games = [IgdbGameResponse.model_validate(game) for game in response_json]
+        return self._hydrate_games(games, require_external_games=True)
+
+    def _hydrate_games(
+        self,
+        games: list[IgdbGameResponse],
+        *,
+        require_external_games: bool = False,
+    ) -> list[IgdbGameResponse]:
+        if not games:
+            return []
+
         game_ids = [g.id for g in games]
         game_id_to_game = {g.id: g for g in games}
 
@@ -141,7 +169,7 @@ class IgdbClient:
         external_games.sort(key=lambda x: x.game)
         grouped_external_games = groupby(external_games, lambda x: x.game)
 
-        game_time_to_beats = self.get_game_time_to_beats([g.id for g in games])
+        game_time_to_beats = self.get_game_time_to_beats(game_ids)
         igdb_game_id_to_game_time_to_beat = {
             gttb.game_id: gttb for gttb in game_time_to_beats
         }
@@ -150,14 +178,18 @@ class IgdbClient:
             for ex in ex_games:
                 game_id_to_game[group_game_id].external_games.append(ex)
 
-        for g in games:
-            time_to_beat = igdb_game_id_to_game_time_to_beat.get(g.id, None)
+        hydrated_games: list[IgdbGameResponse] = []
+        for game in games:
+            time_to_beat = igdb_game_id_to_game_time_to_beat.get(game.id)
             if time_to_beat:
-                g.time_to_beat = time_to_beat
+                game.time_to_beat = time_to_beat
 
-        return games
+            if not require_external_games or game.external_games:
+                hydrated_games.append(game)
 
-    def get_external_games(self, igdb_game_ids: list[int]):
+        return hydrated_games
+
+    def get_external_games(self, igdb_game_ids: list[int]) -> list[ExternalGameResponse]:
         if not igdb_game_ids:
             return []
 
@@ -165,7 +197,7 @@ class IgdbClient:
         endpoint = "external_games"
         limit = 500  # IGDB max limit per request
         offset = 0
-        all_external_games = []
+        all_external_games: list[ExternalGameResponse] = []
 
         # Paginate through results
         while True:

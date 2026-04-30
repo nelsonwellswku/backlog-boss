@@ -357,3 +357,68 @@ def test_get_games_deduplicates_when_multiple_steam_games_map_to_same_igdb_game(
 
     assert len(actual[0].external_games) == 2
     assert [eg.id for eg in actual[0].external_games] == [100, 101]
+
+
+def test_search_games_by_name_is_successful(mocker: MockerFixture):
+    mock_games = [
+        {
+            "id": 1,
+            "name": "Hades II",
+            "total_rating": 93.5,
+        }
+    ]
+    mock_external_games = [
+        ExternalGameResponse(id=100, game=1, uid="1145350", external_game_source=1)
+    ]
+    mock_time_to_beat = [TimeToBeatResponse(id=10, game_id=1, normally=43200)]
+
+    igdb_wrapper_mock = mocker.Mock(spec=IGDBWrapper)
+    igdb_wrapper_mock.api_request.return_value = json.dumps(mock_games).encode("utf-8")
+
+    igdb_client = IgdbClient(igdb_wrapper_mock)
+    mocker.patch.object(
+        igdb_client, "get_external_games", return_value=mock_external_games
+    )
+    mocker.patch.object(
+        igdb_client, "get_game_time_to_beats", return_value=mock_time_to_beat
+    )
+
+    actual = igdb_client.search_games_by_name("hades")
+
+    assert actual == [
+        IgdbGameResponse(
+            id=1,
+            name="Hades II",
+            total_rating=93.5,
+            external_games=mock_external_games,
+            time_to_beat=TimeToBeatResponse(id=10, game_id=1, normally=43200),
+        )
+    ]
+    api_query = igdb_wrapper_mock.api_request.call_args.args[1]
+    assert 'search "hades";' in api_query
+    assert "external_games.external_game_source = (1)" in api_query
+
+
+def test_search_games_by_name_filters_games_without_steam_external_matches(
+    mocker: MockerFixture,
+):
+    mock_games = [
+        {"id": 1, "name": "Steam Match"},
+        {"id": 2, "name": "No Steam Mapping"},
+    ]
+    mock_external_games = [
+        ExternalGameResponse(id=100, game=1, uid="111", external_game_source=1)
+    ]
+
+    igdb_wrapper_mock = mocker.Mock(spec=IGDBWrapper)
+    igdb_wrapper_mock.api_request.return_value = json.dumps(mock_games).encode("utf-8")
+
+    igdb_client = IgdbClient(igdb_wrapper_mock)
+    mocker.patch.object(
+        igdb_client, "get_external_games", return_value=mock_external_games
+    )
+    mocker.patch.object(igdb_client, "get_game_time_to_beats", return_value=[])
+
+    actual = igdb_client.search_games_by_name("steam")
+
+    assert [(game.id, game.name) for game in actual] == [(1, "Steam Match")]

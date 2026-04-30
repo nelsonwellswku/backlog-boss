@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.features.auth.auth_router import auth_router
 from app.features.backlog_game.backlog_game_router import backlog_game_router
+from app.features.game.game_router import game_router
 from app.features.health.health_router import health_router
 from app.features.user.user_router import user_router
 from app.http_client import configure_httpx_lifespan
@@ -26,6 +27,7 @@ app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(backlog_game_router)
+app.include_router(game_router)
 
 # Serve static files and SPA fallback (only if static directory exists)
 static_dir = Path(__file__).parent / "static"
