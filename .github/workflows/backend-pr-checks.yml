@@ -4,6 +4,12 @@ on:
   pull_request:
     branches:
       - main
+  workflow_call:
+    inputs:
+      checkout_ref:
+        description: "Git ref to checkout when invoked as a reusable workflow"
+        required: false
+        type: string
 
 jobs:
   lint-and-format:
@@ -17,7 +23,14 @@ jobs:
         working-directory: backend
 
     steps:
+      - name: Checkout requested ref
+        if: ${{ inputs.checkout_ref != '' }}
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.checkout_ref }}
+
       - name: Checkout repository
+        if: ${{ inputs.checkout_ref == '' }}
         uses: actions/checkout@v6
 
       - name: Set up Python
