@@ -1,7 +1,30 @@
 name: Run Database Migrations
 
 on:
+  workflow_call:
+    inputs:
+      ref_type:
+        description: "Run migrations from a branch or a tag"
+        required: true
+        type: string
+      ref_name:
+        description: "Branch name or tag name to run migrations from"
+        required: true
+        type: string
   workflow_dispatch:
+    inputs:
+      ref_type:
+        description: "Run migrations from a branch or a tag"
+        required: true
+        type: choice
+        default: branch
+        options:
+          - branch
+          - tag
+      ref_name:
+        description: "Branch name or tag name to run migrations from"
+        required: true
+        default: main
 
 jobs:
   migrate:
@@ -11,8 +34,48 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout repository
+      - name: Validate required migration configuration
+        env:
+          DB_HOST: ${{ vars.DB_HOST }}
+          DB_USER: ${{ vars.DB_USER }}
+          DB_DATABASE: ${{ vars.DB_DATABASE }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          REF_TYPE: ${{ inputs.ref_type }}
+        run: |
+          REQUIRED_VARS=(
+            DB_HOST
+            DB_USER
+            DB_DATABASE
+            DB_PASSWORD
+          )
+
+          for var_name in "${REQUIRED_VARS[@]}"; do
+            if [ -z "${!var_name}" ]; then
+              echo "Missing required GitHub configuration: ${var_name}" >&2
+              exit 1
+            fi
+          done
+
+          case "${REF_TYPE}" in
+            branch|tag)
+              ;;
+            *)
+              echo "Unsupported ref_type '${REF_TYPE}'." >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Checkout branch
+        if: ${{ inputs.ref_type == 'branch' }}
         uses: actions/checkout@v6
+        with:
+          ref: refs/heads/${{ inputs.ref_name }}
+
+      - name: Checkout tag
+        if: ${{ inputs.ref_type == 'tag' }}
+        uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ inputs.ref_name }}
 
       - name: Run migrations
         run: |

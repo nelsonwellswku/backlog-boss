@@ -1,0 +1,106 @@
+name: Deploy Release to Azure App Service
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref_type:
+        description: "Deploy from a branch or a tag"
+        required: true
+        type: choice
+        default: branch
+        options:
+          - branch
+          - tag
+      ref_name:
+        description: "Branch name or tag name to deploy"
+        required: true
+        default: main
+
+permissions:
+  contents: read
+  packages: write
+  attestations: write
+  id-token: write
+
+concurrency:
+  group: deploy-release
+  cancel-in-progress: false
+
+jobs:
+  resolve-ref:
+    runs-on: ubuntu-latest
+    outputs:
+      checkout_ref: ${{ steps.ref.outputs.checkout_ref }}
+    steps:
+      - name: Resolve checkout ref
+        id: ref
+        run: |
+          REF_TYPE="${{ inputs.ref_type }}"
+          REF_NAME="${{ inputs.ref_name }}"
+
+          case "${REF_TYPE}" in
+            branch)
+              CHECKOUT_REF="refs/heads/${REF_NAME}"
+              ;;
+            tag)
+              CHECKOUT_REF="refs/tags/${REF_NAME}"
+              ;;
+            *)
+              echo "Unsupported ref_type '${REF_TYPE}'." >&2
+              exit 1
+              ;;
+          esac
+
+          echo "checkout_ref=${CHECKOUT_REF}" >> "$GITHUB_OUTPUT"
+
+  backend-checks:
+    needs: resolve-ref
+    uses: ./.github/workflows/backend-pr-checks.yml
+    with:
+      checkout_ref: ${{ needs.resolve-ref.outputs.checkout_ref }}
+
+  backend-tests:
+    needs: resolve-ref
+    uses: ./.github/workflows/backend-pr-tests.yml
+    with:
+      checkout_ref: ${{ needs.resolve-ref.outputs.checkout_ref }}
+
+  frontend-checks:
+    needs: resolve-ref
+    uses: ./.github/workflows/frontend-pr-checks.yml
+    with:
+      checkout_ref: ${{ needs.resolve-ref.outputs.checkout_ref }}
+
+  frontend-tests:
+    needs: resolve-ref
+    uses: ./.github/workflows/frontend-pr-tests.yml
+    with:
+      checkout_ref: ${{ needs.resolve-ref.outputs.checkout_ref }}
+
+  publish-image:
+    needs:
+      - backend-checks
+      - backend-tests
+      - frontend-checks
+      - frontend-tests
+    uses: ./.github/workflows/publish-image.yml
+    with:
+      ref_type: ${{ inputs.ref_type }}
+      ref_name: ${{ inputs.ref_name }}
+
+  run-migrations:
+    needs: publish-image
+    uses: ./.github/workflows/run-migrations.yml
+    with:
+      ref_type: ${{ inputs.ref_type }}
+      ref_name: ${{ inputs.ref_name }}
+    secrets: inherit
+
+  deploy:
+    needs:
+      - publish-image
+      - run-migrations
+    uses: ./.github/workflows/deploy-to-azure-app-service.yml
+    with:
+      image_tag: ${{ needs.publish-image.outputs.image_tag }}
+    secrets: inherit

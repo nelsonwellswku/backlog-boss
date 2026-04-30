@@ -1,6 +1,23 @@
 name: Deploy to Azure App Service
 
 on:
+  workflow_call:
+    inputs:
+      image_tag:
+        description: "Published image tag to deploy"
+        required: false
+        type: string
+        default: ""
+      image_tag_source:
+        description: "Which published image should be deployed"
+        required: false
+        type: string
+        default: ""
+      tag_name:
+        description: "Published image tag to deploy when image_tag_source is 'tag'"
+        required: false
+        type: string
+        default: ""
   workflow_dispatch:
     inputs:
       image_tag_source:
@@ -71,27 +88,33 @@ jobs:
 
       - name: Resolve published image reference
         id: image
+        env:
+          WORKFLOW_IMAGE_TAG: ${{ inputs.image_tag }}
+          IMAGE_TAG_SOURCE: ${{ inputs.image_tag_source }}
+          TAG_NAME: ${{ inputs.tag_name }}
         run: |
           REPOSITORY_LOWER="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
-          IMAGE_TAG_SOURCE="${{ inputs.image_tag_source }}"
-          TAG_NAME="${{ inputs.tag_name }}"
 
-          case "${IMAGE_TAG_SOURCE}" in
-            latest-untagged)
-              IMAGE_TAG="latest-untagged"
-              ;;
-            tag)
-              if [ -z "${TAG_NAME}" ]; then
-                echo "tag_name is required when image_tag_source is 'tag'." >&2
+          if [ -n "${WORKFLOW_IMAGE_TAG}" ]; then
+            IMAGE_TAG="${WORKFLOW_IMAGE_TAG}"
+          else
+            case "${IMAGE_TAG_SOURCE}" in
+              latest-untagged)
+                IMAGE_TAG="latest-untagged"
+                ;;
+              tag)
+                if [ -z "${TAG_NAME}" ]; then
+                  echo "tag_name is required when image_tag_source is 'tag'." >&2
+                  exit 1
+                fi
+                IMAGE_TAG="${TAG_NAME}"
+                ;;
+              *)
+                echo "Unsupported image_tag_source '${IMAGE_TAG_SOURCE}'." >&2
                 exit 1
-              fi
-              IMAGE_TAG="${TAG_NAME}"
-              ;;
-            *)
-              echo "Unsupported image_tag_source '${IMAGE_TAG_SOURCE}'." >&2
-              exit 1
-              ;;
-          esac
+                ;;
+            esac
+          fi
 
           if [[ ! "$IMAGE_TAG" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$ ]]; then
             echo "Error: image tag '${IMAGE_TAG}' is not a valid Docker tag. Must start with a letter or number, contain only letters, numbers, underscores, periods, or hyphens, and be 128 characters or fewer." >&2

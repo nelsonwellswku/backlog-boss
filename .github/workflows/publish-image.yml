@@ -1,6 +1,26 @@
 name: Publish Container Image
 
 on:
+  workflow_call:
+    inputs:
+      ref_type:
+        description: "Publish from a branch or a tag"
+        required: true
+        type: string
+      ref_name:
+        description: "Branch name or tag name to publish"
+        required: true
+        type: string
+    outputs:
+      image_name:
+        description: "Published container repository name"
+        value: ${{ jobs.build-and-push.outputs.image_name }}
+      image_tag:
+        description: "Published container tag"
+        value: ${{ jobs.build-and-push.outputs.image_tag }}
+      image_ref:
+        description: "Published container reference"
+        value: ${{ jobs.build-and-push.outputs.image_ref }}
   workflow_dispatch:
     inputs:
       ref_type:
@@ -22,6 +42,10 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    outputs:
+      image_name: ${{ steps.image.outputs.name }}
+      image_tag: ${{ steps.image.outputs.tag }}
+      image_ref: ${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
 
     permissions:
       contents: read
