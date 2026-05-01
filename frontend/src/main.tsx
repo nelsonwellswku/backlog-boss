@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import { Layout } from "@bb/layouts/Layout";
 import { Home } from "@bb/pages/home/Home";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Games } from "@bb/pages/games/Games";
 import { MyBacklog } from "@bb/pages/my-backlog/MyBacklog";
 
 const queryClient = new QueryClient();
@@ -15,6 +16,7 @@ createRoot(document.getElementById("root")!).render(
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<Home />} />
+            <Route path="games" element={<Games />} />
             <Route path="my-backlog" element={<MyBacklog />} />
           </Route>
         </Routes>

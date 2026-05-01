@@ -6,10 +6,10 @@ from app.database.models import (
     BacklogGame,
     IgdbExternalGame,
     IgdbGame,
-    IgdbGameTimeToBeat,
 )
 from app.features.api_model import ApiResponseModel
 from app.features.auth.get_current_user import CurrentUser
+from app.features.game.persist_igdb_games import persist_igdb_games
 from app.infrastructure.igdb_client import IgdbClientDep
 from app.infrastructure.steam_client import SteamClientDep
 
@@ -63,35 +63,7 @@ class CreateMyBacklogHandler:
 
         # fetch the games to insert from igdb and save them to the database
         igdb_games = self.igdb_client.get_games_by_steam_id(steam_game_ids_to_insert)
-
-        games_to_add: list[IgdbGame] = []
-        for game in igdb_games:
-            igdb_game = IgdbGame(
-                igdb_game_id=game.id, name=game.name, total_rating=game.total_rating
-            )
-            if game.time_to_beat:
-                igdb_game.time_to_beat = IgdbGameTimeToBeat(
-                    igdb_game_time_to_beat_id=game.time_to_beat.id,
-                    igdb_game_id=game.id,
-                    normally=game.time_to_beat.normally,
-                )
-            for steam_game in game.external_games:
-                try:
-                    external_game = IgdbExternalGame(
-                        igdb_external_game_id=steam_game.id,
-                        uid=int(steam_game.uid),
-                        igdb_external_game_source_id=1,
-                    )
-                    igdb_game.external_games.append(external_game)
-                except ValueError:
-                    # steam games should all have integer uids, but bad data can get into igdb sometimes
-                    # for example, the game that caused this problem had a uid of integers joined by commas
-                    pass
-
-            games_to_add.append(igdb_game)
-
-        self.db.add_all(games_to_add)
-        self.db.flush()
+        persist_igdb_games(self.db, igdb_games)
 
         # get all the steam games (and thus igdb games) the user owns
         # and add them to the backlog

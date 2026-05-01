@@ -30,11 +30,18 @@ export function Layout() {
               >
                 Backlog Boss
               </Typography>
+              <Typography
+                component={Link}
+                to="/games"
+                sx={{ ml: 5, textDecoration: "none", color: "inherit" }}
+              >
+                Games
+              </Typography>
               {isSuccess && data?.data ? (
                 <Typography
                   component={Link}
                   to="/my-backlog"
-                  sx={{ ml: 5, textDecoration: "none", color: "inherit" }}
+                  sx={{ ml: 3, textDecoration: "none", color: "inherit" }}
                 >
                   My Backlog
                 </Typography>
