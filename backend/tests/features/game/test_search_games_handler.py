@@ -133,6 +133,41 @@ def test_handle_fetches_from_igdb_persists_results_and_returns_them(
     assert persisted_external_uids == [1145350, 1145351]
 
 
+def test_handle_limits_database_matches_to_fifty(
+    db_session: Session,
+    mocker: MockerFixture,
+):
+    _create_current_user(db_session)
+    db_session.add_all(
+        [
+            IgdbGame(
+                igdb_game_id=game_id,
+                name=f"Portal {game_id:03d}",
+                total_rating=90.0,
+                external_games=[
+                    IgdbExternalGame(
+                        igdb_external_game_id=10_000 + game_id,
+                        uid=20_000 + game_id,
+                        igdb_external_game_source_id=1,
+                    )
+                ],
+            )
+            for game_id in range(1, 56)
+        ]
+    )
+    db_session.commit()
+
+    igdb_client = mocker.Mock()
+
+    actual = SearchGamesHandler(db_session, igdb_client).handle("portal")
+
+    assert len(actual.games) == 50
+    assert [row.title for row in actual.games] == [
+        f"Portal {game_id:03d}" for game_id in range(1, 51)
+    ]
+    igdb_client.search_games_by_name.assert_not_called()
+
+
 def test_handle_raises_for_blank_queries(
     db_session: Session,
     mocker: MockerFixture,

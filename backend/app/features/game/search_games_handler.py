@@ -67,6 +67,7 @@ class SearchGamesHandler:
             .where(func.lower(IgdbGame.name).contains(normalized_query))
             .group_by(IgdbGame.igdb_game_id, IgdbGame.name)
             .order_by(ordering, IgdbGame.name)
+            .limit(50)
         ).all()
         return self._load_games_by_ids(matching_game_ids)
 

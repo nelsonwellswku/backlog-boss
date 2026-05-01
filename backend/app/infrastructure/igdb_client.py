@@ -189,7 +189,9 @@ class IgdbClient:
 
         return hydrated_games
 
-    def get_external_games(self, igdb_game_ids: list[int]) -> list[ExternalGameResponse]:
+    def get_external_games(
+        self, igdb_game_ids: list[int]
+    ) -> list[ExternalGameResponse]:
         if not igdb_game_ids:
             return []
 

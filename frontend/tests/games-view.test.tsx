@@ -7,7 +7,9 @@ import { GamesView } from "../src/pages/games/GamesView";
 const noop: FormEventHandler<HTMLFormElement> = () => {};
 const noopQueryChange = () => {};
 
-function renderGamesView(overrides: Partial<ComponentProps<typeof GamesView>> = {}) {
+function renderGamesView(
+  overrides: Partial<ComponentProps<typeof GamesView>> = {},
+) {
   return renderToStaticMarkup(
     <GamesView
       errorMessage={null}
@@ -42,7 +44,7 @@ describe("GamesView", () => {
     });
 
     expect(markup).toContain("Searching…");
-    expect(markup).toContain('Searching for &quot;hades&quot;');
+    expect(markup).toContain("Searching for &quot;hades&quot;");
   });
 
   test("renders formatted results", () => {
@@ -74,6 +76,6 @@ describe("GamesView", () => {
       submittedQuery: "unknown game",
     });
 
-    expect(markup).toContain('No games found for &quot;unknown game&quot;.');
+    expect(markup).toContain("No games found for &quot;unknown game&quot;.");
   });
 });

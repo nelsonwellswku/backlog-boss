@@ -96,7 +96,8 @@ export function GamesView({
 
       {isError ? (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {errorMessage ?? "We couldn't search for games right now. Please try again."}
+          {errorMessage ??
+            "We couldn't search for games right now. Please try again."}
         </Alert>
       ) : null}
 
@@ -131,9 +132,7 @@ export function GamesView({
 
       {hasSearched && !isPending && !isError ? (
         results.length === 0 ? (
-          <Alert severity="info">
-            No games found for "{submittedQuery}".
-          </Alert>
+          <Alert severity="info">No games found for "{submittedQuery}".</Alert>
         ) : (
           <Paper elevation={2} sx={{ borderRadius: 3, overflow: "hidden" }}>
             <Box
@@ -148,8 +147,8 @@ export function GamesView({
             >
               <Typography variant="h6">Search Results</Typography>
               <Typography variant="body2" color="text.secondary">
-                {results.length} game{results.length === 1 ? "" : "s"} matching "
-                {submittedQuery}"
+                {results.length} game{results.length === 1 ? "" : "s"} matching
+                "{submittedQuery}"
               </Typography>
             </Box>
             <List sx={{ py: 0 }}>
@@ -161,7 +160,9 @@ export function GamesView({
                         <Stack
                           direction={{ xs: "column", md: "row" }}
                           spacing={1.5}
-                          sx={{ alignItems: { xs: "flex-start", md: "center" } }}
+                          sx={{
+                            alignItems: { xs: "flex-start", md: "center" },
+                          }}
                         >
                           <Typography variant="h6">{game.title}</Typography>
                           <Chip
