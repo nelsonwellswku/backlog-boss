@@ -5,9 +5,9 @@ from app.database.models import IgdbExternalGame, IgdbGame, IgdbGameTimeToBeat
 from app.infrastructure.igdb_client import IgdbGameResponse
 
 
-def persist_igdb_games(db: Session, games: list[IgdbGameResponse]) -> None:
+def persist_igdb_games(db: Session, games: list[IgdbGameResponse]) -> bool:
     if not games:
-        return
+        return False
 
     game_ids = [game.id for game in games]
     existing_game_ids = set(
@@ -70,10 +70,11 @@ def persist_igdb_games(db: Session, games: list[IgdbGameResponse]) -> None:
         games_to_add.append(igdb_game)
 
     if not games_to_add:
-        return
+        return False
 
     db.add_all(games_to_add)
     db.flush()
+    return True
 
 
 def _parse_external_uid(uid: str) -> int | None:

@@ -24,6 +24,11 @@ dev = [
     "testcontainers[mssql]>=4.14.2",
 ]
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:The @wait_container_is_ready decorator is deprecated",
+]
+
 [tool.coverage.run]
 source = ["app"]
 

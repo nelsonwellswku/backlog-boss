@@ -33,7 +33,7 @@ def _create_current_user(db_session: Session) -> User:
     )
 
 
-def test_handle_returns_database_matches_without_calling_igdb(
+def test_handle_returns_database_matches_and_still_calls_igdb(
     db_session: Session,
     mocker: MockerFixture,
 ):
@@ -65,13 +65,14 @@ def test_handle_returns_database_matches_without_calling_igdb(
     db_session.commit()
 
     igdb_client = mocker.Mock()
+    igdb_client.search_games_by_name.return_value = []
 
     actual = SearchGamesHandler(db_session, igdb_client).handle("portal")
 
     assert [(row.game_id, row.title, row.time_to_beat) for row in actual.games] == [
         (10, "Portal 2", 28800),
     ]
-    igdb_client.search_games_by_name.assert_not_called()
+    igdb_client.search_games_by_name.assert_called_once_with("portal")
 
 
 def test_handle_fetches_from_igdb_persists_results_and_returns_them(
@@ -158,6 +159,7 @@ def test_handle_limits_database_matches_to_fifty(
     db_session.commit()
 
     igdb_client = mocker.Mock()
+    igdb_client.search_games_by_name.return_value = []
 
     actual = SearchGamesHandler(db_session, igdb_client).handle("portal")
 
@@ -165,7 +167,58 @@ def test_handle_limits_database_matches_to_fifty(
     assert [row.title for row in actual.games] == [
         f"Portal {game_id:03d}" for game_id in range(1, 51)
     ]
-    igdb_client.search_games_by_name.assert_not_called()
+    igdb_client.search_games_by_name.assert_called_once_with("portal")
+
+
+def test_handle_merges_db_and_igdb_results_with_deduplication(
+    db_session: Session,
+    mocker: MockerFixture,
+):
+    _create_current_user(db_session)
+    existing_game = IgdbGame(igdb_game_id=100, name="Half-Life 2", total_rating=96.0)
+    existing_game.external_games.append(
+        IgdbExternalGame(
+            igdb_external_game_id=501,
+            uid=220,
+            igdb_external_game_source_id=1,
+        )
+    )
+    db_session.add(existing_game)
+    db_session.commit()
+
+    igdb_client = mocker.Mock()
+    igdb_client.search_games_by_name.return_value = [
+        IgdbGameResponse(
+            id=100,
+            name="Half-Life 2",
+            total_rating=96.0,
+            external_games=[
+                ExternalGameResponse(
+                    id=501, game=100, uid="220", external_game_source=1
+                )
+            ],
+            time_to_beat=None,
+        ),
+        IgdbGameResponse(
+            id=200,
+            name="Half-Life: Alyx",
+            total_rating=92.0,
+            external_games=[
+                ExternalGameResponse(
+                    id=502, game=200, uid="546560", external_game_source=1
+                )
+            ],
+            time_to_beat=TimeToBeatResponse(id=601, game_id=200, normally=43200),
+        ),
+    ]
+
+    actual = SearchGamesHandler(db_session, igdb_client).handle("half-life")
+
+    assert [(row.game_id, row.title, row.time_to_beat) for row in actual.games] == [
+        (100, "Half-Life 2", None),
+        (200, "Half-Life: Alyx", 43200),
+    ]
+    igdb_client.search_games_by_name.assert_called_once_with("half-life")
 
 
 def test_handle_raises_for_blank_queries(
