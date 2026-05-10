@@ -36,22 +36,25 @@ class SearchGamesHandler:
             )
 
         database_games = self._search_database(normalized_query)
-        if database_games:
-            return SearchGamesResponse(
-                games=[self._build_game_search_row(game) for game in database_games]
-            )
+        db_game_ids = {game.igdb_game_id for game in database_games}
+        db_game_rows = [self._build_game_search_row(game) for game in database_games]
 
         igdb_games = self.igdb_client.search_games_by_name(normalized_query)
         persist_igdb_games(self.db, igdb_games)
         if igdb_games:
             self.db.commit()
-        if not igdb_games:
-            return SearchGamesResponse(games=[])
 
-        persisted_games = self._load_games_by_ids([game.id for game in igdb_games])
-        return SearchGamesResponse(
-            games=[self._build_game_search_row(game) for game in persisted_games]
-        )
+        new_igdb_game_ids = [
+            game.id for game in igdb_games if game.id not in db_game_ids
+        ]
+        new_igdb_rows: list[GameSearchRow] = []
+        if new_igdb_game_ids:
+            new_igdb_games = self._load_games_by_ids(new_igdb_game_ids)
+            new_igdb_rows = [
+                self._build_game_search_row(game) for game in new_igdb_games
+            ]
+
+        return SearchGamesResponse(games=[*db_game_rows, *new_igdb_rows])
 
     def _search_database(self, query: str) -> list[IgdbGame]:
         normalized_query = query.lower()

@@ -1,11 +1,11 @@
 import SearchIcon from "@mui/icons-material/Search";
 import ScheduleIcon from "@mui/icons-material/Schedule";
-import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import StarIcon from "@mui/icons-material/Star";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -84,7 +84,7 @@ export function GamesView({
                 variant="contained"
                 size="large"
                 disabled={isSearchDisabled}
-                startIcon={<SearchIcon />}
+                startIcon={isPending ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
                 sx={{ minWidth: { md: 180 } }}
               >
                 {isPending ? "Searching…" : "Search"}
@@ -121,12 +121,18 @@ export function GamesView({
           variant="outlined"
           sx={{ p: 3, borderRadius: 3, bgcolor: "background.paper" }}
         >
-          <Typography variant="h6" gutterBottom>
-            Searching for "{submittedQuery}"
-          </Typography>
-          <Typography color="text.secondary">
-            Pulling matching games from the local catalog and IGDB if needed.
-          </Typography>
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+            <CircularProgress size={32} />
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Searching for "{submittedQuery}"
+              </Typography>
+              <Typography color="text.secondary">
+                Pulling matching games from the local catalog and IGDB if
+                needed.
+              </Typography>
+            </Box>
+          </Stack>
         </Paper>
       ) : null}
 
@@ -165,12 +171,6 @@ export function GamesView({
                           }}
                         >
                           <Typography variant="h6">{game.title}</Typography>
-                          <Chip
-                            size="small"
-                            color="primary"
-                            icon={<SportsEsportsIcon />}
-                            label={`IGDB #${game.gameId}`}
-                          />
                         </Stack>
                       }
                       secondary={
