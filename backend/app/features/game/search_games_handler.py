@@ -40,8 +40,7 @@ class SearchGamesHandler:
         db_game_rows = [self._build_game_search_row(game) for game in database_games]
 
         igdb_games = self.igdb_client.search_games_by_name(normalized_query)
-        persist_igdb_games(self.db, igdb_games)
-        if igdb_games:
+        if persist_igdb_games(self.db, igdb_games):
             self.db.commit()
 
         new_igdb_game_ids = [

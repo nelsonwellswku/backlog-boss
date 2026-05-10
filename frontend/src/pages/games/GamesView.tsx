@@ -84,7 +84,13 @@ export function GamesView({
                 variant="contained"
                 size="large"
                 disabled={isSearchDisabled}
-                startIcon={isPending ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
+                startIcon={
+                  isPending ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <SearchIcon />
+                  )
+                }
                 sx={{ minWidth: { md: 180 } }}
               >
                 {isPending ? "Searching…" : "Search"}
