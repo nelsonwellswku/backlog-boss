@@ -1,21 +1,14 @@
 import { useCurrentUser } from "@bb/hooks/useCurrentUser";
 import { useLogoutMutation } from "@bb/hooks/useLogOut";
 import { Link } from "@mui/material";
-import { Navigate } from "react-router";
+
 
 export function LogoutLink() {
-  const {
-    isError,
-    data: currentUserData,
-    refetch: refetchCurrentUser,
-  } = useCurrentUser(false);
+  const { isSuccess, data: currentUserData, refetch: refetchCurrentUser } =
+    useCurrentUser(false);
   const { mutate: logout } = useLogoutMutation();
 
-  if (isError) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (currentUserData?.data?.appUserId) {
+  if (isSuccess && currentUserData?.data?.appUserId) {
     return (
       <Link
         component="button"
