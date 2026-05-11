@@ -17,7 +17,8 @@ export function Games() {
   const [addedGameIds, setAddedGameIds] = useState<Set<number>>(new Set());
   const { data, isError, isPending, mutate } = useSearchGames();
   const { data: userData } = useCurrentUser(false);
-  const { data: backlogData } = useGetMyBacklog();
+  const { data: backlogData, isPending: isBacklogLoading } =
+    useGetMyBacklog();
   const {
     mutate: addBacklogGame,
     isPending: isAdding,
@@ -25,6 +26,7 @@ export function Games() {
   } = useAddBacklogGame();
 
   const isLoggedIn = !!userData?.data;
+  const hasBacklog = !!backlogData?.data;
 
   const backlogGameIds = useMemo(() => {
     if (!backlogData?.data?.games) return new Set<number>();
@@ -69,7 +71,9 @@ export function Games() {
       addingGameId={addingGameId}
       backlogGameIds={backlogGameIds}
       errorMessage={isError ? genericSearchError : null}
+      hasBacklog={hasBacklog}
       hasSearched={hasSearched}
+      isBacklogLoading={isBacklogLoading}
       isError={isError}
       isLoggedIn={isLoggedIn}
       isPending={isPending}

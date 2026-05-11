@@ -26,9 +26,10 @@ class AddBacklogGameHandler:
         )
         backlog = self.db.scalars(stmt).one_or_none()
         if not backlog:
-            backlog = Backlog(app_user_id=self.current_user.app_user_id)
-            self.db.add(backlog)
-            self.db.flush()
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND,
+                "Backlog not found. Create one first.",
+            )
 
         game = self.db.get(IgdbGame, request.game_id)
         if not game:

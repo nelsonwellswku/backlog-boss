@@ -17,7 +17,9 @@ function renderGamesView(
       addingGameId={null}
       backlogGameIds={new Set()}
       errorMessage={null}
+      hasBacklog={false}
       hasSearched={false}
+      isBacklogLoading={false}
       isError={false}
       isLoggedIn={false}
       isPending={false}
