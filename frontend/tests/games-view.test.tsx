@@ -6,16 +6,22 @@ import { GamesView } from "../src/pages/games/GamesView";
 
 const noop: FormEventHandler<HTMLFormElement> = () => {};
 const noopQueryChange = () => {};
+const noopAddToBacklog = () => {};
 
 function renderGamesView(
   overrides: Partial<ComponentProps<typeof GamesView>> = {},
 ) {
   return renderToStaticMarkup(
     <GamesView
+      addedGameIds={new Set()}
+      addingGameId={null}
+      backlogGameIds={new Set()}
       errorMessage={null}
       hasSearched={false}
       isError={false}
+      isLoggedIn={false}
       isPending={false}
+      onAddToBacklog={noopAddToBacklog}
       onQueryChange={noopQueryChange}
       onSearch={noop}
       query=""
