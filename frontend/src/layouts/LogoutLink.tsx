@@ -2,10 +2,12 @@ import { useCurrentUser } from "@bb/hooks/useCurrentUser";
 import { useLogoutMutation } from "@bb/hooks/useLogOut";
 import { Link } from "@mui/material";
 
-
 export function LogoutLink() {
-  const { isSuccess, data: currentUserData, refetch: refetchCurrentUser } =
-    useCurrentUser(false);
+  const {
+    isSuccess,
+    data: currentUserData,
+    refetch: refetchCurrentUser,
+  } = useCurrentUser(false);
   const { mutate: logout } = useLogoutMutation();
 
   if (isSuccess && currentUserData?.data?.appUserId) {
