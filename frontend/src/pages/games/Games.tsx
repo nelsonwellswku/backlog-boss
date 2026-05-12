@@ -17,8 +17,7 @@ export function Games() {
   const [addedGameIds, setAddedGameIds] = useState<Set<number>>(new Set());
   const { data, isError, isPending, mutate } = useSearchGames();
   const { data: userData } = useCurrentUser(false);
-  const { data: backlogData, isPending: isBacklogLoading } =
-    useGetMyBacklog();
+  const { data: backlogData, isPending: isBacklogLoading } = useGetMyBacklog();
   const {
     mutate: addBacklogGame,
     isPending: isAdding,
