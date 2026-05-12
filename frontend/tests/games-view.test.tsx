@@ -1,28 +1,39 @@
 import type { ComponentProps, FormEventHandler } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router";
 
 import type { GameSearchRow } from "../src/client";
 import { GamesView } from "../src/pages/games/GamesView";
 
 const noop: FormEventHandler<HTMLFormElement> = () => {};
 const noopQueryChange = () => {};
+const noopAddToBacklog = () => {};
 
 function renderGamesView(
   overrides: Partial<ComponentProps<typeof GamesView>> = {},
 ) {
   return renderToStaticMarkup(
-    <GamesView
-      errorMessage={null}
-      hasSearched={false}
-      isError={false}
-      isPending={false}
-      onQueryChange={noopQueryChange}
-      onSearch={noop}
-      query=""
-      results={[]}
-      submittedQuery=""
-      {...overrides}
-    />,
+    <MemoryRouter>
+      <GamesView
+        addedGameIds={new Set()}
+        addingGameId={null}
+        backlogGameIds={new Set()}
+        errorMessage={null}
+        hasBacklog={false}
+        hasSearched={false}
+        isBacklogLoading={false}
+        isError={false}
+        isLoggedIn={false}
+        isPending={false}
+        onAddToBacklog={noopAddToBacklog}
+        onQueryChange={noopQueryChange}
+        onSearch={noop}
+        query=""
+        results={[]}
+        submittedQuery=""
+        {...overrides}
+      />
+    </MemoryRouter>,
   );
 }
 
@@ -77,5 +88,63 @@ describe("GamesView", () => {
     });
 
     expect(markup).toContain("No games found for &quot;unknown game&quot;.");
+  });
+
+  test('shows "Create your backlog" alert when logged in but no backlog', () => {
+    const markup = renderGamesView({
+      isLoggedIn: true,
+      hasBacklog: false,
+      isBacklogLoading: false,
+    });
+
+    expect(markup).toContain("Create your backlog");
+    expect(markup).toContain("have a backlog yet");
+  });
+
+  test('shows "Add to backlog" button when logged in and results are present', () => {
+    const results: GameSearchRow[] = [
+      { gameId: 1, title: "Hades", totalRating: 91, timeToBeat: 36000 },
+    ];
+
+    const markup = renderGamesView({
+      hasSearched: true,
+      isLoggedIn: true,
+      hasBacklog: true,
+      results,
+    });
+
+    expect(markup).toContain("Add to backlog");
+  });
+
+  test('shows "In backlog" chip for a game already in the backlog', () => {
+    const results: GameSearchRow[] = [
+      { gameId: 1, title: "Hades", totalRating: 91, timeToBeat: 36000 },
+    ];
+
+    const markup = renderGamesView({
+      hasSearched: true,
+      isLoggedIn: true,
+      hasBacklog: true,
+      backlogGameIds: new Set([1]),
+      results,
+    });
+
+    expect(markup).toContain("In backlog");
+  });
+
+  test('shows "Adding…" button while a game is being added', () => {
+    const results: GameSearchRow[] = [
+      { gameId: 1, title: "Hades", totalRating: 91, timeToBeat: 36000 },
+    ];
+
+    const markup = renderGamesView({
+      hasSearched: true,
+      isLoggedIn: true,
+      hasBacklog: true,
+      addingGameId: 1,
+      results,
+    });
+
+    expect(markup).toContain("Adding…");
   });
 });

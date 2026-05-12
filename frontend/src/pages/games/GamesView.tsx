@@ -1,5 +1,7 @@
-import SearchIcon from "@mui/icons-material/Search";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import SearchIcon from "@mui/icons-material/Search";
 import StarIcon from "@mui/icons-material/Star";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -7,6 +9,7 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
+import Link from "@mui/material/Link";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
@@ -15,14 +18,22 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { FormEventHandler } from "react";
+import { Link as RouterLink } from "react-router";
 
 import type { GameSearchRow } from "@bb/client";
 
 type GamesViewProps = {
+  addedGameIds: Set<number>;
+  addingGameId: number | null;
+  backlogGameIds: Set<number>;
   errorMessage: string | null;
+  hasBacklog: boolean;
   hasSearched: boolean;
+  isBacklogLoading: boolean;
   isError: boolean;
+  isLoggedIn: boolean;
   isPending: boolean;
+  onAddToBacklog: (gameId: number) => void;
   onQueryChange: (value: string) => void;
   onSearch: FormEventHandler<HTMLFormElement>;
   query: string;
@@ -31,10 +42,17 @@ type GamesViewProps = {
 };
 
 export function GamesView({
+  addedGameIds,
+  addingGameId,
+  backlogGameIds,
   errorMessage,
+  hasBacklog,
   hasSearched,
+  isBacklogLoading,
   isError,
+  isLoggedIn,
   isPending,
+  onAddToBacklog,
   onQueryChange,
   onSearch,
   query,
@@ -107,6 +125,15 @@ export function GamesView({
         </Alert>
       ) : null}
 
+      {isLoggedIn && !hasBacklog && !isBacklogLoading ? (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          You don&apos;t have a backlog yet.{" "}
+          <Link component={RouterLink} to="/my-backlog">
+            Create your backlog
+          </Link>
+        </Alert>
+      ) : null}
+
       {!hasSearched && !isPending ? (
         <Paper
           variant="outlined"
@@ -166,7 +193,35 @@ export function GamesView({
             <List sx={{ py: 0 }}>
               {results.map((game, index) => (
                 <Box key={game.gameId}>
-                  <ListItem sx={{ py: 2.5, px: 3 }}>
+                  <ListItem
+                    sx={{ py: 2.5, px: 3 }}
+                    secondaryAction={
+                      isLoggedIn && hasBacklog ? (
+                        backlogGameIds.has(game.gameId) ||
+                        addedGameIds.has(game.gameId) ? (
+                          <Chip
+                            size="small"
+                            icon={<CheckCircleIcon />}
+                            label="In backlog"
+                            color="success"
+                            variant="outlined"
+                          />
+                        ) : (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            disabled={addingGameId === game.gameId}
+                            startIcon={<PlaylistAddIcon />}
+                            onClick={() => onAddToBacklog(game.gameId)}
+                          >
+                            {addingGameId === game.gameId
+                              ? "Adding…"
+                              : "Add to backlog"}
+                          </Button>
+                        )
+                      ) : null
+                    }
+                  >
                     <ListItemText
                       primary={
                         <Stack

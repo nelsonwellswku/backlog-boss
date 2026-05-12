@@ -19,7 +19,7 @@ import { useCurrentUser } from "@bb/hooks/useCurrentUser";
 import { Link } from "react-router";
 
 export function Home() {
-  const { isSuccess, data } = useCurrentUser();
+  const { isSuccess, data } = useCurrentUser(false);
   const isLoggedIn = isSuccess && data?.data;
 
   return (
