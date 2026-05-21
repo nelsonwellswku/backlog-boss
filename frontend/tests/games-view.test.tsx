@@ -6,7 +6,8 @@ import type { GameSearchRow } from "../src/client";
 import { GamesView } from "../src/pages/games/GamesView";
 
 const noopAddToBacklog = () => {};
-const noopSearch = async () => {};
+const noopSearch = async (): Promise<GameSearchRow[]> => [];
+const noopOnSubmitSuccess = () => {};
 
 function renderGamesView(
   overrides: Partial<ComponentProps<typeof GamesView>> = {},
@@ -26,6 +27,7 @@ function renderGamesView(
         isPending={false}
         onAddToBacklog={noopAddToBacklog}
         onSearch={noopSearch}
+        onSubmitSuccess={noopOnSubmitSuccess}
         results={[]}
         submittedQuery=""
         {...overrides}

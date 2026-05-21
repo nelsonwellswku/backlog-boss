@@ -35,9 +35,10 @@ export function Games() {
   const results: GameSearchRow[] = data?.data?.games ?? [];
   const hasSearched = submittedQuery.length > 0;
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = async (query: string): Promise<GameSearchRow[]> => {
     setSubmittedQuery(query);
-    await mutateAsync({ query });
+    const result = await mutateAsync({ query });
+    return result.data?.games ?? [];
   };
 
   const handleAddToBacklog = (gameId: number) => {
@@ -69,6 +70,7 @@ export function Games() {
       isPending={isPending}
       onAddToBacklog={handleAddToBacklog}
       onSearch={handleSearch}
+      onSubmitSuccess={() => {}}
       results={results}
       submittedQuery={submittedQuery}
     />

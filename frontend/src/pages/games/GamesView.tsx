@@ -1,7 +1,6 @@
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import ScheduleIcon from "@mui/icons-material/Schedule";
-import SearchIcon from "@mui/icons-material/Search";
 import StarIcon from "@mui/icons-material/Star";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -15,12 +14,11 @@ import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useForm } from "@tanstack/react-form";
 import { Link as RouterLink } from "react-router";
 
 import type { GameSearchRow } from "@bb/client";
+import { GameSearchForm } from "@bb/pages/games/GameSearchForm";
 
 type GamesViewProps = {
   addedGameIds: Set<number>;
@@ -34,7 +32,8 @@ type GamesViewProps = {
   isLoggedIn: boolean;
   isPending: boolean;
   onAddToBacklog: (gameId: number) => void;
-  onSearch: (query: string) => Promise<void>;
+  onSearch: (query: string) => Promise<GameSearchRow[]>;
+  onSubmitSuccess: (results: GameSearchRow[]) => void;
   results: GameSearchRow[];
   submittedQuery: string;
 };
@@ -52,103 +51,17 @@ export function GamesView({
   isPending,
   onAddToBacklog,
   onSearch,
+  onSubmitSuccess,
   results,
   submittedQuery,
 }: GamesViewProps) {
-  const form = useForm({
-    defaultValues: { query: "" },
-    onSubmit: async ({ value }) => {
-      await onSearch(value.query);
-    },
-  });
-
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", mt: 4 }}>
-      <Paper
-        elevation={3}
-        sx={{
-          p: { xs: 3, md: 4 },
-          mb: 4,
-          borderRadius: 3,
-          background:
-            "linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(118,75,162,0.12) 100%)",
-        }}
-      >
-        <Stack spacing={3}>
-          <Box>
-            <Typography
-              variant="h3"
-              component="h1"
-              gutterBottom
-              sx={{ fontWeight: "bold" }}
-            >
-              Discover Games
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Search the Backlog Boss catalog and, when needed, pull fresh Steam
-              game data from IGDB.
-            </Typography>
-          </Box>
-
-          <Box
-            component="form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              void form.handleSubmit();
-            }}
-          >
-            <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-              <form.Field
-                name="query"
-                validators={{
-                  onChange: ({ value }) =>
-                    value.trim().length === 0 ? "Required" : undefined,
-                }}
-              >
-                {(field) => (
-                  <TextField
-                    fullWidth
-                    label="Game name"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    onBlur={field.handleBlur}
-                  />
-                )}
-              </form.Field>
-              <form.Subscribe
-                selector={(state) =>
-                  [state.values.query, state.isSubmitting] as const
-                }
-              >
-                {([query, isSubmitting]) => {
-                  const isLoading = isSubmitting || isPending;
-                  const isSearchDisabled =
-                    query.trim().length === 0 || isLoading;
-                  return (
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      size="large"
-                      disabled={isSearchDisabled}
-                      startIcon={
-                        isLoading ? (
-                          <CircularProgress size={20} color="inherit" />
-                        ) : (
-                          <SearchIcon />
-                        )
-                      }
-                      sx={{ minWidth: { md: 180 } }}
-                    >
-                      {isLoading ? "Searching…" : "Search"}
-                    </Button>
-                  );
-                }}
-              </form.Subscribe>
-            </Stack>
-          </Box>
-        </Stack>
-      </Paper>
+      <GameSearchForm
+        onSearch={onSearch}
+        isPending={isPending}
+        onSubmitSuccess={onSubmitSuccess}
+      />
 
       {isError ? (
         <Alert severity="error" sx={{ mb: 3 }}>
