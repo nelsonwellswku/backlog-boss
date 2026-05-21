@@ -17,7 +17,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import type { FormEventHandler } from "react";
+import { useForm } from "@tanstack/react-form";
 import { Link as RouterLink } from "react-router";
 
 import type { GameSearchRow } from "@bb/client";
@@ -34,9 +34,7 @@ type GamesViewProps = {
   isLoggedIn: boolean;
   isPending: boolean;
   onAddToBacklog: (gameId: number) => void;
-  onQueryChange: (value: string) => void;
-  onSearch: FormEventHandler<HTMLFormElement>;
-  query: string;
+  onSearch: (query: string) => Promise<void>;
   results: GameSearchRow[];
   submittedQuery: string;
 };
@@ -53,13 +51,16 @@ export function GamesView({
   isLoggedIn,
   isPending,
   onAddToBacklog,
-  onQueryChange,
   onSearch,
-  query,
   results,
   submittedQuery,
 }: GamesViewProps) {
-  const isSearchDisabled = query.trim().length === 0 || isPending;
+  const form = useForm({
+    defaultValues: { query: "" },
+    onSubmit: async ({ value }) => {
+      await onSearch(value.query);
+    },
+  });
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", mt: 4 }}>
@@ -89,30 +90,61 @@ export function GamesView({
             </Typography>
           </Box>
 
-          <Box component="form" onSubmit={onSearch}>
+          <Box
+            component="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void form.handleSubmit();
+            }}
+          >
             <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-              <TextField
-                fullWidth
-                label="Game name"
-                value={query}
-                onChange={(event) => onQueryChange(event.target.value)}
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                disabled={isSearchDisabled}
-                startIcon={
-                  isPending ? (
-                    <CircularProgress size={20} color="inherit" />
-                  ) : (
-                    <SearchIcon />
-                  )
-                }
-                sx={{ minWidth: { md: 180 } }}
+              <form.Field
+                name="query"
+                validators={{
+                  onChange: ({ value }) =>
+                    value.trim().length === 0 ? "Required" : undefined,
+                }}
               >
-                {isPending ? "Searching…" : "Search"}
-              </Button>
+                {(field) => (
+                  <TextField
+                    fullWidth
+                    label="Game name"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                  />
+                )}
+              </form.Field>
+              <form.Subscribe
+                selector={(state) =>
+                  [state.values.query, state.isSubmitting] as const
+                }
+              >
+                {([query, isSubmitting]) => {
+                  const isLoading = isSubmitting || isPending;
+                  const isSearchDisabled =
+                    query.trim().length === 0 || isLoading;
+                  return (
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      disabled={isSearchDisabled}
+                      startIcon={
+                        isLoading ? (
+                          <CircularProgress size={20} color="inherit" />
+                        ) : (
+                          <SearchIcon />
+                        )
+                      }
+                      sx={{ minWidth: { md: 180 } }}
+                    >
+                      {isLoading ? "Searching…" : "Search"}
+                    </Button>
+                  );
+                }}
+              </form.Subscribe>
             </Stack>
           </Box>
         </Stack>

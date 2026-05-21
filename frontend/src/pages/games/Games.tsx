@@ -1,4 +1,3 @@
-import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 
 import type { GameSearchRow } from "@bb/client";
@@ -12,10 +11,9 @@ const genericSearchError =
   "We couldn't search for games right now. Please try again.";
 
 export function Games() {
-  const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [addedGameIds, setAddedGameIds] = useState<Set<number>>(new Set());
-  const { data, isError, isPending, mutate } = useSearchGames();
+  const { data, isError, isPending, mutateAsync } = useSearchGames();
   const { data: userData } = useCurrentUser(false);
   const { data: backlogData, isPending: isBacklogLoading } = useGetMyBacklog();
   const {
@@ -37,16 +35,9 @@ export function Games() {
   const results: GameSearchRow[] = data?.data?.games ?? [];
   const hasSearched = submittedQuery.length > 0;
 
-  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const trimmedQuery = query.trim();
-    if (!trimmedQuery) {
-      return;
-    }
-
-    setSubmittedQuery(trimmedQuery);
-    mutate({ query: trimmedQuery });
+  const handleSearch = async (query: string) => {
+    setSubmittedQuery(query);
+    await mutateAsync({ query });
   };
 
   const handleAddToBacklog = (gameId: number) => {
@@ -77,9 +68,7 @@ export function Games() {
       isLoggedIn={isLoggedIn}
       isPending={isPending}
       onAddToBacklog={handleAddToBacklog}
-      onQueryChange={setQuery}
       onSearch={handleSearch}
-      query={query}
       results={results}
       submittedQuery={submittedQuery}
     />

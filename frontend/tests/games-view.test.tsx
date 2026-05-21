@@ -1,13 +1,12 @@
-import type { ComponentProps, FormEventHandler } from "react";
+import type { ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router";
 
 import type { GameSearchRow } from "../src/client";
 import { GamesView } from "../src/pages/games/GamesView";
 
-const noop: FormEventHandler<HTMLFormElement> = () => {};
-const noopQueryChange = () => {};
 const noopAddToBacklog = () => {};
+const noopSearch = async () => {};
 
 function renderGamesView(
   overrides: Partial<ComponentProps<typeof GamesView>> = {},
@@ -26,9 +25,7 @@ function renderGamesView(
         isLoggedIn={false}
         isPending={false}
         onAddToBacklog={noopAddToBacklog}
-        onQueryChange={noopQueryChange}
-        onSearch={noop}
-        query=""
+        onSearch={noopSearch}
         results={[]}
         submittedQuery=""
         {...overrides}
@@ -51,7 +48,6 @@ describe("GamesView", () => {
       hasSearched: true,
       isPending: true,
       submittedQuery: "hades",
-      query: "hades",
     });
 
     expect(markup).toContain("Searching…");
