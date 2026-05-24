@@ -203,9 +203,7 @@ describe("Games", () => {
     );
 
     // After submit, hasSearched=true and results are available
-    fireEvent.click(
-      screen.getByRole("button", { name: /add to backlog/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /add to backlog/i }));
 
     expect(mockAddMutate).toHaveBeenCalledWith(
       { gameId: 1 },

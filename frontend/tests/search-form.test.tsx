@@ -24,9 +24,7 @@ describe("SearchForm", () => {
   test("renders the search field and button", () => {
     renderSearchForm();
     expect(screen.getByLabelText("Game name")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /search/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /search/i })).toBeInTheDocument();
   });
 
   test("search button is disabled when query is empty", () => {
