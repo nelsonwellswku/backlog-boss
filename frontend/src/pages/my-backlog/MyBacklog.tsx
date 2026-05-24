@@ -25,7 +25,7 @@ export function MyBacklog() {
     isPending: isUpdating,
     variables: updateVariables,
   } = useUpdateBacklogGame();
-  const [sortType, setSortType] = useState<SortType>(null);
+  const [sortType, setSortType] = useState<SortType>("score");
   const [showCreating, setShowCreating] = useState(false);
   const [completedInSessionIds, setCompletedInSessionIds] = useState<number[]>(
     [],

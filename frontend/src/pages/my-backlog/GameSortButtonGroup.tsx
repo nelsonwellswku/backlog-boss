@@ -24,19 +24,19 @@ export function GameSortButtonGroup({ sortType, setSortType }: PropType) {
       </Typography>
       <ButtonGroup variant="outlined" size="small">
         <Button
-          onClick={() => setSortType(sortType === "score" ? null : "score")}
+          onClick={() => setSortType("score")}
           variant={sortType === "score" ? "contained" : "outlined"}
         >
           ⭐ Highest Score
         </Button>
         <Button
-          onClick={() => setSortType(sortType === "time" ? null : "time")}
+          onClick={() => setSortType("time")}
           variant={sortType === "time" ? "contained" : "outlined"}
         >
           ⏱️ Shortest Time
         </Button>
         <Button
-          onClick={() => setSortType(sortType === "blended" ? null : "blended")}
+          onClick={() => setSortType("blended")}
           variant={sortType === "blended" ? "contained" : "outlined"}
         >
           🎯 Blended
