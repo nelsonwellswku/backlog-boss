@@ -61,7 +61,7 @@ export function GameListItem({
         }
       >
         <ListItemText
-          secondaryTypographyProps={{ component: "div" }}
+          slotProps={{ secondary: { component: "div" } }}
           primary={
             <Stack
               direction={{ xs: "column", md: "row" }}
