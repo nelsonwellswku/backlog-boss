@@ -25,3 +25,6 @@ dist-ssr
 
 # generated open api client
 src/client/*
+
+# coverage from vitest
+coverage/*
