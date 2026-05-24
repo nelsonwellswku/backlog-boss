@@ -147,4 +147,39 @@ describe("GamesView", () => {
 
     expect(markup).toContain("Adding…");
   });
+
+  test("renders error alert when search errors and no custom message", () => {
+    const markup = renderGamesView({
+      isError: true,
+      errorMessage: null,
+    });
+
+    expect(markup).toContain(
+      "We couldn&#x27;t search for games right now. Please try again.",
+    );
+  });
+
+  test("renders custom error message when provided", () => {
+    const markup = renderGamesView({
+      isError: true,
+      errorMessage: "Custom error message",
+    });
+
+    expect(markup).toContain("Custom error message");
+  });
+
+  test("renders multiple results with pluralized text", () => {
+    const results: GameSearchRow[] = [
+      { gameId: 1, title: "Hades", totalRating: 91, timeToBeat: 36000 },
+      { gameId: 2, title: "Hades II", totalRating: 93, timeToBeat: 43200 },
+    ];
+
+    const markup = renderGamesView({
+      hasSearched: true,
+      results,
+      submittedQuery: "hades",
+    });
+
+    expect(markup).toContain("2 games matching");
+  });
 });
