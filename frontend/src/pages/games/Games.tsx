@@ -1,11 +1,19 @@
 import { useMemo, useState } from "react";
 
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+
 import type { GameSearchRow } from "@bb/client";
 import { useAddBacklogGame } from "@bb/hooks/useAddBacklogGame";
 import { useCurrentUser } from "@bb/hooks/useCurrentUser";
 import { useGetMyBacklog } from "@bb/hooks/useGetMyBacklog";
 import { useSearchGames } from "@bb/hooks/useSearchGames";
-import { GamesView } from "@bb/pages/games/GamesView";
+import { GameSearchForm } from "@bb/pages/games/GameSearchForm";
+import { NoBacklogAlert } from "@bb/pages/games/NoBacklogAlert";
+import { NoResultsAlert } from "@bb/pages/games/NoResultsAlert";
+import { SearchInstructions } from "@bb/pages/games/SearchInstructions";
+import { SearchLoadingState } from "@bb/pages/games/SearchLoadingState";
+import { SearchResults } from "@bb/pages/games/SearchResults";
 
 const genericSearchError =
   "We couldn't search for games right now. Please try again.";
@@ -57,22 +65,41 @@ export function Games() {
   };
 
   return (
-    <GamesView
-      addedGameIds={addedGameIds}
-      addingGameId={addingGameId}
-      backlogGameIds={backlogGameIds}
-      errorMessage={isError ? genericSearchError : null}
-      hasBacklog={hasBacklog}
-      hasSearched={hasSearched}
-      isBacklogLoading={isBacklogLoading}
-      isError={isError}
-      isLoggedIn={isLoggedIn}
-      isPending={isPending}
-      onAddToBacklog={handleAddToBacklog}
-      onSearch={handleSearch}
-      onSubmitSuccess={() => {}}
-      results={results}
-      submittedQuery={submittedQuery}
-    />
+    <Box sx={{ maxWidth: 900, mx: "auto", mt: 4 }}>
+      <GameSearchForm
+        onSearch={handleSearch}
+        isPending={isPending}
+        onSubmitSuccess={() => {}}
+      />
+
+      {isError ? (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {genericSearchError}
+        </Alert>
+      ) : null}
+
+      {isLoggedIn && !hasBacklog && !isBacklogLoading ? <NoBacklogAlert /> : null}
+
+      {!hasSearched && !isPending ? <SearchInstructions /> : null}
+
+      {isPending ? <SearchLoadingState submittedQuery={submittedQuery} /> : null}
+
+      {hasSearched && !isPending && !isError ? (
+        results.length === 0 ? (
+          <NoResultsAlert submittedQuery={submittedQuery} />
+        ) : (
+          <SearchResults
+            results={results}
+            submittedQuery={submittedQuery}
+            backlogGameIds={backlogGameIds}
+            addedGameIds={addedGameIds}
+            addingGameId={addingGameId}
+            isLoggedIn={isLoggedIn}
+            hasBacklog={hasBacklog}
+            onAddToBacklog={handleAddToBacklog}
+          />
+        )
+      ) : null}
+    </Box>
   );
 }
