@@ -1,11 +1,11 @@
-import type { ComponentProps, FormEventHandler } from "react";
+import type { ComponentProps, SubmitEventHandler } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router";
 
 import type { GameSearchRow } from "../src/client";
 import { GamesView } from "../src/pages/games/GamesView";
 
-const noop: FormEventHandler<HTMLFormElement> = () => {};
+const noop: SubmitEventHandler<HTMLFormElement> = () => {};
 const noopQueryChange = () => {};
 const noopAddToBacklog = () => {};
 

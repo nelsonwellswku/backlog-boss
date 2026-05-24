@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { useMemo, useState } from "react";
 
 import type { GameSearchRow } from "@bb/client";
@@ -12,10 +12,15 @@ const genericSearchError =
   "We couldn't search for games right now. Please try again.";
 
 export function Games() {
-  const [query, setQuery] = useState("");
-  const [submittedQuery, setSubmittedQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [submittedSearchQuery, setSubmittedSearchQuery] = useState("");
   const [addedGameIds, setAddedGameIds] = useState<Set<number>>(new Set());
-  const { data, isError, isPending, mutate } = useSearchGames();
+  const {
+    data: searchGamesData,
+    isError: searchIsError,
+    isPending: searchIsPending,
+    mutate: searchGames,
+  } = useSearchGames();
   const { data: userData } = useCurrentUser(false);
   const { data: backlogData, isPending: isBacklogLoading } = useGetMyBacklog();
   const {
@@ -34,19 +39,19 @@ export function Games() {
 
   const addingGameId = isAdding && addVariables ? addVariables.gameId : null;
 
-  const results: GameSearchRow[] = data?.data?.games ?? [];
-  const hasSearched = submittedQuery.length > 0;
+  const results: GameSearchRow[] = searchGamesData?.data?.games ?? [];
+  const hasSearched = submittedSearchQuery.length > 0;
 
-  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+  const handleSearch = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const trimmedQuery = query.trim();
+    const trimmedQuery = searchQuery.trim();
     if (!trimmedQuery) {
       return;
     }
 
-    setSubmittedQuery(trimmedQuery);
-    mutate({ query: trimmedQuery });
+    setSubmittedSearchQuery(trimmedQuery);
+    searchGames({ query: trimmedQuery });
   };
 
   const handleAddToBacklog = (gameId: number) => {
@@ -69,19 +74,19 @@ export function Games() {
       addedGameIds={addedGameIds}
       addingGameId={addingGameId}
       backlogGameIds={backlogGameIds}
-      errorMessage={isError ? genericSearchError : null}
+      errorMessage={searchIsError ? genericSearchError : null}
       hasBacklog={hasBacklog}
       hasSearched={hasSearched}
       isBacklogLoading={isBacklogLoading}
-      isError={isError}
+      isError={searchIsError}
       isLoggedIn={isLoggedIn}
-      isPending={isPending}
+      isPending={searchIsPending}
       onAddToBacklog={handleAddToBacklog}
-      onQueryChange={setQuery}
+      onQueryChange={setSearchQuery}
       onSearch={handleSearch}
-      query={query}
+      query={searchQuery}
       results={results}
-      submittedQuery={submittedQuery}
+      submittedQuery={submittedSearchQuery}
     />
   );
 }

@@ -1,26 +1,16 @@
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
-import ScheduleIcon from "@mui/icons-material/Schedule";
-import SearchIcon from "@mui/icons-material/Search";
-import StarIcon from "@mui/icons-material/Star";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
-import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import type { FormEventHandler } from "react";
+import type { SubmitEventHandler } from "react";
 import { Link as RouterLink } from "react-router";
 
 import type { GameSearchRow } from "@bb/client";
+import { SearchForm } from "@bb/pages/games/SearchForm";
+import { SearchResults } from "@bb/pages/games/SearchResults";
 
 type GamesViewProps = {
   addedGameIds: Set<number>;
@@ -35,7 +25,7 @@ type GamesViewProps = {
   isPending: boolean;
   onAddToBacklog: (gameId: number) => void;
   onQueryChange: (value: string) => void;
-  onSearch: FormEventHandler<HTMLFormElement>;
+  onSearch: SubmitEventHandler<HTMLFormElement>;
   query: string;
   results: GameSearchRow[];
   submittedQuery: string;
@@ -59,8 +49,6 @@ export function GamesView({
   results,
   submittedQuery,
 }: GamesViewProps) {
-  const isSearchDisabled = query.trim().length === 0 || isPending;
-
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", mt: 4 }}>
       <Paper
@@ -89,32 +77,12 @@ export function GamesView({
             </Typography>
           </Box>
 
-          <Box component="form" onSubmit={onSearch}>
-            <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-              <TextField
-                fullWidth
-                label="Game name"
-                value={query}
-                onChange={(event) => onQueryChange(event.target.value)}
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                disabled={isSearchDisabled}
-                startIcon={
-                  isPending ? (
-                    <CircularProgress size={20} color="inherit" />
-                  ) : (
-                    <SearchIcon />
-                  )
-                }
-                sx={{ minWidth: { md: 180 } }}
-              >
-                {isPending ? "Searching…" : "Search"}
-              </Button>
-            </Stack>
-          </Box>
+          <SearchForm
+            query={query}
+            isPending={isPending}
+            onQueryChange={onQueryChange}
+            onSearch={onSearch}
+          />
         </Stack>
       </Paper>
 
@@ -170,104 +138,16 @@ export function GamesView({
       ) : null}
 
       {hasSearched && !isPending && !isError ? (
-        results.length === 0 ? (
-          <Alert severity="info">No games found for "{submittedQuery}".</Alert>
-        ) : (
-          <Paper elevation={2} sx={{ borderRadius: 3, overflow: "hidden" }}>
-            <Box
-              sx={{
-                px: 3,
-                py: 2,
-                borderBottom: "1px solid",
-                borderColor: "divider",
-                background:
-                  "linear-gradient(180deg, rgba(25,118,210,0.08) 0%, rgba(25,118,210,0.02) 100%)",
-              }}
-            >
-              <Typography variant="h6">Search Results</Typography>
-              <Typography variant="body2" color="text.secondary">
-                {results.length} game{results.length === 1 ? "" : "s"} matching
-                "{submittedQuery}"
-              </Typography>
-            </Box>
-            <List sx={{ py: 0 }}>
-              {results.map((game, index) => (
-                <Box key={game.gameId}>
-                  <ListItem
-                    sx={{ py: 2.5, px: 3 }}
-                    secondaryAction={
-                      isLoggedIn && hasBacklog ? (
-                        backlogGameIds.has(game.gameId) ||
-                        addedGameIds.has(game.gameId) ? (
-                          <Chip
-                            size="small"
-                            icon={<CheckCircleIcon />}
-                            label="In backlog"
-                            color="success"
-                            variant="outlined"
-                          />
-                        ) : (
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            disabled={addingGameId === game.gameId}
-                            startIcon={<PlaylistAddIcon />}
-                            onClick={() => onAddToBacklog(game.gameId)}
-                          >
-                            {addingGameId === game.gameId
-                              ? "Adding…"
-                              : "Add to backlog"}
-                          </Button>
-                        )
-                      ) : null
-                    }
-                  >
-                    <ListItemText
-                      primary={
-                        <Stack
-                          direction={{ xs: "column", md: "row" }}
-                          spacing={1.5}
-                          sx={{
-                            alignItems: { xs: "flex-start", md: "center" },
-                          }}
-                        >
-                          <Typography variant="h6">{game.title}</Typography>
-                        </Stack>
-                      }
-                      secondary={
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          sx={{ mt: 1.5, flexWrap: "wrap", rowGap: 1 }}
-                        >
-                          <Chip
-                            size="small"
-                            icon={<StarIcon />}
-                            label={
-                              game.totalRating !== null
-                                ? `${Math.round(game.totalRating)}/100 rating`
-                                : "Rating unavailable"
-                            }
-                          />
-                          <Chip
-                            size="small"
-                            icon={<ScheduleIcon />}
-                            label={
-                              game.timeToBeat !== null
-                                ? `${Math.round(game.timeToBeat / 3600)}h to beat`
-                                : "Time to beat unavailable"
-                            }
-                          />
-                        </Stack>
-                      }
-                    />
-                  </ListItem>
-                  {index < results.length - 1 ? <Divider /> : null}
-                </Box>
-              ))}
-            </List>
-          </Paper>
-        )
+        <SearchResults
+          addedGameIds={addedGameIds}
+          addingGameId={addingGameId}
+          backlogGameIds={backlogGameIds}
+          hasBacklog={hasBacklog}
+          isLoggedIn={isLoggedIn}
+          results={results}
+          submittedQuery={submittedQuery}
+          onAddToBacklog={onAddToBacklog}
+        />
       ) : null}
     </Box>
   );
