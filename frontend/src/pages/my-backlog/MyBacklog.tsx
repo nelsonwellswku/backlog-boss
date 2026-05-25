@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
+import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 
 import { useGetMyBacklog } from "@bb/hooks/useGetMyBacklog";
 import { useCreateMyBacklog } from "@bb/hooks/useCreateMyBacklog";
+import { useRefreshMyBacklog } from "@bb/hooks/useRefreshMyBacklog";
 import { useUpdateBacklogGame } from "@bb/hooks/useUpdateBacklogGame";
 import type { BacklogGameRow } from "@bb/client";
 import { createBlendedComparator } from "@bb/pages/my-backlog/blended-comparator";
@@ -25,6 +27,8 @@ export function MyBacklog() {
     isPending: isUpdating,
     variables: updateVariables,
   } = useUpdateBacklogGame();
+  const { mutate: refreshBacklog, isPending: isRefreshing } =
+    useRefreshMyBacklog();
   const [sortType, setSortType] = useState<SortType>("score");
   const [showCreating, setShowCreating] = useState(false);
   const [completedInSessionIds, setCompletedInSessionIds] = useState<number[]>(
@@ -95,6 +99,10 @@ export function MyBacklog() {
     });
   };
 
+  const handleRefreshBacklog = () => {
+    refreshBacklog();
+  };
+
   const handleToggleCompleted = useCallback(
     (game: BacklogGameRow) => {
       const isMarkingCompleted = !game.completedOn;
@@ -162,7 +170,31 @@ export function MyBacklog() {
         <Typography>No games in your backlog.</Typography>
       ) : (
         <>
-          <GameSortButtonGroup sortType={sortType} setSortType={setSortType} />
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
+            <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+              My Backlog
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={handleRefreshBacklog}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? "Refreshing…" : "Refresh Backlog"}
+            </Button>
+          </Box>
+          <Box sx={{ mb: 3 }}>
+            <GameSortButtonGroup
+              sortType={sortType}
+              setSortType={setSortType}
+            />
+          </Box>
           <BacklogList
             activeGames={activeGames}
             completedGames={completedGames}

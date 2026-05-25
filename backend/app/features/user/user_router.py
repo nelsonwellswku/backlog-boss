@@ -9,6 +9,10 @@ from app.features.user.get_my_backlog_handler import (
     GetMyBacklogHandler,
     GetMyBacklogResponse,
 )
+from app.features.user.refresh_my_backlog_handler import (
+    RefreshMyBacklogHandler,
+    RefreshMyBacklogResponse,
+)
 
 user_router = APIRouter(tags=["User"])
 
@@ -29,4 +33,11 @@ def create_my_backlog(
 def get_my_backlog(
     handler: GetMyBacklogHandler = Depends(),
 ) -> GetMyBacklogResponse:
+    return handler.handle()
+
+
+@user_router.post("/api/user/refresh-my-backlog")
+def refresh_my_backlog(
+    handler: RefreshMyBacklogHandler = Depends(),
+) -> RefreshMyBacklogResponse:
     return handler.handle()
