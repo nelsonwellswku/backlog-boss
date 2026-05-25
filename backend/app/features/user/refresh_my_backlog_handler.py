@@ -72,6 +72,8 @@ class RefreshMyBacklogHandler:
         qualified_games = self.db.scalars(stmt).all()
         qualified_igdb_game_ids = {g.igdb_game_id for g in qualified_games}
 
+        # Intentionally includes removed_on rows so previously removed games
+        # are treated as "already in backlog" and won't be re-added.
         stmt = select(BacklogGame.igdb_game_id).where(
             BacklogGame.backlog_id == backlog.backlog_id
         )
