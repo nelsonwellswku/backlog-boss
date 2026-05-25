@@ -1,1 +1,1 @@
-export type SortType = "score" | "time" | "blended" | null;
+export type SortType = "score" | "time" | "blended";
