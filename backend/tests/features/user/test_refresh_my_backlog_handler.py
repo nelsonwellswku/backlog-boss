@@ -133,7 +133,7 @@ def test_handle_adds_qualifying_new_game_skips_active_game(
     current_user = _create_current_user(db_session)
     backlog = _create_backlog(db_session, current_user)
     existing_game = _create_game(db_session, 1, "Existing Game", 111)
-    new_game = _create_game(db_session, 2, "New Game", 222)
+    _create_game(db_session, 2, "New Game", 222)
     backlog_game = BacklogGame(
         backlog_id=backlog.backlog_id,
         igdb_game_id=existing_game.igdb_game_id,
@@ -202,7 +202,7 @@ def test_handle_skips_game_without_time_to_beat(
     mocker: MockerFixture,
 ):
     current_user = _create_current_user(db_session)
-    backlog = _create_backlog(db_session, current_user)
+    _create_backlog(db_session, current_user)
     _create_game(
         db_session,
         1,
