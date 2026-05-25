@@ -206,10 +206,7 @@ export function BacklogList({
   };
 
   const scrollToTopOfBacklog = () => {
-    document.getElementById("active-backlog")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (

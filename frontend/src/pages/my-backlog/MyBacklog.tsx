@@ -170,6 +170,9 @@ export function MyBacklog() {
         <Typography>No games in your backlog.</Typography>
       ) : (
         <>
+          <Typography variant="h4" sx={{ fontWeight: "bold", mb: 3 }}>
+            My Backlog
+          </Typography>
           <Box
             sx={{
               display: "flex",
@@ -178,22 +181,18 @@ export function MyBacklog() {
               mb: 3,
             }}
           >
-            <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-              My Backlog
-            </Typography>
+            <GameSortButtonGroup
+              sortType={sortType}
+              setSortType={setSortType}
+            />
             <Button
+              size="small"
               variant="contained"
               onClick={handleRefreshBacklog}
               disabled={isRefreshing}
             >
               {isRefreshing ? "Refreshing…" : "Refresh Backlog"}
             </Button>
-          </Box>
-          <Box sx={{ mb: 3 }}>
-            <GameSortButtonGroup
-              sortType={sortType}
-              setSortType={setSortType}
-            />
           </Box>
           <BacklogList
             activeGames={activeGames}
