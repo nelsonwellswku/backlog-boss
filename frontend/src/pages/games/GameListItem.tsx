@@ -12,6 +12,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import type { GameSearchRow } from "@bb/client";
+import { GenreChips } from "@bb/components/GenreChips";
 
 type GameListItemProps = {
   addingInProgress: boolean;
@@ -97,25 +98,7 @@ export function GameListItem({
                     : "Time to beat unavailable"
                 }
               />
-              {game.genres.length > 0 && (
-                <>
-                  {game.genres.slice(0, 3).map((genre) => (
-                    <Chip
-                      key={genre}
-                      size="small"
-                      label={genre}
-                      variant="outlined"
-                    />
-                  ))}
-                  {game.genres.length > 3 && (
-                    <Chip
-                      size="small"
-                      label={`+${game.genres.length - 3}`}
-                      variant="outlined"
-                    />
-                  )}
-                </>
-              )}
+              <GenreChips genres={game.genres} />
             </Stack>
           }
         />
