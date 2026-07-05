@@ -152,7 +152,7 @@ export function MyBacklog() {
   );
 
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto", mt: 4 }}>
+    <Box sx={{ mt: 4 }}>
       {showCreating || isCreating ? (
         <BacklogCreatingLoader />
       ) : createError ? (

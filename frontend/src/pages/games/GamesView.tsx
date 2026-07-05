@@ -50,7 +50,7 @@ export function GamesView({
   submittedQuery,
 }: GamesViewProps) {
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto", mt: 4 }}>
+    <Box sx={{ mt: 4 }}>
       <Paper
         elevation={3}
         sx={{
