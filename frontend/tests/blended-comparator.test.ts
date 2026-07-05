@@ -12,6 +12,7 @@ function createBacklogGameRow(
     timeToBeat: overrides.timeToBeat ?? null,
     totalRating: overrides.totalRating ?? null,
     completedOn: overrides.completedOn ?? null,
+    genres: overrides.genres ?? [],
   };
 }
 

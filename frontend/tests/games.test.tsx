@@ -177,6 +177,7 @@ describe("Games", () => {
               title: "Hades",
               totalRating: 93,
               timeToBeat: 36000,
+              genres: [],
             },
           ],
         },

@@ -8,6 +8,7 @@ const defaultGame: GameSearchRow = {
   title: "Test Game",
   totalRating: 85,
   timeToBeat: 14400,
+  genres: [],
 };
 const noop = () => {};
 

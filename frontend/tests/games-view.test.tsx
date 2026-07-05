@@ -65,6 +65,7 @@ describe("GamesView", () => {
         title: "Hades II",
         totalRating: 93.5,
         timeToBeat: 43200,
+        genres: [],
       },
     ];
 
@@ -103,7 +104,13 @@ describe("GamesView", () => {
 
   test('shows "Add to backlog" button when logged in and results are present', () => {
     const results: GameSearchRow[] = [
-      { gameId: 1, title: "Hades", totalRating: 91, timeToBeat: 36000 },
+      {
+        gameId: 1,
+        title: "Hades",
+        totalRating: 91,
+        timeToBeat: 36000,
+        genres: [],
+      },
     ];
 
     const markup = renderGamesView({
@@ -118,7 +125,13 @@ describe("GamesView", () => {
 
   test('shows "In backlog" chip for a game already in the backlog', () => {
     const results: GameSearchRow[] = [
-      { gameId: 1, title: "Hades", totalRating: 91, timeToBeat: 36000 },
+      {
+        gameId: 1,
+        title: "Hades",
+        totalRating: 91,
+        timeToBeat: 36000,
+        genres: [],
+      },
     ];
 
     const markup = renderGamesView({
@@ -134,7 +147,13 @@ describe("GamesView", () => {
 
   test('shows "Adding…" button while a game is being added', () => {
     const results: GameSearchRow[] = [
-      { gameId: 1, title: "Hades", totalRating: 91, timeToBeat: 36000 },
+      {
+        gameId: 1,
+        title: "Hades",
+        totalRating: 91,
+        timeToBeat: 36000,
+        genres: [],
+      },
     ];
 
     const markup = renderGamesView({
@@ -170,8 +189,20 @@ describe("GamesView", () => {
 
   test("renders multiple results with pluralized text", () => {
     const results: GameSearchRow[] = [
-      { gameId: 1, title: "Hades", totalRating: 91, timeToBeat: 36000 },
-      { gameId: 2, title: "Hades II", totalRating: 93, timeToBeat: 43200 },
+      {
+        gameId: 1,
+        title: "Hades",
+        totalRating: 91,
+        timeToBeat: 36000,
+        genres: [],
+      },
+      {
+        gameId: 2,
+        title: "Hades II",
+        totalRating: 93,
+        timeToBeat: 43200,
+        genres: [],
+      },
     ];
 
     const markup = renderGamesView({
