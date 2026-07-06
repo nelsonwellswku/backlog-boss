@@ -1,10 +1,10 @@
-CREATE TABLE bb.IgdbGenre (
-    Id          INT           NOT NULL PRIMARY KEY,
-    Name        VARCHAR(100)  NOT NULL
+create table bb.IgdbGenre (
+    Id          int           not null primary key,
+    Name        varchar(100)  not null
 );
 
-CREATE TABLE bb.IgdbGameGenre (
-    IgdbGameId  INT NOT NULL REFERENCES bb.IgdbGame(Id),
-    IgdbGenreId INT NOT NULL REFERENCES bb.IgdbGenre(Id),
-    PRIMARY KEY (IgdbGameId, IgdbGenreId)
+create table bb.IgdbGameGenre (
+    IgdbGameId  int not null references bb.IgdbGame(Id),
+    IgdbGenreId int not null references bb.IgdbGenre(Id),
+    primary key (IgdbGameId, IgdbGenreId)
 );
