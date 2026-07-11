@@ -1,6 +1,5 @@
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import CircularProgress from "@mui/material/CircularProgress";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -11,6 +10,7 @@ import { Link as RouterLink } from "react-router";
 import type { GameSearchRow } from "@bb/client";
 import { SearchForm } from "@bb/pages/games/SearchForm";
 import { SearchResults } from "@bb/pages/games/SearchResults";
+import { SearchResultsSkeleton } from "@bb/pages/games/SearchResultsSkeleton";
 
 type GamesViewProps = {
   addedGameIds: Set<number>;
@@ -118,23 +118,7 @@ export function GamesView({
       ) : null}
 
       {isPending ? (
-        <Paper
-          variant="outlined"
-          sx={{ p: 3, borderRadius: 3, bgcolor: "background.paper" }}
-        >
-          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-            <CircularProgress size={32} />
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                Searching for "{submittedQuery}"
-              </Typography>
-              <Typography color="text.secondary">
-                Pulling matching games from the local catalog and IGDB if
-                needed.
-              </Typography>
-            </Box>
-          </Stack>
-        </Paper>
+        <SearchResultsSkeleton submittedQuery={submittedQuery} />
       ) : null}
 
       {hasSearched && !isPending && !isError ? (

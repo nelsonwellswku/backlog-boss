@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import Button from "@mui/material/Button";
+import LinearProgress from "@mui/material/LinearProgress";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 
@@ -12,6 +13,7 @@ import { createBlendedComparator } from "@bb/pages/my-backlog/blended-comparator
 import { GameSortButtonGroup } from "@bb/pages/my-backlog/GameSortButtonGroup";
 import type { SortType } from "@bb/pages/my-backlog/SortType";
 import { BacklogList } from "@bb/pages/my-backlog/BacklogList";
+import { BacklogListSkeleton } from "@bb/pages/my-backlog/BacklogListSkeleton";
 import { BacklogCreatingLoader } from "@bb/pages/my-backlog/BacklogCreatingLoader";
 import { CreateBacklogPrompt } from "@bb/pages/my-backlog/CreateBacklogPrompt";
 
@@ -165,7 +167,7 @@ export function MyBacklog() {
       ) : is404 ? (
         <CreateBacklogPrompt onCreateBacklog={handleCreateBacklog} />
       ) : !isSuccess ? (
-        <Typography>Loading…</Typography>
+        <BacklogListSkeleton />
       ) : games.length === 0 ? (
         <Typography>No games in your backlog.</Typography>
       ) : (
@@ -194,6 +196,7 @@ export function MyBacklog() {
               {isRefreshing ? "Refreshing…" : "Refresh Backlog"}
             </Button>
           </Box>
+          {isRefreshing && <LinearProgress sx={{ mt: -2, mb: 2 }} />}
           <BacklogList
             activeGames={activeGames}
             completedGames={completedGames}
