@@ -187,6 +187,26 @@ describe("GamesView", () => {
     expect(markup).toContain("Custom error message");
   });
 
+  test("renders genre chips for search results", () => {
+    const results: GameSearchRow[] = [
+      {
+        gameId: 1,
+        title: "Hades",
+        totalRating: 91,
+        timeToBeat: 36000,
+        genres: ["Action", "Roguelike"],
+      },
+    ];
+
+    const markup = renderGamesView({
+      hasSearched: true,
+      results,
+    });
+
+    expect(markup).toContain("Action");
+    expect(markup).toContain("Roguelike");
+  });
+
   test("renders multiple results with pluralized text", () => {
     const results: GameSearchRow[] = [
       {

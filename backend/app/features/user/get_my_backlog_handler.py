@@ -34,15 +34,12 @@ class GetMyBacklogHandler:
         backlog_games_loader = joinedload(
             Backlog.backlog_games.and_(BacklogGame.removed_on.is_(None))
         )
+        igdb_game_loader = backlog_games_loader.joinedload(BacklogGame.igdb_game)
         stmt = (
             select(Backlog)
             .options(
-                backlog_games_loader.joinedload(BacklogGame.igdb_game).joinedload(
-                    IgdbGame.time_to_beat
-                ),
-                backlog_games_loader.joinedload(BacklogGame.igdb_game).joinedload(
-                    IgdbGame.genres
-                ),
+                igdb_game_loader.joinedload(IgdbGame.time_to_beat),
+                igdb_game_loader.joinedload(IgdbGame.genres),
             )
             .where(Backlog.app_user_id == self.current_user.app_user_id)
         )

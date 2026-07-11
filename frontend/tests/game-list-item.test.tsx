@@ -114,6 +114,33 @@ describe("GameListItem", () => {
     expect(container.querySelector("hr")).not.toBeInTheDocument();
   });
 
+  test("renders genre chips when genres are provided", () => {
+    renderGameListItem({
+      game: { ...defaultGame, genres: ["Action", "Roguelike"] },
+    });
+    expect(screen.getByText("Action")).toBeInTheDocument();
+    expect(screen.getByText("Roguelike")).toBeInTheDocument();
+  });
+
+  test("renders no genre chips when genres are empty", () => {
+    renderGameListItem({ game: { ...defaultGame, genres: [] } });
+    expect(screen.queryByRole("button", { name: /action/i })).toBeNull();
+  });
+
+  test("renders overflow chip when more than 3 genres", () => {
+    renderGameListItem({
+      game: {
+        ...defaultGame,
+        genres: ["Action", "RPG", "Adventure", "Strategy"],
+      },
+    });
+    expect(screen.getByText("Action")).toBeInTheDocument();
+    expect(screen.getByText("RPG")).toBeInTheDocument();
+    expect(screen.getByText("Adventure")).toBeInTheDocument();
+    expect(screen.getByText("+1")).toBeInTheDocument();
+    expect(screen.queryByText("Strategy")).toBeNull();
+  });
+
   test("calls onAddToBacklog when add button is clicked", () => {
     const onAddToBacklog = vi.fn();
     renderGameListItem({
