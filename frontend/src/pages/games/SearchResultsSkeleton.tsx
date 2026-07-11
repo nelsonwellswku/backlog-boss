@@ -13,9 +13,7 @@ function GameListItemSkeleton({ isLast }: { isLast: boolean }) {
     <Box>
       <ListItem
         sx={{ py: 2.5, px: 3 }}
-        secondaryAction={
-          <Skeleton variant="rounded" width={120} height={32} />
-        }
+        secondaryAction={<Skeleton variant="rounded" width={120} height={32} />}
       >
         <ListItemText
           slotProps={{ secondary: { component: "div" } }}
@@ -46,9 +44,14 @@ function GameListItemSkeleton({ isLast }: { isLast: boolean }) {
 
 export function SearchResultsSkeleton({
   submittedQuery,
-}: { submittedQuery: string }) {
+}: {
+  submittedQuery: string;
+}) {
   return (
-    <Paper variant="outlined" sx={{ borderRadius: 3, bgcolor: "background.paper" }}>
+    <Paper
+      variant="outlined"
+      sx={{ borderRadius: 3, bgcolor: "background.paper" }}
+    >
       <Box
         sx={{
           px: 3,
@@ -59,7 +62,9 @@ export function SearchResultsSkeleton({
             "linear-gradient(180deg, rgba(25,118,210,0.08) 0%, rgba(25,118,210,0.02) 100%)",
         }}
       >
-        <Typography variant="h6">Searching for &quot;{submittedQuery}&quot;</Typography>
+        <Typography variant="h6">
+          Searching for &quot;{submittedQuery}&quot;
+        </Typography>
         <Typography variant="body2" color="text.secondary">
           Pulling matching games from the local catalog and IGDB if needed.
         </Typography>

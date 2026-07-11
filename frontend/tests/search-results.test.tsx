@@ -34,9 +34,7 @@ function renderSearchResults(
 describe("SearchResults", () => {
   test("renders empty state when no results", () => {
     renderSearchResults({ results: [] });
-    expect(
-      screen.getByText('No games found for "hades".'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('No games found for "hades".')).toBeInTheDocument();
   });
 
   test("renders Search Results header", () => {
@@ -46,17 +44,13 @@ describe("SearchResults", () => {
 
   test("renders result count with singular form", () => {
     renderSearchResults({ results: [game] });
-    expect(
-      screen.getByText('1 game matching "hades"'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('1 game matching "hades"')).toBeInTheDocument();
   });
 
   test("renders result count with plural form", () => {
     const game2 = { ...game, gameId: 2, title: "Hades II" };
     renderSearchResults({ results: [game, game2] });
-    expect(
-      screen.getByText('2 games matching "hades"'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('2 games matching "hades"')).toBeInTheDocument();
   });
 
   test("renders game title", () => {

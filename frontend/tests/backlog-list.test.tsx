@@ -105,9 +105,7 @@ describe("BacklogList", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /remove from backlog/i }),
     );
-    expect(
-      screen.getByText("Remove game from backlog?"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Remove game from backlog?")).toBeInTheDocument();
     expect(
       screen.getByText(/Remove Active Game from your backlog/),
     ).toBeInTheDocument();
@@ -128,13 +126,9 @@ describe("BacklogList", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /remove from backlog/i }),
     );
-    expect(
-      screen.getByText("Remove game from backlog?"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Remove game from backlog?")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
-    expect(
-      screen.getByText("Remove game from backlog?"),
-    ).not.toBeVisible();
+    expect(screen.getByText("Remove game from backlog?")).not.toBeVisible();
   });
 
   test("does not render completed section when no completed games", () => {

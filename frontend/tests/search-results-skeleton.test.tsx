@@ -3,9 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { SearchResultsSkeleton } from "../src/pages/games/SearchResultsSkeleton";
 
 function renderSkeleton(query = "hades") {
-  return renderToStaticMarkup(
-    <SearchResultsSkeleton submittedQuery={query} />,
-  );
+  return renderToStaticMarkup(<SearchResultsSkeleton submittedQuery={query} />);
 }
 
 describe("SearchResultsSkeleton", () => {
