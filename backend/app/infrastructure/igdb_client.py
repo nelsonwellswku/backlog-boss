@@ -43,10 +43,16 @@ def get_igdb_wrapper(
     return IGDBWrapper(settings.twitch_client_id, access_token)
 
 
+class GenreResponse(BaseModel):
+    id: int
+    name: str
+
+
 class IgdbGameResponse(BaseModel):
     id: int
     name: str
     total_rating: float | None = None
+    genres: list[GenreResponse] = Field(default_factory=list)
     external_games: list["ExternalGameResponse"] = Field(default_factory=list)
     time_to_beat: "TimeToBeatResponse | None" = None
 
@@ -92,7 +98,7 @@ class IgdbClient:
         # Paginate through results
         while True:
             query = f"""
-                fields game.id, game.name, game.total_rating;
+                fields game.id, game.name, game.total_rating, game.genres.name;
                 where uid = ({formatted_steam_ids}) & external_game_source = 1;
                 offset {offset};
                 limit {limit};
@@ -143,7 +149,7 @@ class IgdbClient:
 
         endpoint = "games"
         query = f"""
-            fields id, name, total_rating;
+            fields id, name, total_rating, genres.name;
             search {json.dumps(normalized_name)};
             where external_games != null & external_games.external_game_source = (1);
             limit 50;

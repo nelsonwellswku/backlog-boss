@@ -22,6 +22,7 @@ class BacklogGameRow(ApiResponseModel):
     total_rating: float | None
     time_to_beat: int | None
     completed_on: datetime | None
+    genres: list[str]
 
 
 class GetMyBacklogHandler:
@@ -30,12 +31,15 @@ class GetMyBacklogHandler:
         self.current_user = current_user
 
     def handle(self):
+        backlog_games_loader = joinedload(
+            Backlog.backlog_games.and_(BacklogGame.removed_on.is_(None))
+        )
+        igdb_game_loader = backlog_games_loader.joinedload(BacklogGame.igdb_game)
         stmt = (
             select(Backlog)
             .options(
-                joinedload(Backlog.backlog_games.and_(BacklogGame.removed_on.is_(None)))
-                .joinedload(BacklogGame.igdb_game)
-                .joinedload(IgdbGame.time_to_beat)
+                igdb_game_loader.joinedload(IgdbGame.time_to_beat),
+                igdb_game_loader.joinedload(IgdbGame.genres),
             )
             .where(Backlog.app_user_id == self.current_user.app_user_id)
         )
@@ -54,6 +58,7 @@ class GetMyBacklogHandler:
                 if g.igdb_game.time_to_beat
                 else None,
                 completed_on=g.completed_on,
+                genres=[genre.name for genre in g.igdb_game.genres],
             )
             for g in backlog.backlog_games
         ]

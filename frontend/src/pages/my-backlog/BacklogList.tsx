@@ -1,5 +1,6 @@
 import { memo, useState } from "react";
 import type { BacklogGameRow } from "@bb/client";
+import { GenreChips } from "@bb/components/GenreChips";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import Box from "@mui/material/Box";
@@ -90,6 +91,7 @@ const BacklogListItem = memo(function BacklogListItem({
                 ⭐ {Math.round(game.totalRating)}/100
               </Typography>
             )}
+            <GenreChips genres={game.genres} />
             {isCompleted && (
               <Chip
                 icon={<CheckCircleIcon />}

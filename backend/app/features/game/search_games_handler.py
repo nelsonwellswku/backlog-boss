@@ -16,6 +16,7 @@ class GameSearchRow(ApiResponseModel):
     title: str
     total_rating: float | None
     time_to_beat: int | None
+    genres: list[str]
 
 
 class SearchGamesResponse(ApiResponseModel):
@@ -80,7 +81,7 @@ class SearchGamesHandler:
         stmt = (
             select(IgdbGame)
             .join(IgdbExternalGame)
-            .options(joinedload(IgdbGame.time_to_beat))
+            .options(joinedload(IgdbGame.time_to_beat), joinedload(IgdbGame.genres))
             .where(IgdbExternalGame.igdb_external_game_source_id == 1)
             .where(IgdbGame.igdb_game_id.in_(game_ids))
             .distinct()
@@ -95,4 +96,5 @@ class SearchGamesHandler:
             title=game.name,
             total_rating=game.total_rating,
             time_to_beat=game.time_to_beat.normally if game.time_to_beat else None,
+            genres=[g.name for g in game.genres],
         )

@@ -92,6 +92,27 @@ class IgdbGame(Base):
     time_to_beat: Mapped[Optional["IgdbGameTimeToBeat"]] = relationship(
         "IgdbGameTimeToBeat", back_populates="igdb_game", lazy="raise"
     )
+    genres: Mapped[list["IgdbGenre"]] = relationship(
+        "IgdbGenre", secondary="bb.IgdbGameGenre", lazy="raise"
+    )
+
+
+class IgdbGenre(Base):
+    __tablename__ = "IgdbGenre"
+    igdb_genre_id: Mapped[int] = mapped_column(
+        "Id", primary_key=True, autoincrement=False
+    )
+    name: Mapped[str] = mapped_column("Name", String(100))
+
+
+class IgdbGameGenre(Base):
+    __tablename__ = "IgdbGameGenre"
+    igdb_game_id: Mapped[int] = mapped_column(
+        "IgdbGameId", ForeignKey("bb.IgdbGame.Id"), primary_key=True
+    )
+    igdb_genre_id: Mapped[int] = mapped_column(
+        "IgdbGenreId", ForeignKey("bb.IgdbGenre.Id"), primary_key=True
+    )
 
 
 class IgdbExternalGame(Base):
