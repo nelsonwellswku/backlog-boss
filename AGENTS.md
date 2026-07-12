@@ -58,6 +58,7 @@ Multi-stage: generates OpenAPI schema → builds frontend → packages FastAPI +
 - **Settings & DB engine cached** via `@lru_cache`. Tests changing env must call `clear_settings_cache()` / `reset_db_engine()`.
 - **Required env vars** (copy `backend/.env.sample` to `.env`): `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`, `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`, `STEAM_API_KEY`. `dummy_settings` fixture provides defaults for unit tests.
 - **`base_url`** controls Steam OpenID return realm; defaults to `http://localhost:5173`.
+- **SQL style**: Always use lowercase keywords. Avoid brackets unless required (e.g. when column names are SQL keywords).
 
 ## Deploy
 

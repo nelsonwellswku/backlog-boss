@@ -1,1 +1,1 @@
-ALTER TABLE bb.IgdbGame ADD CoverImageId nvarchar(100) NULL;
+alter table bb.IgdbGame add CoverImageId nvarchar(100) null;
