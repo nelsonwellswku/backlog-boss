@@ -33,119 +33,123 @@ export const BacklogListItem = memo(function BacklogListItem({
   return (
     <>
       <ListItem
-      sx={{
-        py: 2,
-        px: 2,
-        opacity: isCompleted ? 0.7 : 1,
-        "&:hover": {
-          backgroundColor: "action.hover",
-        },
-      }}
-    >
-      <Box sx={{ display: "flex", gap: 2, flex: 1, minWidth: 0 }}>
-        <CoverImage imageId={game.coverImageId} title={game.title} />
+        sx={{
+          py: 2,
+          px: 2,
+          opacity: isCompleted ? 0.7 : 1,
+          "&:hover": {
+            backgroundColor: "action.hover",
+          },
+        }}
+      >
+        <Box sx={{ display: "flex", gap: 2, flex: 1, minWidth: 0 }}>
+          <CoverImage imageId={game.coverImageId} title={game.title} />
 
-        <ListItemText
-          primary={game.title}
-          secondary={
-            <Box
-              component="span"
-              sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.75 }}
-            >
-              {game.timeToBeat !== null && (
-                <Typography
-                  component="span"
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 0.5,
-                    textDecoration: isCompleted ? "line-through" : "none",
-                  }}
-                >
-                  ⏱️ {Math.round(game.timeToBeat / 3600)}h
-                </Typography>
-              )}
-              {game.totalRating !== null && (
-                <Typography
-                  component="span"
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 0.5,
-                    textDecoration: isCompleted ? "line-through" : "none",
-                  }}
-                >
-                  ⭐ {Math.round(game.totalRating)}/100
-                </Typography>
-              )}
-              <GenreChips genres={game.genres} />
-              {isCompleted && (
-                <Chip
-                  icon={<CheckCircleIcon />}
-                  label="Completed"
-                  size="small"
-                  color="success"
-                  variant="outlined"
-                />
-              )}
-            </Box>
-          }
-          slotProps={{
-            primary: {
-              variant: "body1",
-              sx: {
-                fontWeight: 500,
-                textDecoration: isCompleted ? "line-through" : "none",
+          <ListItemText
+            primary={game.title}
+            secondary={
+              <Box
+                component="span"
+                sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.75 }}
+              >
+                {game.timeToBeat !== null && (
+                  <Typography
+                    component="span"
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      textDecoration: isCompleted ? "line-through" : "none",
+                    }}
+                  >
+                    ⏱️ {Math.round(game.timeToBeat / 3600)}h
+                  </Typography>
+                )}
+                {game.totalRating !== null && (
+                  <Typography
+                    component="span"
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      textDecoration: isCompleted ? "line-through" : "none",
+                    }}
+                  >
+                    ⭐ {Math.round(game.totalRating)}/100
+                  </Typography>
+                )}
+                <GenreChips genres={game.genres} />
+                {isCompleted && (
+                  <Chip
+                    icon={<CheckCircleIcon />}
+                    label="Completed"
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                  />
+                )}
+              </Box>
+            }
+            slotProps={{
+              primary: {
+                variant: "body1",
+                sx: {
+                  fontWeight: 500,
+                  textDecoration: isCompleted ? "line-through" : "none",
+                },
               },
-            },
-            secondary: {
-              component: "div",
-            },
-          }}
-        />
-      </Box>
+              secondary: {
+                component: "div",
+              },
+            }}
+          />
+        </Box>
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
-        <Tooltip
-          title={
-            isCompleted
-              ? "Mark this game as active again"
-              : "Mark this game as completed"
-          }
-        >
-          <span>
-            <Button
-              size="small"
-              variant={isCompleted ? "contained" : "outlined"}
-              color={isCompleted ? "success" : "inherit"}
-              disabled={isUpdating}
-              startIcon={
-                isCompleted ? <CheckCircleIcon /> : <CheckCircleOutlinedIcon />
-              }
-              onClick={() => onToggleCompleted(game)}
-            >
-              {isCompleted ? "Completed" : "Mark complete"}
-            </Button>
-          </span>
-        </Tooltip>
-        <Tooltip title="Remove from backlog">
-          <span>
-            <IconButton
-              color="error"
-              aria-label="Remove from backlog"
-              disabled={isUpdating}
-              onClick={() => onRemoveGame(game)}
-            >
-              <DeleteOutlinedIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Box>
-    </ListItem>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
+          <Tooltip
+            title={
+              isCompleted
+                ? "Mark this game as active again"
+                : "Mark this game as completed"
+            }
+          >
+            <span>
+              <Button
+                size="small"
+                variant={isCompleted ? "contained" : "outlined"}
+                color={isCompleted ? "success" : "inherit"}
+                disabled={isUpdating}
+                startIcon={
+                  isCompleted ? (
+                    <CheckCircleIcon />
+                  ) : (
+                    <CheckCircleOutlinedIcon />
+                  )
+                }
+                onClick={() => onToggleCompleted(game)}
+              >
+                {isCompleted ? "Completed" : "Mark complete"}
+              </Button>
+            </span>
+          </Tooltip>
+          <Tooltip title="Remove from backlog">
+            <span>
+              <IconButton
+                color="error"
+                aria-label="Remove from backlog"
+                disabled={isUpdating}
+                onClick={() => onRemoveGame(game)}
+              >
+                <DeleteOutlinedIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
+      </ListItem>
       {!isLast && <Divider />}
     </>
   );
