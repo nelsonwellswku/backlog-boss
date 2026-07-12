@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useState } from "react";
 import type { BacklogGameRow } from "@bb/client";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import Box from "@mui/material/Box";
@@ -8,10 +8,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { BacklogListItem } from "./BacklogListItem";
-import {
-  RemoveGameDialog,
-  type RemoveGameDialogHandle,
-} from "./RemoveGameDialog";
+import { RemoveGameDialog } from "./RemoveGameDialog";
 
 type BacklogListProps = {
   activeGames: BacklogGameRow[];
@@ -28,7 +25,8 @@ export function BacklogList({
   onRemoveGame,
   updatingBacklogGameId,
 }: BacklogListProps) {
-  const dialogRef = useRef<RemoveGameDialogHandle>(null);
+  const [gamePendingRemoval, setGamePendingRemoval] =
+    useState<BacklogGameRow | null>(null);
 
   const scrollToCompletedGames = () => {
     document.getElementById("completed-games")?.scrollIntoView({
@@ -95,7 +93,7 @@ export function BacklogList({
               isLast={index === activeGames.length - 1}
               isUpdating={updatingBacklogGameId === game.backlogGameId}
               onToggleCompleted={onToggleCompleted}
-              onRemoveGame={() => dialogRef.current?.requestRemove(game)}
+              onRemoveGame={() => setGamePendingRemoval(game)}
             />
           ))}
         </List>
@@ -154,16 +152,21 @@ export function BacklogList({
                 isLast={index === completedGames.length - 1}
                 isUpdating={updatingBacklogGameId === game.backlogGameId}
                 onToggleCompleted={onToggleCompleted}
-                onRemoveGame={() => dialogRef.current?.requestRemove(game)}
+                onRemoveGame={() => setGamePendingRemoval(game)}
               />
             ))}
           </List>
         </Paper>
       )}
       <RemoveGameDialog
-        ref={dialogRef}
+        open={gamePendingRemoval !== null}
+        game={gamePendingRemoval}
         isUpdating={updatingBacklogGameId !== null}
-        onRemoveGame={onRemoveGame}
+        onClose={() => setGamePendingRemoval(null)}
+        onConfirm={(game) => {
+          onRemoveGame(game);
+          setGamePendingRemoval(null);
+        }}
       />
     </Stack>
   );

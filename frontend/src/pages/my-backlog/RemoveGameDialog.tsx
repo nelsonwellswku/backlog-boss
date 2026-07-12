@@ -1,4 +1,3 @@
-import { forwardRef, useImperativeHandle, useState } from "react";
 import type { BacklogGameRow } from "@bb/client";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -7,66 +6,44 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 
-export type RemoveGameDialogHandle = {
-  requestRemove: (game: BacklogGameRow) => void;
-};
-
 type RemoveGameDialogProps = {
+  open: boolean;
+  game: BacklogGameRow | null;
   isUpdating: boolean;
-  onRemoveGame: (game: BacklogGameRow) => void;
+  onClose: () => void;
+  onConfirm: (game: BacklogGameRow) => void;
 };
 
-export const RemoveGameDialog = forwardRef<
-  RemoveGameDialogHandle,
-  RemoveGameDialogProps
->(function RemoveGameDialog({ isUpdating, onRemoveGame }, ref) {
-  const [gamePendingRemoval, setGamePendingRemoval] =
-    useState<BacklogGameRow | null>(null);
-
-  useImperativeHandle(ref, () => ({
-    requestRemove: (game: BacklogGameRow) => {
-      setGamePendingRemoval(game);
-    },
-  }));
-
-  const handleCancel = () => {
-    setGamePendingRemoval(null);
-  };
-
-  const handleConfirm = () => {
-    if (!gamePendingRemoval) {
-      return;
-    }
-    onRemoveGame(gamePendingRemoval);
-    setGamePendingRemoval(null);
-  };
-
+export function RemoveGameDialog({
+  open,
+  game,
+  isUpdating,
+  onClose,
+  onConfirm,
+}: RemoveGameDialogProps) {
   return (
-    <Dialog
-      open={gamePendingRemoval !== null}
-      onClose={isUpdating ? undefined : handleCancel}
-    >
+    <Dialog open={open} onClose={isUpdating ? undefined : onClose}>
       <DialogTitle>Remove game from backlog?</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          {gamePendingRemoval
-            ? `Remove ${gamePendingRemoval.title} from your backlog? It will be hidden from this page, but can be re-added later.`
+          {game
+            ? `Remove ${game.title} from your backlog? It will be hidden from this page, but can be re-added later.`
             : ""}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button disabled={isUpdating} onClick={handleCancel}>
+        <Button disabled={isUpdating} onClick={onClose}>
           Cancel
         </Button>
         <Button
           color="error"
           disabled={isUpdating}
           variant="contained"
-          onClick={handleConfirm}
+          onClick={() => game && onConfirm(game)}
         >
           Remove
         </Button>
       </DialogActions>
     </Dialog>
   );
-});
+}
