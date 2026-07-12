@@ -22,8 +22,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 
-const IGDB_CDN_BASE =
-  "https://images.igdb.com/igdb/image/upload/t_cover_big";
+const IGDB_CDN_BASE = "https://images.igdb.com/igdb/image/upload/t_cover_big";
 
 function coverImageUrl(imageId: string): string {
   return `${IGDB_CDN_BASE}/${imageId}.jpg`;
