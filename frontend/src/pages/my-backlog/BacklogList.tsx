@@ -1,16 +1,12 @@
-import { memo, useState } from "react";
+import { memo, useRef } from "react";
 import type { BacklogGameRow } from "@bb/client";
 import { GenreChips } from "@bb/components/GenreChips";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
@@ -20,34 +16,11 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
-
-const IGDB_CDN_BASE = "https://images.igdb.com/igdb/image/upload/t_cover_big";
-
-function coverImageUrl(imageId: string): string {
-  return `${IGDB_CDN_BASE}/${imageId}.jpg`;
-}
-
-function CoverPlaceholder({ title }: { title: string }) {
-  return (
-    <Box
-      sx={{
-        width: 88,
-        height: 124,
-        borderRadius: 1,
-        backgroundColor: "grey.200",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-      }}
-    >
-      <Typography variant="h5" color="text.secondary">
-        {title.charAt(0).toUpperCase()}
-      </Typography>
-    </Box>
-  );
-}
+import { CoverImage } from "./CoverImage";
+import {
+  RemoveGameDialog,
+  type RemoveGameDialogHandle,
+} from "./RemoveGameDialog";
 
 type PropType = {
   activeGames: BacklogGameRow[];
@@ -82,22 +55,7 @@ const BacklogListItem = memo(function BacklogListItem({
       }}
     >
       <Box sx={{ display: "flex", gap: 2, flex: 1, minWidth: 0 }}>
-        {game.coverImageId ? (
-          <Box
-            component="img"
-            src={coverImageUrl(game.coverImageId)}
-            alt={game.title}
-            sx={{
-              width: 88,
-              height: 124,
-              objectFit: "cover",
-              borderRadius: 1,
-              flexShrink: 0,
-            }}
-          />
-        ) : (
-          <CoverPlaceholder title={game.title} />
-        )}
+        <CoverImage imageId={game.coverImageId} title={game.title} />
 
         <ListItemText
           primary={game.title}
@@ -210,25 +168,7 @@ export function BacklogList({
   onRemoveGame,
   updatingBacklogGameId,
 }: PropType) {
-  const [gamePendingRemoval, setGamePendingRemoval] =
-    useState<BacklogGameRow | null>(null);
-
-  const handleRemoveRequested = (game: BacklogGameRow) => {
-    setGamePendingRemoval(game);
-  };
-
-  const handleCancelRemoveGame = () => {
-    setGamePendingRemoval(null);
-  };
-
-  const handleConfirmRemoveGame = () => {
-    if (!gamePendingRemoval) {
-      return;
-    }
-
-    onRemoveGame(gamePendingRemoval);
-    setGamePendingRemoval(null);
-  };
+  const dialogRef = useRef<RemoveGameDialogHandle>(null);
 
   const renderGame = (
     game: BacklogGameRow,
@@ -241,7 +181,7 @@ export function BacklogList({
         isCompleted={Boolean(game.completedOn)}
         isUpdating={updatingBacklogGameId === game.backlogGameId}
         onToggleCompleted={onToggleCompleted}
-        onRemoveGame={handleRemoveRequested}
+        onRemoveGame={() => dialogRef.current?.requestRemove(game)}
       />
       {index < games.length - 1 && <Divider />}
     </Box>
@@ -361,35 +301,11 @@ export function BacklogList({
           </List>
         </Paper>
       )}
-      <Dialog
-        open={gamePendingRemoval !== null}
-        onClose={updatingBacklogGameId ? undefined : handleCancelRemoveGame}
-      >
-        <DialogTitle>Remove game from backlog?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {gamePendingRemoval
-              ? `Remove ${gamePendingRemoval.title} from your backlog? It will be hidden from this page, but can be re-added later.`
-              : ""}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            disabled={updatingBacklogGameId !== null}
-            onClick={handleCancelRemoveGame}
-          >
-            Cancel
-          </Button>
-          <Button
-            color="error"
-            disabled={updatingBacklogGameId !== null}
-            variant="contained"
-            onClick={handleConfirmRemoveGame}
-          >
-            Remove
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <RemoveGameDialog
+        ref={dialogRef}
+        isUpdating={updatingBacklogGameId !== null}
+        onRemoveGame={onRemoveGame}
+      />
     </Stack>
   );
 }
