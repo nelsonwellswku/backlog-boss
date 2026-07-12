@@ -7,6 +7,7 @@ import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
@@ -17,18 +18,21 @@ import { CoverImage } from "./CoverImage";
 export const BacklogListItem = memo(function BacklogListItem({
   game,
   isCompleted,
+  isLast,
   isUpdating,
   onToggleCompleted,
   onRemoveGame,
 }: {
   game: BacklogGameRow;
   isCompleted: boolean;
+  isLast: boolean;
   isUpdating: boolean;
   onToggleCompleted: (game: BacklogGameRow) => void;
   onRemoveGame: (game: BacklogGameRow) => void;
 }) {
   return (
-    <ListItem
+    <>
+      <ListItem
       sx={{
         py: 2,
         px: 2,
@@ -142,5 +146,7 @@ export const BacklogListItem = memo(function BacklogListItem({
         </Tooltip>
       </Box>
     </ListItem>
+      {!isLast && <Divider />}
+    </>
   );
 });

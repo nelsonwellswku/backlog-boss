@@ -7,7 +7,7 @@ import List from "@mui/material/List";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { BacklogGameRowItem } from "./BacklogGameRowItem";
+import { BacklogListItem } from "./BacklogListItem";
 import {
   RemoveGameDialog,
   type RemoveGameDialogHandle,
@@ -88,9 +88,10 @@ export function BacklogList({
         </Box>
         <List sx={{ py: 0 }}>
           {activeGames.map((game, index) => (
-            <BacklogGameRowItem
+            <BacklogListItem
               key={game.backlogGameId}
               game={game}
+              isCompleted={Boolean(game.completedOn)}
               isLast={index === activeGames.length - 1}
               isUpdating={updatingBacklogGameId === game.backlogGameId}
               onToggleCompleted={onToggleCompleted}
@@ -146,9 +147,10 @@ export function BacklogList({
           </Box>
           <List sx={{ py: 0 }}>
             {completedGames.map((game, index) => (
-              <BacklogGameRowItem
+              <BacklogListItem
                 key={game.backlogGameId}
                 game={game}
+                isCompleted={Boolean(game.completedOn)}
                 isLast={index === completedGames.length - 1}
                 isUpdating={updatingBacklogGameId === game.backlogGameId}
                 onToggleCompleted={onToggleCompleted}
