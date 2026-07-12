@@ -23,6 +23,7 @@ class BacklogGameRow(ApiResponseModel):
     time_to_beat: int | None
     completed_on: datetime | None
     genres: list[str]
+    cover_image_id: str | None = None
 
 
 class GetMyBacklogHandler:
@@ -59,6 +60,7 @@ class GetMyBacklogHandler:
                 else None,
                 completed_on=g.completed_on,
                 genres=[genre.name for genre in g.igdb_game.genres],
+                cover_image_id=g.igdb_game.cover_image_id,
             )
             for g in backlog.backlog_games
         ]

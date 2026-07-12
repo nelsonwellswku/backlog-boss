@@ -5,7 +5,7 @@ import { BacklogList } from "../src/pages/my-backlog/BacklogList";
 
 const noop = () => {};
 
-const activeGame: BacklogGameRow = {
+const activeGame = {
   backlogGameId: 1,
   gameId: 10,
   title: "Active Game",
@@ -17,7 +17,8 @@ const activeGame: BacklogGameRow = {
   addedOn: "2025-01-01T00:00:00Z",
   igdbId: 100,
   steamAppId: 1000,
-};
+  coverImageId: null,
+} as BacklogGameRow;
 
 const completedGame: BacklogGameRow = {
   ...activeGame,

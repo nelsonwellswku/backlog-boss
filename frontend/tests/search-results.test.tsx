@@ -62,7 +62,6 @@ describe("SearchResults", () => {
     renderSearchResults({
       isLoggedIn: true,
       hasBacklog: true,
-      inBacklog: false,
     });
     expect(
       screen.getByRole("button", { name: /add to backlog/i }),

@@ -22,6 +22,34 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 
+const IGDB_CDN_BASE =
+  "https://images.igdb.com/igdb/image/upload/t_cover_big";
+
+function coverImageUrl(imageId: string): string {
+  return `${IGDB_CDN_BASE}/${imageId}.jpg`;
+}
+
+function CoverPlaceholder({ title }: { title: string }) {
+  return (
+    <Box
+      sx={{
+        width: 88,
+        height: 124,
+        borderRadius: 1,
+        backgroundColor: "grey.200",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+      }}
+    >
+      <Typography variant="h5" color="text.secondary">
+        {title.charAt(0).toUpperCase()}
+      </Typography>
+    </Box>
+  );
+}
+
 type PropType = {
   activeGames: BacklogGameRow[];
   completedGames: BacklogGameRow[];
@@ -54,68 +82,88 @@ const BacklogListItem = memo(function BacklogListItem({
         },
       }}
     >
-      <ListItemText
-        primary={game.title}
-        secondary={
+      <Box sx={{ display: "flex", gap: 2, flex: 1, minWidth: 0 }}>
+        {game.coverImageId ? (
           <Box
-            component="span"
-            sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.75 }}
-          >
-            {game.timeToBeat !== null && (
-              <Typography
-                component="span"
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  textDecoration: isCompleted ? "line-through" : "none",
-                }}
-              >
-                ⏱️ {Math.round(game.timeToBeat / 3600)}h
-              </Typography>
-            )}
-            {game.totalRating !== null && (
-              <Typography
-                component="span"
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  textDecoration: isCompleted ? "line-through" : "none",
-                }}
-              >
-                ⭐ {Math.round(game.totalRating)}/100
-              </Typography>
-            )}
-            <GenreChips genres={game.genres} />
-            {isCompleted && (
-              <Chip
-                icon={<CheckCircleIcon />}
-                label="Completed"
-                size="small"
-                color="success"
-                variant="outlined"
-              />
-            )}
-          </Box>
-        }
-        slotProps={{
-          primary: {
-            variant: "body1",
-            sx: {
-              fontWeight: 500,
-              textDecoration: isCompleted ? "line-through" : "none",
+            component="img"
+            src={coverImageUrl(game.coverImageId)}
+            alt={game.title}
+            sx={{
+              width: 88,
+              height: 124,
+              objectFit: "cover",
+              borderRadius: 1,
+              flexShrink: 0,
+            }}
+          />
+        ) : (
+          <CoverPlaceholder title={game.title} />
+        )}
+
+        <ListItemText
+          primary={game.title}
+          secondary={
+            <Box
+              component="span"
+              sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.75 }}
+            >
+              {game.timeToBeat !== null && (
+                <Typography
+                  component="span"
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    textDecoration: isCompleted ? "line-through" : "none",
+                  }}
+                >
+                  ⏱️ {Math.round(game.timeToBeat / 3600)}h
+                </Typography>
+              )}
+              {game.totalRating !== null && (
+                <Typography
+                  component="span"
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    textDecoration: isCompleted ? "line-through" : "none",
+                  }}
+                >
+                  ⭐ {Math.round(game.totalRating)}/100
+                </Typography>
+              )}
+              <GenreChips genres={game.genres} />
+              {isCompleted && (
+                <Chip
+                  icon={<CheckCircleIcon />}
+                  label="Completed"
+                  size="small"
+                  color="success"
+                  variant="outlined"
+                />
+              )}
+            </Box>
+          }
+          slotProps={{
+            primary: {
+              variant: "body1",
+              sx: {
+                fontWeight: 500,
+                textDecoration: isCompleted ? "line-through" : "none",
+              },
             },
-          },
-          secondary: {
-            component: "div",
-          },
-        }}
-      />
+            secondary: {
+              component: "div",
+            },
+          }}
+        />
+      </Box>
+
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
         <Tooltip
           title={
