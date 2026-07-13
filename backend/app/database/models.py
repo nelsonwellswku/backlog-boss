@@ -85,6 +85,7 @@ class IgdbGame(Base):
     )
     name: Mapped[str] = mapped_column("Name", String(255))
     total_rating: Mapped[Optional[float]] = mapped_column("TotalRating")
+    cover_image_id: Mapped[Optional[str]] = mapped_column("CoverImageId", String(100))
 
     external_games: Mapped[list["IgdbExternalGame"]] = relationship(
         "IgdbExternalGame", back_populates="igdb_game"

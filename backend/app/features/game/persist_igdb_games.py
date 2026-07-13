@@ -69,6 +69,7 @@ def persist_igdb_games(db: Session, games: list[IgdbGameResponse]) -> bool:
             igdb_game_id=game.id,
             name=game.name,
             total_rating=game.total_rating,
+            cover_image_id=game.cover.image_id if game.cover else None,
         )
 
         if game.time_to_beat:

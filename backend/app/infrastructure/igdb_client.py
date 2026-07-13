@@ -48,6 +48,10 @@ class GenreResponse(BaseModel):
     name: str
 
 
+class CoverResponse(BaseModel):
+    image_id: str
+
+
 class IgdbGameResponse(BaseModel):
     id: int
     name: str
@@ -55,6 +59,7 @@ class IgdbGameResponse(BaseModel):
     genres: list[GenreResponse] = Field(default_factory=list)
     external_games: list["ExternalGameResponse"] = Field(default_factory=list)
     time_to_beat: "TimeToBeatResponse | None" = None
+    cover: CoverResponse | None = None
 
 
 class ExternalGameResponse(BaseModel):
@@ -98,7 +103,7 @@ class IgdbClient:
         # Paginate through results
         while True:
             query = f"""
-                fields game.id, game.name, game.total_rating, game.genres.name;
+                fields game.id, game.name, game.total_rating, game.genres.name, game.cover.image_id;
                 where uid = ({formatted_steam_ids}) & external_game_source = 1;
                 offset {offset};
                 limit {limit};
@@ -149,7 +154,7 @@ class IgdbClient:
 
         endpoint = "games"
         query = f"""
-            fields id, name, total_rating, genres.name;
+            fields id, name, total_rating, genres.name, cover.image_id;
             search {json.dumps(normalized_name)};
             where external_games != null & external_games.external_game_source = (1);
             limit 50;

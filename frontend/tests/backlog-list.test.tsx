@@ -5,7 +5,7 @@ import { BacklogList } from "../src/pages/my-backlog/BacklogList";
 
 const noop = () => {};
 
-const activeGame: BacklogGameRow = {
+const activeGame = {
   backlogGameId: 1,
   gameId: 10,
   title: "Active Game",
@@ -17,7 +17,8 @@ const activeGame: BacklogGameRow = {
   addedOn: "2025-01-01T00:00:00Z",
   igdbId: 100,
   steamAppId: 1000,
-};
+  coverImageId: null,
+} as BacklogGameRow;
 
 const completedGame: BacklogGameRow = {
   ...activeGame,
@@ -203,5 +204,51 @@ describe("BacklogList", () => {
     expect(
       screen.getByRole("button", { name: /jump to top of backlog/i }),
     ).toBeInTheDocument();
+  });
+
+  test("scrolls to completed games when jump button is clicked", () => {
+    const scrollIntoView = vi.fn();
+    const completedSection = document.createElement("div");
+    completedSection.id = "completed-games";
+    vi.spyOn(document, "getElementById").mockReturnValue(completedSection);
+    completedSection.scrollIntoView = scrollIntoView;
+
+    renderBacklogList({ completedGames: [completedGame] });
+    fireEvent.click(
+      screen.getByRole("button", { name: /jump to completed games/i }),
+    );
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "start",
+    });
+
+    vi.restoreAllMocks();
+  });
+
+  test("scrolls to top of backlog when jump button is clicked", () => {
+    const scrollTo = vi.fn();
+    vi.spyOn(window, "scrollTo").mockImplementation(scrollTo);
+
+    renderBacklogList({ completedGames: [completedGame] });
+    fireEvent.click(
+      screen.getByRole("button", { name: /jump to top of backlog/i }),
+    );
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+
+    vi.restoreAllMocks();
+  });
+
+  test("calls onRemoveGame when removing a completed game", () => {
+    const onRemoveGame = vi.fn();
+    renderBacklogList({
+      completedGames: [completedGame],
+      onRemoveGame,
+    });
+    const removeButtons = screen.getAllByRole("button", {
+      name: /remove from backlog/i,
+    });
+    fireEvent.click(removeButtons[removeButtons.length - 1]);
+    fireEvent.click(screen.getByRole("button", { name: /^remove$/i }));
+    expect(onRemoveGame).toHaveBeenCalledWith(completedGame);
   });
 });

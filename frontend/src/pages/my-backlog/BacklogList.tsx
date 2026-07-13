@@ -1,28 +1,16 @@
-import { memo, useState } from "react";
+import { useState } from "react";
 import type { BacklogGameRow } from "@bb/client";
-import { GenreChips } from "@bb/components/GenreChips";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
-import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import { BacklogListItem } from "./BacklogListItem";
+import { RemoveGameDialog } from "./RemoveGameDialog";
 
-type PropType = {
+type BacklogListProps = {
   activeGames: BacklogGameRow[];
   completedGames: BacklogGameRow[];
   onToggleCompleted: (game: BacklogGameRow) => void;
@@ -30,175 +18,15 @@ type PropType = {
   updatingBacklogGameId: number | null;
 };
 
-const BacklogListItem = memo(function BacklogListItem({
-  game,
-  isCompleted,
-  isUpdating,
-  onToggleCompleted,
-  onRemoveGame,
-}: {
-  game: BacklogGameRow;
-  isCompleted: boolean;
-  isUpdating: boolean;
-  onToggleCompleted: (game: BacklogGameRow) => void;
-  onRemoveGame: (game: BacklogGameRow) => void;
-}) {
-  return (
-    <ListItem
-      sx={{
-        py: 2,
-        px: 2,
-        opacity: isCompleted ? 0.7 : 1,
-        "&:hover": {
-          backgroundColor: "action.hover",
-        },
-      }}
-    >
-      <ListItemText
-        primary={game.title}
-        secondary={
-          <Box
-            component="span"
-            sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.75 }}
-          >
-            {game.timeToBeat !== null && (
-              <Typography
-                component="span"
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  textDecoration: isCompleted ? "line-through" : "none",
-                }}
-              >
-                ⏱️ {Math.round(game.timeToBeat / 3600)}h
-              </Typography>
-            )}
-            {game.totalRating !== null && (
-              <Typography
-                component="span"
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  textDecoration: isCompleted ? "line-through" : "none",
-                }}
-              >
-                ⭐ {Math.round(game.totalRating)}/100
-              </Typography>
-            )}
-            <GenreChips genres={game.genres} />
-            {isCompleted && (
-              <Chip
-                icon={<CheckCircleIcon />}
-                label="Completed"
-                size="small"
-                color="success"
-                variant="outlined"
-              />
-            )}
-          </Box>
-        }
-        slotProps={{
-          primary: {
-            variant: "body1",
-            sx: {
-              fontWeight: 500,
-              textDecoration: isCompleted ? "line-through" : "none",
-            },
-          },
-          secondary: {
-            component: "div",
-          },
-        }}
-      />
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
-        <Tooltip
-          title={
-            isCompleted
-              ? "Mark this game as active again"
-              : "Mark this game as completed"
-          }
-        >
-          <span>
-            <Button
-              size="small"
-              variant={isCompleted ? "contained" : "outlined"}
-              color={isCompleted ? "success" : "inherit"}
-              disabled={isUpdating}
-              startIcon={
-                isCompleted ? <CheckCircleIcon /> : <CheckCircleOutlinedIcon />
-              }
-              onClick={() => onToggleCompleted(game)}
-            >
-              {isCompleted ? "Completed" : "Mark complete"}
-            </Button>
-          </span>
-        </Tooltip>
-        <Tooltip title="Remove from backlog">
-          <span>
-            <IconButton
-              color="error"
-              aria-label="Remove from backlog"
-              disabled={isUpdating}
-              onClick={() => onRemoveGame(game)}
-            >
-              <DeleteOutlinedIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Box>
-    </ListItem>
-  );
-});
-
 export function BacklogList({
   activeGames,
   completedGames,
   onToggleCompleted,
   onRemoveGame,
   updatingBacklogGameId,
-}: PropType) {
+}: BacklogListProps) {
   const [gamePendingRemoval, setGamePendingRemoval] =
     useState<BacklogGameRow | null>(null);
-
-  const handleRemoveRequested = (game: BacklogGameRow) => {
-    setGamePendingRemoval(game);
-  };
-
-  const handleCancelRemoveGame = () => {
-    setGamePendingRemoval(null);
-  };
-
-  const handleConfirmRemoveGame = () => {
-    if (!gamePendingRemoval) {
-      return;
-    }
-
-    onRemoveGame(gamePendingRemoval);
-    setGamePendingRemoval(null);
-  };
-
-  const renderGame = (
-    game: BacklogGameRow,
-    index: number,
-    games: BacklogGameRow[],
-  ) => (
-    <Box key={game.backlogGameId}>
-      <BacklogListItem
-        game={game}
-        isCompleted={Boolean(game.completedOn)}
-        isUpdating={updatingBacklogGameId === game.backlogGameId}
-        onToggleCompleted={onToggleCompleted}
-        onRemoveGame={handleRemoveRequested}
-      />
-      {index < games.length - 1 && <Divider />}
-    </Box>
-  );
 
   const scrollToCompletedGames = () => {
     document.getElementById("completed-games")?.scrollIntoView({
@@ -257,9 +85,17 @@ export function BacklogList({
           </Box>
         </Box>
         <List sx={{ py: 0 }}>
-          {activeGames.map((game, index) =>
-            renderGame(game, index, activeGames),
-          )}
+          {activeGames.map((game, index) => (
+            <BacklogListItem
+              key={game.backlogGameId}
+              game={game}
+              isCompleted={Boolean(game.completedOn)}
+              isLast={index === activeGames.length - 1}
+              isUpdating={updatingBacklogGameId === game.backlogGameId}
+              onToggleCompleted={onToggleCompleted}
+              onRemoveGame={() => setGamePendingRemoval(game)}
+            />
+          ))}
         </List>
       </Paper>
 
@@ -308,41 +144,30 @@ export function BacklogList({
             </Button>
           </Box>
           <List sx={{ py: 0 }}>
-            {completedGames.map((game, index) =>
-              renderGame(game, index, completedGames),
-            )}
+            {completedGames.map((game, index) => (
+              <BacklogListItem
+                key={game.backlogGameId}
+                game={game}
+                isCompleted={Boolean(game.completedOn)}
+                isLast={index === completedGames.length - 1}
+                isUpdating={updatingBacklogGameId === game.backlogGameId}
+                onToggleCompleted={onToggleCompleted}
+                onRemoveGame={() => setGamePendingRemoval(game)}
+              />
+            ))}
           </List>
         </Paper>
       )}
-      <Dialog
+      <RemoveGameDialog
         open={gamePendingRemoval !== null}
-        onClose={updatingBacklogGameId ? undefined : handleCancelRemoveGame}
-      >
-        <DialogTitle>Remove game from backlog?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {gamePendingRemoval
-              ? `Remove ${gamePendingRemoval.title} from your backlog? It will be hidden from this page, but can be re-added later.`
-              : ""}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            disabled={updatingBacklogGameId !== null}
-            onClick={handleCancelRemoveGame}
-          >
-            Cancel
-          </Button>
-          <Button
-            color="error"
-            disabled={updatingBacklogGameId !== null}
-            variant="contained"
-            onClick={handleConfirmRemoveGame}
-          >
-            Remove
-          </Button>
-        </DialogActions>
-      </Dialog>
+        game={gamePendingRemoval}
+        isUpdating={updatingBacklogGameId !== null}
+        onClose={() => setGamePendingRemoval(null)}
+        onConfirm={(game) => {
+          onRemoveGame(game);
+          setGamePendingRemoval(null);
+        }}
+      />
     </Stack>
   );
 }
