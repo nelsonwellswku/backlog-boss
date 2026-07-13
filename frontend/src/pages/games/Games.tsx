@@ -21,15 +21,16 @@ export function Games() {
     isPending: searchIsPending,
     mutate: searchGames,
   } = useSearchGames();
-  const { data: userData } = useCurrentUser(false);
-  const { data: backlogData, isPending: isBacklogLoading } = useGetMyBacklog();
+  const { isSuccess, data: userData } = useCurrentUser(false);
+  const isLoggedIn = isSuccess && !!userData?.data;
+  const { data: backlogData, isPending: isBacklogLoading } =
+    useGetMyBacklog(isLoggedIn);
   const {
     mutate: addBacklogGame,
     isPending: isAdding,
     variables: addVariables,
   } = useAddBacklogGame();
 
-  const isLoggedIn = !!userData?.data;
   const hasBacklog = !!backlogData?.data;
 
   const backlogGameIds = useMemo(() => {
