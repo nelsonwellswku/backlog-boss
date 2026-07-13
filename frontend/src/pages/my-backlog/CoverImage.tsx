@@ -40,6 +40,7 @@ export function CoverImage({ imageId, title }: CoverImageProps) {
         component="img"
         src={coverImageUrl(imageId)}
         alt={title}
+        loading="lazy"
         sx={{
           width: 88,
           height: 124,
