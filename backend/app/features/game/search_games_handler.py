@@ -17,6 +17,7 @@ class GameSearchRow(ApiResponseModel):
     total_rating: float | None
     time_to_beat: int | None
     genres: list[str]
+    cover_image_id: str | None
 
 
 class SearchGamesResponse(ApiResponseModel):
@@ -97,4 +98,5 @@ class SearchGamesHandler:
             total_rating=game.total_rating,
             time_to_beat=game.time_to_beat.normally if game.time_to_beat else None,
             genres=[g.name for g in game.genres],
+            cover_image_id=game.cover_image_id,
         )

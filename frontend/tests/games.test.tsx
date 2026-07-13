@@ -178,6 +178,7 @@ describe("Games", () => {
               totalRating: 93,
               timeToBeat: 36000,
               genres: [],
+              coverImageId: null,
             },
           ],
         },

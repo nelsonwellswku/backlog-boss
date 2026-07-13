@@ -11,6 +11,7 @@ const game: GameSearchRow = {
   totalRating: 91,
   timeToBeat: 36000,
   genres: ["Action", "Roguelike"],
+  coverImageId: null,
 };
 
 function renderSearchResults(
@@ -100,7 +101,7 @@ describe("SearchResults", () => {
     renderSearchResults({
       addingGameId: 1,
     });
-    expect(screen.getByText("Adding…")).toBeInTheDocument();
+    expect(screen.getByText("Adding...")).toBeInTheDocument();
   });
 
   test("renders genre chips for results", () => {
