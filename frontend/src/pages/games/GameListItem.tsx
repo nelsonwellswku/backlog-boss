@@ -1,4 +1,4 @@
-import { memo } from "react";
+
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import ScheduleIcon from "@mui/icons-material/Schedule";
@@ -26,7 +26,7 @@ type GameListItemProps = {
   onAddToBacklog: (gameId: number) => void;
 };
 
-export const GameListItem = memo(function GameListItem({
+export function GameListItem({
   addingInProgress,
   game,
   hasBacklog,
@@ -111,4 +111,4 @@ export const GameListItem = memo(function GameListItem({
       {!isLast ? <Divider /> : null}
     </Box>
   );
-});
+}
