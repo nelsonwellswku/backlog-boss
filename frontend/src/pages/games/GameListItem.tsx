@@ -102,7 +102,7 @@ export const GameListItem = memo(function GameListItem({
                 startIcon={<PlaylistAddIcon />}
                 onClick={() => onAddToBacklog(game.gameId)}
               >
-                {addingInProgress ? "Adding\u2026" : "Add to backlog"}
+                {addingInProgress ? "Adding..." : "Add to backlog"}
               </Button>
             )}
           </Box>

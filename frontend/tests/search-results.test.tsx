@@ -101,7 +101,7 @@ describe("SearchResults", () => {
     renderSearchResults({
       addingGameId: 1,
     });
-    expect(screen.getByText("Adding…")).toBeInTheDocument();
+    expect(screen.getByText("Adding...")).toBeInTheDocument();
   });
 
   test("renders genre chips for results", () => {

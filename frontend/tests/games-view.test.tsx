@@ -168,7 +168,7 @@ describe("GamesView", () => {
       results,
     });
 
-    expect(markup).toContain("Adding…");
+    expect(markup).toContain("Adding...");
   });
 
   test("renders error alert when search errors and no custom message", () => {

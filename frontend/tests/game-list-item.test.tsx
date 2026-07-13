@@ -102,7 +102,7 @@ describe("GameListItem", () => {
       hasBacklog: true,
       inBacklog: false,
     });
-    expect(screen.getByText("Adding…")).toBeInTheDocument();
+    expect(screen.getByText("Adding...")).toBeInTheDocument();
   });
 
   test("renders a divider when not the last item", () => {
