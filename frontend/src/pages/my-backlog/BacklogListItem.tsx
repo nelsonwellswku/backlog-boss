@@ -13,7 +13,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { CoverImage } from "./CoverImage";
+import { CoverImage } from "@bb/components/CoverImage";
 
 export const BacklogListItem = memo(function BacklogListItem({
   game,

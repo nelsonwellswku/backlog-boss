@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { CoverImage } from "../src/pages/my-backlog/CoverImage";
+import { CoverImage } from "../src/components/CoverImage";
 
 describe("CoverImage", () => {
   test("renders img when imageId is provided", () => {

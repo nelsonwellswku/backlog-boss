@@ -11,6 +11,7 @@ const game: GameSearchRow = {
   totalRating: 91,
   timeToBeat: 36000,
   genres: ["Action", "Roguelike"],
+  coverImageId: null,
 };
 
 function renderSearchResults(

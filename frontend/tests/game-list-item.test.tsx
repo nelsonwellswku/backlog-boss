@@ -9,6 +9,7 @@ const defaultGame: GameSearchRow = {
   totalRating: 85,
   timeToBeat: 14400,
   genres: [],
+  coverImageId: null,
 };
 const noop = () => {};
 

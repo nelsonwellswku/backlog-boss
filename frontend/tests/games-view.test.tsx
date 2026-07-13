@@ -66,6 +66,7 @@ describe("GamesView", () => {
         totalRating: 93.5,
         timeToBeat: 43200,
         genres: [],
+        coverImageId: null,
       },
     ];
 
@@ -110,6 +111,7 @@ describe("GamesView", () => {
         totalRating: 91,
         timeToBeat: 36000,
         genres: [],
+        coverImageId: null,
       },
     ];
 
@@ -131,6 +133,7 @@ describe("GamesView", () => {
         totalRating: 91,
         timeToBeat: 36000,
         genres: [],
+        coverImageId: null,
       },
     ];
 
@@ -153,6 +156,7 @@ describe("GamesView", () => {
         totalRating: 91,
         timeToBeat: 36000,
         genres: [],
+        coverImageId: null,
       },
     ];
 
@@ -195,6 +199,7 @@ describe("GamesView", () => {
         totalRating: 91,
         timeToBeat: 36000,
         genres: ["Action", "Roguelike"],
+        coverImageId: null,
       },
     ];
 
@@ -215,6 +220,7 @@ describe("GamesView", () => {
         totalRating: 91,
         timeToBeat: 36000,
         genres: [],
+        coverImageId: null,
       },
       {
         gameId: 2,
@@ -222,6 +228,7 @@ describe("GamesView", () => {
         totalRating: 93,
         timeToBeat: 43200,
         genres: [],
+        coverImageId: null,
       },
     ];
 

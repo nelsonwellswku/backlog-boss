@@ -28,7 +28,7 @@ npm run test -- --run path/to/test.ts     # single test
 ```bash
 cd backend && uv run python export_openapi.py && cd ../frontend && npm run genclient
 ```
-`openapi.json` is gitignored (root `.gitignore`). Regenerating requires dummy env vars for all Settings fields (see Dockerfile for the pattern). The client uses `@hey-api/openapi-ts`; output lands in `frontend/src/client/`. **Do not hand-edit that directory.**
+`openapi.json` is gitignored (root `.gitignore`). The client uses `@hey-api/openapi-ts`; output lands in `frontend/src/client/`. **Do not hand-edit that directory.** Your `.env` already provides all required env vars, so codegen runs without extra setup. In CI/Docker, dummy values are used instead (see `Dockerfile` for the full list of required vars) — the values aren't used, they just satisfy Pydantic settings validation at import time.
 
 ### Local DB
 ```bash
