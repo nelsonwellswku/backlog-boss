@@ -12,7 +12,9 @@ class GetMeHandler:
     def __init__(self, current_user: CurrentUser):
         self.current_user = current_user
 
-    def handle(self):
+    def handle(self) -> GetMeResponse | None:
+        if self.current_user is None:
+            return None
         return GetMeResponse(
             app_user_id=self.current_user.app_user_id,
             steam_id=self.current_user.steam_id,

@@ -18,7 +18,7 @@ user_router = APIRouter(tags=["User"])
 
 
 @user_router.get("/api/user/me")
-def get_me(handler: GetMeHandler = Depends()) -> GetMeResponse:
+def get_me(handler: GetMeHandler = Depends()) -> GetMeResponse | None:
     return handler.handle()
 
 

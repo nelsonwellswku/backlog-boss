@@ -8,7 +8,7 @@ from app.database.models import (
     IgdbGame,
 )
 from app.features.api_model import ApiResponseModel
-from app.features.auth.get_current_user import CurrentUser
+from app.features.auth.get_current_user import RequiredCurrentUser
 from app.features.game.persist_igdb_games import persist_igdb_games
 from app.infrastructure.igdb_client import IgdbClientDep
 from app.infrastructure.steam_client import SteamClientDep
@@ -23,7 +23,7 @@ class CreateMyBacklogHandler:
         self,
         db: DbSession,
         steam: SteamClientDep,
-        current_user: CurrentUser,
+        current_user: RequiredCurrentUser,
         igdb_client: IgdbClientDep,
     ):
         self.db = db
