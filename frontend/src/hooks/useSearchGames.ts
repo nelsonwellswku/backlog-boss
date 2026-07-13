@@ -11,6 +11,7 @@ export function useSearchGames() {
     mutationFn: ({ query }: SearchGamesParams) =>
       gameSearchGames({
         query: { query },
+        throwOnError: true,
       }),
   });
 }
