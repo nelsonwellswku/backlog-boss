@@ -95,7 +95,7 @@ export function GamesView({
 
       {isLoggedIn && !hasBacklog && !isBacklogLoading ? (
         <Alert severity="error" sx={{ mb: 3 }}>
-          You don&apos;t have a backlog yet.{" "}
+          You don't have a backlog yet.{" "}
           <Link component={RouterLink} to="/my-backlog">
             Create your backlog
           </Link>

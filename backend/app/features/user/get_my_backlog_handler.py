@@ -7,7 +7,7 @@ from sqlalchemy.orm import joinedload
 from app.database.engine import DbSession
 from app.database.models import Backlog, BacklogGame, IgdbGame
 from app.features.api_model import ApiResponseModel
-from app.features.auth.get_current_user import CurrentUser
+from app.features.auth.get_current_user import RequiredCurrentUser
 
 
 class GetMyBacklogResponse(ApiResponseModel):
@@ -27,7 +27,7 @@ class BacklogGameRow(ApiResponseModel):
 
 
 class GetMyBacklogHandler:
-    def __init__(self, db: DbSession, current_user: CurrentUser):
+    def __init__(self, db: DbSession, current_user: RequiredCurrentUser):
         self.db = db
         self.current_user = current_user
 

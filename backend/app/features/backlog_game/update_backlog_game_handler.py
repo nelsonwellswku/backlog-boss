@@ -7,7 +7,7 @@ from sqlalchemy.orm import joinedload
 from app.database.engine import DbSession
 from app.database.models import BacklogGame
 from app.features.api_model import ApiRequestModel, ApiResponseModel
-from app.features.auth.get_current_user import CurrentUser
+from app.features.auth.get_current_user import RequiredCurrentUser
 
 
 class UpdateBacklogGameRequest(ApiRequestModel):
@@ -20,7 +20,7 @@ class UpdateBacklogGameResponse(ApiResponseModel):
 
 
 class UpdateBacklogGameHandler:
-    def __init__(self, db: DbSession, current_user: CurrentUser):
+    def __init__(self, db: DbSession, current_user: RequiredCurrentUser):
         self.db = db
         self.current_user = current_user
 

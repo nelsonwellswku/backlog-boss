@@ -101,6 +101,7 @@ describe("Games", () => {
 
   test("renders backlog creation prompt when logged in without backlog", () => {
     mockUseCurrentUser.mockReturnValue({
+      isSuccess: true,
       data: { data: { steamId: "12345" } },
     });
     mockUseGetMyBacklog.mockReturnValue({
@@ -114,6 +115,7 @@ describe("Games", () => {
 
   test("does not show backlog alert while backlog is loading", () => {
     mockUseCurrentUser.mockReturnValue({
+      isSuccess: true,
       data: { data: { steamId: "12345" } },
     });
     mockUseGetMyBacklog.mockReturnValue({
@@ -132,6 +134,7 @@ describe("Games", () => {
 
   test("computes backlogGameIds from backlog data", () => {
     mockUseCurrentUser.mockReturnValue({
+      isSuccess: true,
       data: { data: { steamId: "12345" } },
     });
     mockUseGetMyBacklog.mockReturnValue({
@@ -188,6 +191,7 @@ describe("Games", () => {
       mutate,
     });
     mockUseCurrentUser.mockReturnValue({
+      isSuccess: true,
       data: { data: { steamId: "12345" } },
     });
     mockUseGetMyBacklog.mockReturnValue({
