@@ -1,0 +1,1 @@
+alias nocl='nono run --profile .opencode/nono-profile.json --allow-cwd -- opencode'
