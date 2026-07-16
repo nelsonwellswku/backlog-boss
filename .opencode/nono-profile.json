@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "name": "backlog-boss",
+    "version": "1.0.0",
+    "description": "OpenCode profile for Backlog Boss development with ODBC and Docker access"
+  },
+  "extends": "always-further/opencode",
+  "filesystem": {
+    "allow": [
+      "/opt/microsoft"
+    ],
+    "allow_file": [
+      "/var/run/docker.sock",
+      "/usr/bin/docker",
+      "/usr/local/bin/docker",
+      "/etc/odbcinst.ini"
+    ],
+    "bypass_protection": [
+    ]
+  },
+  "groups": {
+    "exclude": ["dangerous_commands"]
+  }
+}

@@ -1,3 +1,4 @@
+import httpx
 import json
 from itertools import groupby
 from logging import getLogger
@@ -10,7 +11,7 @@ from igdb.wrapper import IGDBWrapper
 from pydantic import BaseModel, Field
 
 from app.http_client import HttpClient
-from app.settings import AppSettings
+from app.settings import AppSettings, get_settings
 from app.timing import timed
 
 logger = getLogger(__name__)
@@ -78,6 +79,29 @@ class TimeToBeatResponse(BaseModel):
 class IgdbClient:
     def __init__(self, igdb_wrapper: IGDBWrapper = Depends(get_igdb_wrapper)):
         self.igdb_wrapper = igdb_wrapper
+
+    @classmethod
+    def create(cls) -> "IgdbClient":
+        settings = get_settings()
+        if access_token_key not in access_token_cache:
+            query_params = QueryParams(
+                client_id=settings.twitch_client_id,
+                client_secret=settings.twitch_client_secret,
+                grant_type="client_credentials",
+            )
+            with httpx.Client() as client:
+                response = client.post(
+                    "https://id.twitch.tv/oauth2/token", params=query_params
+                )
+                response_json = response.json()
+                access_token_cache.ttl(
+                    access_token_key,
+                    response_json["access_token"],
+                    response_json["expires_in"],
+                )
+        access_token = access_token_cache[access_token_key]
+        wrapper = IGDBWrapper(settings.twitch_client_id, access_token)
+        return cls(igdb_wrapper=wrapper)
 
     def _format_ids(self, ids: list[int]):
         return ", ".join([str(id) for id in ids])
@@ -275,6 +299,41 @@ class IgdbClient:
             offset += limit
 
         return all_game_time_to_beats
+
+    def get_covers_by_game_ids(self, game_ids: list[int]) -> dict[int, str]:
+        if not game_ids:
+            return {}
+
+        formatted_ids = self._format_ids(game_ids)
+        endpoint = "games"
+        limit = 500
+        offset = 0
+        covers: dict[int, str] = {}
+
+        while True:
+            query = f"""
+                fields id, cover.image_id;
+                where id = ({formatted_ids}) & cover != null;
+                offset {offset};
+                limit {limit};
+            """
+
+            response_bytes = self._api_request(endpoint, query)
+            response_json = json.loads(response_bytes)
+
+            if not response_json:
+                break
+
+            for game in response_json:
+                if game.get("cover") and game["cover"].get("image_id"):
+                    covers[game["id"]] = game["cover"]["image_id"]
+
+            if len(response_json) < limit:
+                break
+
+            offset += limit
+
+        return covers
 
 
 IgdbClientDep: TypeAlias = Annotated[IgdbClient, Depends(IgdbClient)]
