@@ -335,5 +335,46 @@ class IgdbClient:
 
         return covers
 
+    def get_genres_by_game_ids(
+        self, game_ids: list[int]
+    ) -> dict[int, list[GenreResponse]]:
+        if not game_ids:
+            return {}
+
+        formatted_ids = self._format_ids(game_ids)
+        endpoint = "games"
+        limit = 500
+        offset = 0
+        genres: dict[int, list[GenreResponse]] = {}
+
+        while True:
+            query = f"""
+                fields id, genres.name;
+                where id = ({formatted_ids}) & genres != null;
+                offset {offset};
+                limit {limit};
+            """
+
+            response_bytes = self._api_request(endpoint, query)
+            response_json = json.loads(response_bytes)
+
+            if not response_json:
+                break
+
+            for game in response_json:
+                game_id = game["id"]
+                if "genres" in game and game["genres"]:
+                    genres[game_id] = [
+                        GenreResponse(id=g["id"], name=g["name"])
+                        for g in game["genres"]
+                    ]
+
+            if len(response_json) < limit:
+                break
+
+            offset += limit
+
+        return genres
+
 
 IgdbClientDep: TypeAlias = Annotated[IgdbClient, Depends(IgdbClient)]

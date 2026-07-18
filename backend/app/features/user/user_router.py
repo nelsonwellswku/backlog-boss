@@ -7,6 +7,9 @@ from app.features.user.create_my_backlog_handler import (
 from app.features.user.fetch_missing_covers_task import (
     fetch_missing_covers_task,
 )
+from app.features.user.fetch_missing_genres_task import (
+    fetch_missing_genres_task,
+)
 from app.features.user.get_me_handler import GetMeHandler, GetMeResponse
 from app.features.user.get_my_backlog_handler import (
     GetMyBacklogHandler,
@@ -46,4 +49,5 @@ def refresh_my_backlog(
 ) -> RefreshMyBacklogResponse:
     result = handler.handle()
     bg_tasks.add_task(fetch_missing_covers_task, result.backlog_id)
+    bg_tasks.add_task(fetch_missing_genres_task, result.backlog_id)
     return result
