@@ -53,6 +53,7 @@ Multi-stage: generates OpenAPI schema → builds frontend → packages FastAPI +
 ## Key conventions
 
 - **Routes are thin**: handlers receive deps via `Depends()` (`DbSession`, `CurrentUser`, `AppSettings`, `SteamClientDep`, `IgdbClientDep`, `HttpClient`).
+- **DI type aliases**: For any class that should be injectable by FastAPI (e.g. a handler or service), define a type alias next to it: `MyClassDep: TypeAlias = Annotated[MyClass, Depends(MyClass)]`. Consumers import `MyClassDep`, never `Depends` directly. This keeps the injection point decoupled from FastAPI.
 - **API models**: snake_case Python, camelCase wire. Inherit `ApiRequestModel` or `ApiResponseModel` from `app/features/api_model.py`. Requests are alias-strict (`validate_by_name=False`).
 - **Frontend imports**: use `@bb` alias (maps to `src/`). Reuse React Query hooks + generated SDK; no raw `fetch`.
 - **Settings & DB engine cached** via `@lru_cache`. Tests changing env must call `clear_settings_cache()` / `reset_db_engine()`.
