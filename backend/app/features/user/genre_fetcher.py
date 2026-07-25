@@ -48,7 +48,9 @@ class GenreFetcher:
         )
         games = {g.igdb_game_id: g for g in self.db.scalars(stmt).all()}
 
-        all_genre_ids = {gr.id for genre_list in genres_by_game.values() for gr in genre_list}
+        all_genre_ids = {
+            gr.id for genre_list in genres_by_game.values() for gr in genre_list
+        }
         stmt = select(IgdbGenre).where(IgdbGenre.igdb_genre_id.in_(all_genre_ids))
         existing_genres = {g.igdb_genre_id: g for g in self.db.scalars(stmt).all()}
 
