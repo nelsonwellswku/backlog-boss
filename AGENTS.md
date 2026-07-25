@@ -60,6 +60,16 @@ Multi-stage: generates OpenAPI schema → builds frontend → packages FastAPI +
 - **`base_url`** controls Steam OpenID return realm; defaults to `http://localhost:5173`.
 - **SQL style**: Always use lowercase keywords. Avoid brackets unless required (e.g. when column names are SQL keywords).
 
+## Database schema context
+
+When working on database-related tasks (new migrations, queries, model changes), load `docs/schema.md` for the current schema reference. Migrations are cumulative and do not represent a "state in time" view — the static schema doc reflects the final state after all migrations are applied.
+
+To regenerate after schema changes:
+
+```bash
+cd backend && uv run python ../scripts/generate_schema_docs.py
+```
+
 ## Deploy
 
 GitHub Actions in `.github/workflows/`. Release pipeline: checks → tests → publish image (`ghcr.io`) → run migrations → deploy to Azure App Service (port 9000). OIDC setup: `scripts/setup-azure-github-oidc.sh`.
