@@ -179,8 +179,8 @@ def test_handle_adds_qualifying_new_game_skips_active_game(
     ).all()
     assert set(backlog_game_ids) == {1, 2}
 
-    cover_fetcher.fetch.assert_called_once_with([1, 2])
-    genre_fetcher.fetch.assert_called_once_with([1, 2])
+    cover_fetcher.fetch_and_persist.assert_called_once_with([1, 2])
+    genre_fetcher.fetch_and_persist.assert_called_once_with([1, 2])
 
 
 def test_handle_skips_game_without_rating(

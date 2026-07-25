@@ -98,8 +98,8 @@ class RefreshMyBacklogHandler:
         )
         all_backlog_game_ids = list(self.db.scalars(stmt).all())
 
-        self.cover_fetcher.fetch(all_backlog_game_ids)
-        self.genre_fetcher.fetch(all_backlog_game_ids)
+        self.cover_fetcher.fetch_and_persist(all_backlog_game_ids)
+        self.genre_fetcher.fetch_and_persist(all_backlog_game_ids)
 
         self.db.commit()
 

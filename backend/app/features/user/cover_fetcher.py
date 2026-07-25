@@ -16,7 +16,12 @@ class CoverFetcher:
         self.db = db
         self.igdb_client = igdb_client
 
-    def fetch(self, game_ids: list[int]) -> None:
+    def fetch_and_persist(self, game_ids: list[int]) -> None:
+        """Fetch covers from IGDB for games that are missing them and persist.
+
+        Args:
+            game_ids: IGDB game IDs to check and potentially update.
+        """
         stmt = select(IgdbGame.igdb_game_id).where(
             IgdbGame.igdb_game_id.in_(game_ids),
             IgdbGame.cover_image_id.is_(None),
@@ -33,9 +38,12 @@ class CoverFetcher:
             logger.info("IGDB returned no covers for %d games", len(missing_ids))
             return
 
+        stmt = select(IgdbGame).where(IgdbGame.igdb_game_id.in_(covers.keys()))
+        games = {g.igdb_game_id: g for g in self.db.scalars(stmt).all()}
+
         updated = 0
         for igdb_game_id, image_id in covers.items():
-            game = self.db.get(IgdbGame, igdb_game_id)
+            game = games.get(igdb_game_id)
             if game and game.cover_image_id is None:
                 game.cover_image_id = image_id
                 updated += 1

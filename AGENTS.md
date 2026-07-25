@@ -60,6 +60,9 @@ Multi-stage: generates OpenAPI schema → builds frontend → packages FastAPI +
 - **Required env vars** (copy `backend/.env.sample` to `.env`): `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`, `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`, `STEAM_API_KEY`. `dummy_settings` fixture provides defaults for unit tests.
 - **`base_url`** controls Steam OpenID return realm; defaults to `http://localhost:5173`.
 - **SQL style**: Always use lowercase keywords. Avoid brackets unless required (e.g. when column names are SQL keywords).
+- **Avoid N+1 queries**: When processing a list of entities, batch-load all required data upfront — use `WHERE ... IN (...)` to fetch parent rows, and `selectinload` / `joinedload` to eager-load relationships. Never call `db.get()`, `db.scalars()`, or access unloaded relationships inside a loop; every iteration produces a separate round trip.
+- **No LSP errors**: Even if LSP errors were not introduced by an agent's change, if the agent modifies a file then no LSP errors should remain in that file.
+- **Docstrings**: When modifying or creating new functions or methods, always include "Google style" docstrings.
 
 ## Deploy
 

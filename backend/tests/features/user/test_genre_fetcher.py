@@ -45,7 +45,7 @@ def test_fetch_updates_games_without_genres(
     }
 
     fetcher = GenreFetcher(db_session, igdb_client)
-    fetcher.fetch([1, 2, 3])
+    fetcher.fetch_and_persist([1, 2, 3])
 
     genres_1 = db_session.scalars(
         select(IgdbGenre.igdb_genre_id)
@@ -90,7 +90,7 @@ def test_fetch_skips_when_no_games_missing_genres(
     igdb_client = mocker.Mock()
 
     fetcher = GenreFetcher(db_session, igdb_client)
-    fetcher.fetch([1])
+    fetcher.fetch_and_persist([1])
 
     igdb_client.get_genres_by_game_ids.assert_not_called()
 
@@ -102,6 +102,6 @@ def test_fetch_handles_empty_game_list(
     igdb_client = mocker.Mock()
 
     fetcher = GenreFetcher(db_session, igdb_client)
-    fetcher.fetch([])
+    fetcher.fetch_and_persist([])
 
     igdb_client.get_genres_by_game_ids.assert_not_called()

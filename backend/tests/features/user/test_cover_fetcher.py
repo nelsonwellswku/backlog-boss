@@ -34,12 +34,15 @@ def test_fetch_updates_games_without_covers(
     igdb_client.get_covers_by_game_ids.return_value = {1: "co1z2z", 2: "co4abc"}
 
     fetcher = CoverFetcher(db_session, igdb_client)
-    fetcher.fetch([1, 2, 3])
+    fetcher.fetch_and_persist([1, 2, 3])
 
     game_1 = db_session.get(IgdbGame, 1)
     game_2 = db_session.get(IgdbGame, 2)
     game_3 = db_session.get(IgdbGame, 3)
 
+    assert game_1 is not None
+    assert game_2 is not None
+    assert game_3 is not None
     assert game_1.cover_image_id == "co1z2z"
     assert game_2.cover_image_id == "co4abc"
     assert game_3.cover_image_id == "existing"
@@ -58,7 +61,7 @@ def test_fetch_skips_when_no_games_missing_covers(
     igdb_client = mocker.Mock()
 
     fetcher = CoverFetcher(db_session, igdb_client)
-    fetcher.fetch([1, 2])
+    fetcher.fetch_and_persist([1, 2])
 
     igdb_client.get_covers_by_game_ids.assert_not_called()
 
@@ -70,6 +73,6 @@ def test_fetch_handles_empty_game_list(
     igdb_client = mocker.Mock()
 
     fetcher = CoverFetcher(db_session, igdb_client)
-    fetcher.fetch([])
+    fetcher.fetch_and_persist([])
 
     igdb_client.get_covers_by_game_ids.assert_not_called()

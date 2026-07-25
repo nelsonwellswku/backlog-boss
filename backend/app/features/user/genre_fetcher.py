@@ -17,7 +17,12 @@ class GenreFetcher:
         self.db = db
         self.igdb_client = igdb_client
 
-    def fetch(self, game_ids: list[int]) -> None:
+    def fetch_and_persist(self, game_ids: list[int]) -> None:
+        """Fetch genres from IGDB for games that are missing them and persist.
+
+        Args:
+            game_ids: IGDB game IDs to check and potentially update.
+        """
         stmt = select(IgdbGame.igdb_game_id).where(
             IgdbGame.igdb_game_id.in_(game_ids),
             ~select(IgdbGameGenre.igdb_game_id)
@@ -36,25 +41,32 @@ class GenreFetcher:
             logger.info("IGDB returned no genres for %d games", len(missing_ids))
             return
 
+        stmt = (
+            select(IgdbGame)
+            .where(IgdbGame.igdb_game_id.in_(genres_by_game.keys()))
+            .options(selectinload(IgdbGame.genres))
+        )
+        games = {g.igdb_game_id: g for g in self.db.scalars(stmt).all()}
+
+        all_genre_ids = {gr.id for genre_list in genres_by_game.values() for gr in genre_list}
+        stmt = select(IgdbGenre).where(IgdbGenre.igdb_genre_id.in_(all_genre_ids))
+        existing_genres = {g.igdb_genre_id: g for g in self.db.scalars(stmt).all()}
+
         updated = 0
         for igdb_game_id, genre_list in genres_by_game.items():
-            stmt = (
-                select(IgdbGame)
-                .where(IgdbGame.igdb_game_id == igdb_game_id)
-                .options(selectinload(IgdbGame.genres))
-            )
-            game = self.db.scalars(stmt).one_or_none()
+            game = games.get(igdb_game_id)
             if not game:
                 continue
 
             for genre_response in genre_list:
-                genre = self.db.get(IgdbGenre, genre_response.id)
+                genre = existing_genres.get(genre_response.id)
                 if not genre:
                     genre = IgdbGenre(
                         igdb_genre_id=genre_response.id,
                         name=genre_response.name,
                     )
                     self.db.add(genre)
+                    existing_genres[genre_response.id] = genre
                 game.genres.append(genre)
                 updated += 1
 
