@@ -54,7 +54,6 @@ class GenreFetcher:
         stmt = select(IgdbGenre).where(IgdbGenre.igdb_genre_id.in_(all_genre_ids))
         existing_genres = {g.igdb_genre_id: g for g in self.db.scalars(stmt).all()}
 
-        updated = 0
         for igdb_game_id, genre_list in genres_by_game.items():
             game = games.get(igdb_game_id)
             if not game:
@@ -70,9 +69,8 @@ class GenreFetcher:
                     self.db.add(genre)
                     existing_genres[genre_response.id] = genre
                 game.genres.append(genre)
-                updated += 1
 
-        logger.info("Updated genres for %d games", updated)
+        logger.info("Updated genres for %d games", len(genres_by_game))
 
 
 GenreFetcherDep: TypeAlias = Annotated[GenreFetcher, Depends(GenreFetcher)]
