@@ -179,8 +179,68 @@ def test_handle_adds_qualifying_new_game_skips_active_game(
     ).all()
     assert set(backlog_game_ids) == {1, 2}
 
-    cover_fetcher.fetch_and_persist.assert_called_once_with([1, 2])
-    genre_fetcher.fetch_and_persist.assert_called_once_with([1, 2])
+    cover_fetcher.fetch_and_persist.assert_called_once()
+    assert set(cover_fetcher.fetch_and_persist.call_args[0][0]) == {1, 2}
+    genre_fetcher.fetch_and_persist.assert_called_once()
+    assert set(genre_fetcher.fetch_and_persist.call_args[0][0]) == {1, 2}
+
+
+def test_handle_raises_when_cover_fetcher_fails(
+    db_session: Session,
+    mocker: MockerFixture,
+):
+    current_user = _create_current_user(db_session)
+    backlog = _create_backlog(db_session, current_user)
+    _create_game(db_session, 1, "Existing Game", 111)
+    backlog_game = BacklogGame(
+        backlog_id=backlog.backlog_id,
+        igdb_game_id=1,
+    )
+    db_session.add(backlog_game)
+    db_session.commit()
+
+    steam_client = mocker.Mock()
+    steam_client.get_owned_games.return_value = [
+        SteamGame(steam_game_id=111),
+        SteamGame(steam_game_id=222),
+    ]
+    igdb_client = mocker.Mock()
+    igdb_client.get_games_by_steam_id.return_value = [
+        IgdbGameResponse(
+            id=2,
+            name="New Game",
+            total_rating=85.0,
+            external_games=[
+                ExternalGameResponse(id=2001, game=2, uid="222", external_game_source=1)
+            ],
+            time_to_beat=TimeToBeatResponse(id=3001, game_id=2, normally=7200),
+        ),
+    ]
+    cover_fetcher = mocker.Mock()
+    cover_fetcher.fetch_and_persist.side_effect = RuntimeError("IGDB API error")
+    genre_fetcher = mocker.Mock()
+    handler = RefreshMyBacklogHandler(
+        db_session,
+        steam_client,
+        current_user,
+        igdb_client,
+        cover_fetcher,
+        genre_fetcher,
+    )
+
+    with pytest.raises(RuntimeError, match="IGDB API error"):
+        handler.handle()
+
+    db_session.rollback()
+
+    backlog_game_ids = db_session.scalars(
+        select(BacklogGame.igdb_game_id).where(
+            BacklogGame.backlog_id == backlog.backlog_id
+        )
+    ).all()
+    assert backlog_game_ids == [1]
+
+    genre_fetcher.fetch_and_persist.assert_not_called()
 
 
 def test_handle_skips_game_without_rating(
