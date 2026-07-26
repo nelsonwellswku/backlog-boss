@@ -4,6 +4,7 @@ import { GenreChips } from "@bb/components/GenreChips";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -46,7 +47,33 @@ export const BacklogListItem = memo(function BacklogListItem({
           <CoverImage imageId={game.coverImageId} title={game.title} />
 
           <ListItemText
-            primary={game.title}
+            primary={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontWeight: 500,
+                    textDecoration: isCompleted ? "line-through" : "none",
+                  }}
+                >
+                  {game.title}
+                </Typography>
+                {game.steamAppId && (
+                  <Tooltip title="Open in Steam">
+                    <IconButton
+                      size="small"
+                      component="a"
+                      href={`https://store.steampowered.com/app/${game.steamAppId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ p: 0.5 }}
+                    >
+                      <OpenInNewIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
+            }
             secondary={
               <Box
                 component="span"
@@ -95,13 +122,6 @@ export const BacklogListItem = memo(function BacklogListItem({
               </Box>
             }
             slotProps={{
-              primary: {
-                variant: "body1",
-                sx: {
-                  fontWeight: 500,
-                  textDecoration: isCompleted ? "line-through" : "none",
-                },
-              },
               secondary: {
                 component: "div",
               },

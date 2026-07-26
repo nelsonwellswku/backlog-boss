@@ -1,4 +1,5 @@
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import StarIcon from "@mui/icons-material/Star";
@@ -6,9 +7,11 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import type { GameSearchRow } from "@bb/client";
@@ -50,7 +53,23 @@ export function GameListItem({
                   alignItems: { xs: "flex-start", md: "center" },
                 }}
               >
-                <Typography variant="h6">{game.title}</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Typography variant="h6">{game.title}</Typography>
+                  {game.steamAppId && (
+                    <Tooltip title="Open in Steam">
+                      <IconButton
+                        size="small"
+                        component="a"
+                        href={`https://store.steampowered.com/app/${game.steamAppId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ p: 0.5 }}
+                      >
+                        <OpenInNewIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Box>
               </Stack>
             }
             secondary={
