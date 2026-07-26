@@ -10,9 +10,10 @@ from httpx import QueryParams
 from igdb.wrapper import IGDBWrapper
 from pydantic import BaseModel, Field
 
+import time
+
 from app.http_client import HttpClient
 from app.settings import AppSettings, get_settings
-from app.timing import timed
 
 logger = getLogger(__name__)
 
@@ -106,9 +107,12 @@ class IgdbClient:
     def _format_ids(self, ids: list[int]):
         return ", ".join([str(id) for id in ids])
 
-    @timed
     def _api_request(self, endpoint: str, query: str):
-        return self.igdb_wrapper.api_request(endpoint, query)
+        start_time = time.time()
+        result = self.igdb_wrapper.api_request(endpoint, query)
+        elapsed_time = time.time() - start_time
+        logger.info("%s took %.2f seconds", endpoint, elapsed_time)
+        return result
 
     def get_games_by_steam_id(self, steam_ids: set[int]) -> list[IgdbGameResponse]:
         if not steam_ids:
