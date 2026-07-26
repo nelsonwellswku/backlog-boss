@@ -64,6 +64,12 @@ Multi-stage: generates OpenAPI schema → builds frontend → packages FastAPI +
 - **No LSP errors**: Even if LSP errors were not introduced by an agent's change, if the agent modifies a file then no LSP errors should remain in that file.
 - **Docstrings**: When modifying or creating new functions or methods, always include "Google style" docstrings.
 
+## Database schema context
+
+When working on database-related tasks (new migrations, queries, model changes), load `docs/schema.md` for the current schema reference. Migrations are cumulative and do not represent a "state in time" view — the static schema doc reflects the final state after all migrations are applied.
+
+To regenerate after schema changes, invoke the `generate-schema-docs` skill.
+
 ## Deploy
 
 GitHub Actions in `.github/workflows/`. Release pipeline: checks → tests → publish image (`ghcr.io`) → run migrations → deploy to Azure App Service (port 9000). OIDC setup: `scripts/setup-azure-github-oidc.sh`.
