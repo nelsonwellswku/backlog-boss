@@ -69,8 +69,11 @@ def test_handle_returns_database_matches_and_still_calls_igdb(
 
     actual = SearchGamesHandler(db_session, igdb_client).handle("portal")
 
-    assert [(row.game_id, row.title, row.time_to_beat) for row in actual.games] == [
-        (10, "Portal 2", 28800),
+    assert [
+        (row.game_id, row.title, row.time_to_beat, row.steam_app_id)
+        for row in actual.games
+    ] == [
+        (10, "Portal 2", 28800, 620),
     ]
     igdb_client.search_games_by_name.assert_called_once_with("portal")
 
@@ -114,9 +117,12 @@ def test_handle_fetches_from_igdb_persists_results_and_returns_them(
 
     actual = SearchGamesHandler(db_session, igdb_client).handle("hades")
 
-    assert [(row.game_id, row.title, row.time_to_beat) for row in actual.games] == [
-        (44, "Hades II", 43200),
-        (45, "Hades Tactics", None),
+    assert [
+        (row.game_id, row.title, row.time_to_beat, row.steam_app_id)
+        for row in actual.games
+    ] == [
+        (44, "Hades II", 43200, 1145350),
+        (45, "Hades Tactics", None, 1145351),
     ]
     igdb_client.search_games_by_name.assert_called_once_with("hades")
 
@@ -214,9 +220,12 @@ def test_handle_merges_db_and_igdb_results_with_deduplication(
 
     actual = SearchGamesHandler(db_session, igdb_client).handle("half-life")
 
-    assert [(row.game_id, row.title, row.time_to_beat) for row in actual.games] == [
-        (100, "Half-Life 2", None),
-        (200, "Half-Life: Alyx", 43200),
+    assert [
+        (row.game_id, row.title, row.time_to_beat, row.steam_app_id)
+        for row in actual.games
+    ] == [
+        (100, "Half-Life 2", None, 220),
+        (200, "Half-Life: Alyx", 43200, 546560),
     ]
     igdb_client.search_games_by_name.assert_called_once_with("half-life")
 

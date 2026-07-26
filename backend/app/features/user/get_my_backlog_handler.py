@@ -24,6 +24,7 @@ class BacklogGameRow(ApiResponseModel):
     completed_on: datetime | None
     genres: list[str]
     cover_image_id: str | None = None
+    steam_app_id: int | None = None
 
 
 class GetMyBacklogHandler:
@@ -41,6 +42,7 @@ class GetMyBacklogHandler:
             .options(
                 igdb_game_loader.joinedload(IgdbGame.time_to_beat),
                 igdb_game_loader.joinedload(IgdbGame.genres),
+                igdb_game_loader.joinedload(IgdbGame.external_games),
             )
             .where(Backlog.app_user_id == self.current_user.app_user_id)
         )
@@ -61,6 +63,14 @@ class GetMyBacklogHandler:
                 completed_on=g.completed_on,
                 genres=[genre.name for genre in g.igdb_game.genres],
                 cover_image_id=g.igdb_game.cover_image_id,
+                steam_app_id=next(
+                    (
+                        eg.uid
+                        for eg in g.igdb_game.external_games
+                        if eg.igdb_external_game_source_id == 1
+                    ),
+                    None,
+                ),
             )
             for g in backlog.backlog_games
         ]

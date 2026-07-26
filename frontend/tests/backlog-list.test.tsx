@@ -65,6 +65,27 @@ describe("BacklogList", () => {
     expect(screen.getByText("Active Game")).toBeInTheDocument();
   });
 
+  test("renders Steam store link when steamAppId is present", () => {
+    renderBacklogList();
+    const link = screen.getByRole("link", {
+      name: /open in steam/i,
+    });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute(
+      "href",
+      "https://store.steampowered.com/app/1000",
+    );
+    expect(link).toHaveAttribute("target", "_blank");
+  });
+
+  test("does not render Steam store link when steamAppId is null", () => {
+    const gameNoSteam = { ...activeGame, steamAppId: null };
+    renderBacklogList({ activeGames: [gameNoSteam] });
+    expect(
+      screen.queryByRole("link", { name: /open in steam/i }),
+    ).not.toBeInTheDocument();
+  });
+
   test("renders time to beat", () => {
     renderBacklogList();
     expect(screen.getByText("⏱️ 10h")).toBeInTheDocument();

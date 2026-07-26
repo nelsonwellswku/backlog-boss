@@ -8,6 +8,7 @@ from app.database.models import (
     AppUser,
     Backlog,
     BacklogGame,
+    IgdbExternalGame,
     IgdbGame,
     IgdbGameTimeToBeat,
 )
@@ -77,6 +78,50 @@ def test_handle_returns_backlog_games_excluding_removed_entries(db_session: Sess
         (1, "Keep Me", 5400, completed_on),
         (2, "No Time", None, None),
     ]
+
+
+def test_handle_includes_steam_app_id_from_external_games(
+    db_session: Session,
+):
+    current_user = _create_current_user(db_session)
+    backlog = Backlog(app_user_id=current_user.app_user_id)
+    game_with_steam = IgdbGame(igdb_game_id=1, name="Portal 2", total_rating=95.0)
+    game_with_steam.external_games.append(
+        IgdbExternalGame(
+            igdb_external_game_id=101,
+            uid=620,
+            igdb_external_game_source_id=1,
+        )
+    )
+    game_without_steam = IgdbGame(
+        igdb_game_id=2, name="Some Other Game", total_rating=70.0
+    )
+    game_without_steam.external_games.append(
+        IgdbExternalGame(
+            igdb_external_game_id=102,
+            uid=777,
+            igdb_external_game_source_id=5,
+        )
+    )
+    game_no_external = IgdbGame(igdb_game_id=3, name="No External", total_rating=50.0)
+    db_session.add_all([backlog, game_with_steam, game_without_steam, game_no_external])
+    db_session.flush()
+
+    db_session.add_all(
+        [
+            BacklogGame(backlog_id=backlog.backlog_id, igdb_game_id=1),
+            BacklogGame(backlog_id=backlog.backlog_id, igdb_game_id=2),
+            BacklogGame(backlog_id=backlog.backlog_id, igdb_game_id=3),
+        ]
+    )
+    db_session.commit()
+
+    actual = GetMyBacklogHandler(db_session, current_user).handle()
+
+    rows = sorted(actual.games, key=lambda game: game.game_id)
+    assert rows[0].steam_app_id == 620
+    assert rows[1].steam_app_id is None
+    assert rows[2].steam_app_id is None
 
 
 def test_handle_raises_not_found_when_backlog_is_missing(db_session: Session):

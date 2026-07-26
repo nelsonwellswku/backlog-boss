@@ -18,6 +18,7 @@ class GameSearchRow(ApiResponseModel):
     time_to_beat: int | None
     genres: list[str]
     cover_image_id: str | None
+    steam_app_id: int | None = None
 
 
 class SearchGamesResponse(ApiResponseModel):
@@ -82,7 +83,11 @@ class SearchGamesHandler:
         stmt = (
             select(IgdbGame)
             .join(IgdbExternalGame)
-            .options(joinedload(IgdbGame.time_to_beat), joinedload(IgdbGame.genres))
+            .options(
+                joinedload(IgdbGame.time_to_beat),
+                joinedload(IgdbGame.genres),
+                joinedload(IgdbGame.external_games),
+            )
             .where(IgdbExternalGame.igdb_external_game_source_id == 1)
             .where(IgdbGame.igdb_game_id.in_(game_ids))
             .distinct()
@@ -99,4 +104,12 @@ class SearchGamesHandler:
             time_to_beat=game.time_to_beat.normally if game.time_to_beat else None,
             genres=[g.name for g in game.genres],
             cover_image_id=game.cover_image_id,
+            steam_app_id=next(
+                (
+                    eg.uid
+                    for eg in game.external_games
+                    if eg.igdb_external_game_source_id == 1
+                ),
+                None,
+            ),
         )
