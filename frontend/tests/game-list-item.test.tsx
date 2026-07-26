@@ -142,6 +142,32 @@ describe("GameListItem", () => {
     expect(screen.queryByText("Strategy")).toBeNull();
   });
 
+  test("renders Steam store link when steamAppId is present", () => {
+    renderGameListItem({
+      game: { ...defaultGame, steamAppId: 620 },
+      isLoggedIn: true,
+      hasBacklog: true,
+    });
+    const link = screen.getByRole("link", {
+      name: /open in steam/i,
+    });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute(
+      "href",
+      "https://store.steampowered.com/app/620",
+    );
+    expect(link).toHaveAttribute("target", "_blank");
+  });
+
+  test("does not render Steam store link when steamAppId is null", () => {
+    renderGameListItem({
+      game: { ...defaultGame, steamAppId: null },
+    });
+    expect(
+      screen.queryByRole("link", { name: /open in steam/i }),
+    ).not.toBeInTheDocument();
+  });
+
   test("calls onAddToBacklog when add button is clicked", () => {
     const onAddToBacklog = vi.fn();
     renderGameListItem({

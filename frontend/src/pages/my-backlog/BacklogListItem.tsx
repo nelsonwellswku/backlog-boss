@@ -66,6 +66,7 @@ export const BacklogListItem = memo(function BacklogListItem({
                       href={`https://store.steampowered.com/app/${game.steamAppId}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label="Open in Steam"
                       sx={{ p: 0.5 }}
                     >
                       <OpenInNewIcon fontSize="small" />
