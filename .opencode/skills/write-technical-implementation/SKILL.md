@@ -27,3 +27,7 @@ Write as a handoff document for a new coding session. It must be self-contained 
 - **Edge Cases**: Known edge cases and how they're handled
 
 Refer to `feature-artifacts/refresh-backlog-covers/technical-implementation.md` for style.
+
+# Guardrails
+
+* Do NOT begin implementing without explicit instructions to do so.

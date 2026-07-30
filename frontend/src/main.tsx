@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { Layout } from "@bb/layouts/Layout";
+import { ProtectedRoute } from "@bb/layouts/ProtectedRoute";
 import { Home } from "@bb/pages/home/Home";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Games } from "@bb/pages/games/Games";
@@ -17,7 +18,9 @@ createRoot(document.getElementById("root")!).render(
           <Route element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="games" element={<Games />} />
-            <Route path="my-backlog" element={<MyBacklog />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="my-backlog" element={<MyBacklog />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>
