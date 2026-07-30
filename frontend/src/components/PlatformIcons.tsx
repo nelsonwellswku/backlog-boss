@@ -5,7 +5,10 @@ import type { IconType } from "react-icons";
 
 const PLATFORM_ORDER = [6, 14, 3];
 
-const PLATFORMS: Record<number, { name: string; color: string; icon: IconType }> = {
+const PLATFORMS: Record<
+  number,
+  { name: string; color: string; icon: IconType }
+> = {
   6: { name: "Windows", color: "#00A4EF", icon: FaWindows },
   14: { name: "Mac", color: "#555555", icon: FaApple },
   3: { name: "Linux", color: "#B8860B", icon: FaLinux },
@@ -34,7 +37,11 @@ export function PlatformIcon({ platformId }: { platformId: number }) {
   );
 }
 
-export function PlatformIcons({ platformIds }: { platformIds: number[] | undefined }) {
+export function PlatformIcons({
+  platformIds,
+}: {
+  platformIds: number[] | undefined;
+}) {
   if (!platformIds || platformIds.length === 0) return null;
 
   return (
@@ -47,9 +54,11 @@ export function PlatformIcons({ platformIds }: { platformIds: number[] | undefin
         ml: 0.5,
       }}
     >
-      {[...platformIds].sort((a, b) => PLATFORM_ORDER.indexOf(a) - PLATFORM_ORDER.indexOf(b)).map((id) => (
-        <PlatformIcon key={id} platformId={id} />
-      ))}
+      {[...platformIds]
+        .sort((a, b) => PLATFORM_ORDER.indexOf(a) - PLATFORM_ORDER.indexOf(b))
+        .map((id) => (
+          <PlatformIcon key={id} platformId={id} />
+        ))}
     </Box>
   );
 }
