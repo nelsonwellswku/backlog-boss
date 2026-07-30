@@ -30,4 +30,4 @@ Refer to `feature-artifacts/refresh-backlog-covers/technical-implementation.md` 
 
 # Guardrails
 
-* Do NOT begin implementing without explicit instructions to do so
+* Do NOT begin implementing without explicit instructions to do so.
