@@ -13,6 +13,7 @@ from app.features.auth.get_current_user import RequiredCurrentUser
 from app.features.game.persist_igdb_games import persist_igdb_games
 from app.features.user.cover_fetcher import CoverFetcherDep
 from app.features.user.genre_fetcher import GenreFetcherDep
+from app.features.user.platform_fetcher import PlatformFetcherDep
 from app.infrastructure.igdb_client import IgdbClientDep
 from app.infrastructure.steam_client import SteamClientDep
 
@@ -31,6 +32,7 @@ class RefreshMyBacklogHandler:
         igdb_client: IgdbClientDep,
         cover_fetcher: CoverFetcherDep,
         genre_fetcher: GenreFetcherDep,
+        platform_fetcher: PlatformFetcherDep,
     ):
         self.db = db
         self.steam = steam
@@ -38,6 +40,7 @@ class RefreshMyBacklogHandler:
         self.igdb_client = igdb_client
         self.cover_fetcher = cover_fetcher
         self.genre_fetcher = genre_fetcher
+        self.platform_fetcher = platform_fetcher
 
     def handle(self) -> RefreshMyBacklogResponse:
         stmt = select(Backlog).where(
@@ -100,6 +103,7 @@ class RefreshMyBacklogHandler:
 
         self.cover_fetcher.fetch_and_persist(all_backlog_game_ids)
         self.genre_fetcher.fetch_and_persist(all_backlog_game_ids)
+        self.platform_fetcher.fetch_and_persist(all_backlog_game_ids)
 
         self.db.commit()
 

@@ -17,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import type { GameSearchRow } from "@bb/client";
 import { CoverImage } from "@bb/components/CoverImage";
 import { GenreChips } from "@bb/components/GenreChips";
+import { PlatformIcons } from "@bb/components/PlatformIcons";
 
 type GameListItemProps = {
   addingInProgress: boolean;
@@ -55,6 +56,7 @@ export function GameListItem({
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <Typography variant="h6">{game.title}</Typography>
+                  <PlatformIcons platformIds={game.platformIds} />
                   {game.steamAppId && (
                     <Tooltip title="Open in Steam">
                       <IconButton

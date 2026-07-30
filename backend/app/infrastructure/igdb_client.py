@@ -17,6 +17,11 @@ from app.settings import AppSettings, get_settings
 
 logger = getLogger(__name__)
 
+PLATFORM_WINDOWS = 6
+PLATFORM_MAC = 14
+PLATFORM_LINUX = 3
+PLATFORM_IDS = {PLATFORM_WINDOWS, PLATFORM_MAC, PLATFORM_LINUX}
+
 access_token_cache = ExpiringDict()
 access_token_key = "access_token"
 
@@ -54,6 +59,10 @@ class CoverResponse(BaseModel):
     image_id: str
 
 
+class PlatformResponse(BaseModel):
+    id: int
+
+
 class IgdbGameResponse(BaseModel):
     id: int
     name: str
@@ -62,6 +71,7 @@ class IgdbGameResponse(BaseModel):
     external_games: list["ExternalGameResponse"] = Field(default_factory=list)
     time_to_beat: "TimeToBeatResponse | None" = None
     cover: CoverResponse | None = None
+    platforms: list[PlatformResponse] = Field(default_factory=list)
 
 
 class ExternalGameResponse(BaseModel):
@@ -131,7 +141,7 @@ class IgdbClient:
         # Paginate through results
         while True:
             query = f"""
-                fields game.id, game.name, game.total_rating, game.genres.name, game.cover.image_id;
+                fields game.id, game.name, game.total_rating, game.genres.name, game.cover.image_id, game.platforms.id;
                 where uid = ({formatted_steam_ids}) & external_game_source = 1;
                 offset {offset};
                 limit {limit};
@@ -182,7 +192,7 @@ class IgdbClient:
 
         endpoint = "games"
         query = f"""
-            fields id, name, total_rating, genres.name, cover.image_id;
+            fields id, name, total_rating, genres.name, cover.image_id, platforms.id;
             search {json.dumps(normalized_name)};
             where external_games != null & external_games.external_game_source = (1);
             limit 50;
@@ -379,6 +389,54 @@ class IgdbClient:
             offset += limit
 
         return genres
+
+    def get_platforms_by_game_ids(self, game_ids: list[int]) -> dict[int, list[int]]:
+        """Fetch platform IDs from IGDB for the given game IDs.
+
+        Args:
+            game_ids: IGDB game IDs to fetch platforms for.
+
+        Returns:
+            Mapping of game ID to list of platform IDs (only PC platforms: 3, 6, 14).
+        """
+        if not game_ids:
+            return {}
+
+        formatted_ids = self._format_ids(game_ids)
+        endpoint = "games"
+        limit = 500
+        offset = 0
+        platforms: dict[int, list[int]] = {}
+
+        while True:
+            query = f"""
+                fields id, platforms.id;
+                where id = ({formatted_ids}) & platforms != null;
+                offset {offset};
+                limit {limit};
+            """
+
+            response_bytes = self._api_request(endpoint, query)
+            response_json = json.loads(response_bytes)
+
+            if not response_json:
+                break
+
+            for game in response_json:
+                game_id = game["id"]
+                if "platforms" in game and game["platforms"]:
+                    pids = [
+                        p["id"] for p in game["platforms"] if p["id"] in PLATFORM_IDS
+                    ]
+                    if pids:
+                        platforms[game_id] = pids
+
+            if len(response_json) < limit:
+                break
+
+            offset += limit
+
+        return platforms
 
 
 IgdbClientDep: TypeAlias = Annotated[IgdbClient, Depends(IgdbClient)]

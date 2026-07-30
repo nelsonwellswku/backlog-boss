@@ -19,6 +19,7 @@ class GameSearchRow(ApiResponseModel):
     genres: list[str]
     cover_image_id: str | None
     steam_app_id: int | None = None
+    platform_ids: list[int] = []
 
 
 class SearchGamesResponse(ApiResponseModel):
@@ -87,6 +88,7 @@ class SearchGamesHandler:
                 joinedload(IgdbGame.time_to_beat),
                 joinedload(IgdbGame.genres),
                 joinedload(IgdbGame.external_games),
+                joinedload(IgdbGame.platforms),
             )
             .where(IgdbExternalGame.igdb_external_game_source_id == 1)
             .where(IgdbGame.igdb_game_id.in_(game_ids))
@@ -112,4 +114,5 @@ class SearchGamesHandler:
                 ),
                 None,
             ),
+            platform_ids=[p.igdb_platform_id for p in game.platforms],
         )

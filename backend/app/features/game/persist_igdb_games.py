@@ -6,8 +6,9 @@ from app.database.models import (
     IgdbGame,
     IgdbGameTimeToBeat,
     IgdbGenre,
+    IgdbPlatform,
 )
-from app.infrastructure.igdb_client import IgdbGameResponse
+from app.infrastructure.igdb_client import IgdbGameResponse, PLATFORM_IDS
 
 
 def persist_igdb_games(db: Session, games: list[IgdbGameResponse]) -> bool:
@@ -99,6 +100,15 @@ def persist_igdb_games(db: Session, games: list[IgdbGameResponse]) -> bool:
                 )
             )
             existing_external_uids.add(parsed_uid)
+
+        for platform in game.platforms:
+            if platform.id not in PLATFORM_IDS:
+                continue
+            platform_obj = db.get(IgdbPlatform, platform.id)
+            if platform_obj is None:
+                platform_obj = IgdbPlatform(igdb_platform_id=platform.id)
+                db.add(platform_obj)
+            igdb_game.platforms.append(platform_obj)
 
         games_to_add.append(igdb_game)
 
