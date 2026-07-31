@@ -96,6 +96,9 @@ class IgdbGame(Base):
     genres: Mapped[list["IgdbGenre"]] = relationship(
         "IgdbGenre", secondary="bb.IgdbGameGenre", lazy="raise"
     )
+    platforms: Mapped[list["IgdbPlatform"]] = relationship(
+        "IgdbPlatform", secondary="bb.IgdbGamePlatform", lazy="raise"
+    )
 
 
 class IgdbGenre(Base):
@@ -113,6 +116,24 @@ class IgdbGameGenre(Base):
     )
     igdb_genre_id: Mapped[int] = mapped_column(
         "IgdbGenreId", ForeignKey("bb.IgdbGenre.Id"), primary_key=True
+    )
+
+
+class IgdbPlatform(Base):
+    __tablename__ = "IgdbPlatform"
+    igdb_platform_id: Mapped[int] = mapped_column(
+        "Id", primary_key=True, autoincrement=False
+    )
+    name: Mapped[str] = mapped_column("Name", String(32))
+
+
+class IgdbGamePlatform(Base):
+    __tablename__ = "IgdbGamePlatform"
+    igdb_game_id: Mapped[int] = mapped_column(
+        "IgdbGameId", ForeignKey("bb.IgdbGame.Id"), primary_key=True
+    )
+    igdb_platform_id: Mapped[int] = mapped_column(
+        "IgdbPlatformId", ForeignKey("bb.IgdbPlatform.Id"), primary_key=True
     )
 
 

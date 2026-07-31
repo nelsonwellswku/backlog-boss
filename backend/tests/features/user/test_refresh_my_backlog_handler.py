@@ -95,6 +95,7 @@ def test_handle_raises_not_found_when_backlog_is_missing(
         igdb_client,
         mocker.Mock(),
         mocker.Mock(),
+        mocker.Mock(),
     )
 
     with pytest.raises(HTTPException) as exc_info:
@@ -124,6 +125,7 @@ def test_handle_returns_zero_when_no_new_games_to_add(
         db_session,
         steam_client,
         current_user,
+        mocker.Mock(),
         mocker.Mock(),
         mocker.Mock(),
         mocker.Mock(),
@@ -158,6 +160,7 @@ def test_handle_adds_qualifying_new_game_skips_active_game(
     ]
     cover_fetcher = mocker.Mock()
     genre_fetcher = mocker.Mock()
+    platform_fetcher = mocker.Mock()
     handler = RefreshMyBacklogHandler(
         db_session,
         steam_client,
@@ -165,6 +168,7 @@ def test_handle_adds_qualifying_new_game_skips_active_game(
         mocker.Mock(),
         cover_fetcher,
         genre_fetcher,
+        platform_fetcher,
     )
 
     actual = handler.handle()
@@ -183,6 +187,8 @@ def test_handle_adds_qualifying_new_game_skips_active_game(
     assert set(cover_fetcher.fetch_and_persist.call_args[0][0]) == {1, 2}
     genre_fetcher.fetch_and_persist.assert_called_once()
     assert set(genre_fetcher.fetch_and_persist.call_args[0][0]) == {1, 2}
+    platform_fetcher.fetch_and_persist.assert_called_once()
+    assert set(platform_fetcher.fetch_and_persist.call_args[0][0]) == {1, 2}
 
 
 def test_handle_raises_when_cover_fetcher_fails(
@@ -226,6 +232,7 @@ def test_handle_raises_when_cover_fetcher_fails(
         igdb_client,
         cover_fetcher,
         genre_fetcher,
+        mocker.Mock(),
     )
 
     with pytest.raises(RuntimeError, match="IGDB API error"):
@@ -268,6 +275,7 @@ def test_handle_skips_game_without_rating(
         mocker.Mock(),
         mocker.Mock(),
         mocker.Mock(),
+        mocker.Mock(),
     )
 
     actual = handler.handle()
@@ -307,6 +315,7 @@ def test_handle_skips_game_without_time_to_beat(
         mocker.Mock(),
         mocker.Mock(),
         mocker.Mock(),
+        mocker.Mock(),
     )
 
     actual = handler.handle()
@@ -335,6 +344,7 @@ def test_handle_does_not_re_add_removed_game(
         db_session,
         steam_client,
         current_user,
+        mocker.Mock(),
         mocker.Mock(),
         mocker.Mock(),
         mocker.Mock(),
@@ -409,6 +419,7 @@ def test_handle_fetches_new_igdb_games_and_adds_qualifying_ones(
         steam_client,
         current_user,
         igdb_client,
+        mocker.Mock(),
         mocker.Mock(),
         mocker.Mock(),
     )

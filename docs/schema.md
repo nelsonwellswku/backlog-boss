@@ -70,6 +70,13 @@ Schema: `bb`
 | IgdbGameId | int(10) | NO |  | PK, FK → IgdbGame.Id |
 | IgdbGenreId | int(10) | NO |  | PK, FK → IgdbGenre.Id |
 
+## bb.IgdbGamePlatform
+
+| Column | Type | Nullable | Default | Constraints |
+|--------|------|----------|---------|-------------|
+| IgdbGameId | int(10) | NO |  | PK, FK → IgdbGame.Id |
+| IgdbPlatformId | int(10) | NO |  | PK, FK → IgdbPlatform.Id |
+
 ## bb.IgdbGameTimeToBeat
 
 | Column | Type | Nullable | Default | Constraints |
@@ -84,3 +91,10 @@ Schema: `bb`
 |--------|------|----------|---------|-------------|
 | Id | int(10) | NO |  | PK |
 | Name | varchar(100) | NO |  |  |
+
+## bb.IgdbPlatform
+
+| Column | Type | Nullable | Default | Constraints |
+|--------|------|----------|---------|-------------|
+| Id | int(10) | NO |  | PK |
+| Name | varchar(32) | NO |  |  |

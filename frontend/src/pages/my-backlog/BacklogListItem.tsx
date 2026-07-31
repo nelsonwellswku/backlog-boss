@@ -1,6 +1,7 @@
 import { memo } from "react";
 import type { BacklogGameRow } from "@bb/client";
 import { GenreChips } from "@bb/components/GenreChips";
+import { PlatformIcons } from "@bb/components/PlatformIcons";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
@@ -58,6 +59,7 @@ export const BacklogListItem = memo(function BacklogListItem({
                 >
                   {game.title}
                 </Typography>
+                <PlatformIcons platformIds={game.platformIds} />
                 {game.steamAppId && (
                   <Tooltip title="Open in Steam">
                     <IconButton
