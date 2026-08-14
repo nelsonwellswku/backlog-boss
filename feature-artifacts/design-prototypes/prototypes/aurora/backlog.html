@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Backlog &mdash; The Aurora</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;650;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-site="aurora" data-page="backlog">
+
+  <header class="masthead">
+    <a class="masthead__brand" href="index.html">
+      <span class="masthead__orb" aria-hidden="true"></span>
+      <span class="masthead__brand-text">Backlog Boss</span>
+    </a>
+    <nav class="nav">
+      <div class="nav__pill">
+        <a class="nav__link" href="index.html">Home</a>
+        <a class="nav__link" href="search.html">Game Search</a>
+        <a class="nav__link is-active" href="backlog.html" aria-current="page">My Backlog</a>
+      </div>
+    </nav>
+    <p class="masthead__utility">
+      <span data-logged-in>Signed in as <strong>nelson</strong> &middot; Steam connected</span>
+      <span data-logged-out>Not signed in &middot; <a href="#">Sign in with Steam</a></span>
+    </p>
+  </header>
+
+  <main class="main">
+    <header class="page-head" style="text-align:center; margin-bottom: 1.6rem;">
+      <p class="eyebrow">Your library, curated</p>
+      <h1 style="margin:0 0 0.5rem; font-size: clamp(1.9rem, 4.5vw, 2.6rem); font-weight:700; letter-spacing:-0.02em;">My Backlog</h1>
+      <p class="section-head__note" style="margin:0; max-width:34rem; margin-inline:auto;">
+        Your owned games still on deck, arranged by the priority you choose. Mark games complete as you finish them.
+      </p>
+    </header>
+
+    <div class="toolbar">
+      <div class="sort-group" role="group" aria-label="Sort backlog by">
+        <button class="sort-btn" type="button" data-sort="score" aria-pressed="false">Score</button>
+        <button class="sort-btn" type="button" data-sort="time" aria-pressed="false">Time</button>
+        <button class="sort-btn" type="button" data-sort="blended" aria-pressed="false">Blended</button>
+      </div>
+      <button class="btn" type="button" data-refresh>Refresh backlog</button>
+    </div>
+
+    <div class="backlog-section glass">
+      <div class="backlog-section__head">
+        <h2>On deck</h2>
+        <span class="count" data-count-active>0</span>
+      </div>
+      <div data-bblist="active"></div>
+      <div class="empty" data-empty>
+        Nothing on deck. <a href="search.html">Add games from the catalog</a> to get started.
+      </div>
+    </div>
+
+    <div class="backlog-section backlog-section--completed glass">
+      <div class="backlog-section__head">
+        <h2>Completed</h2>
+        <span class="count" data-count-completed>0</span>
+      </div>
+      <div data-bblist="completed"></div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <span>Throwaway prototype &middot; glass/aurora direction &middot; real Steam data</span>
+    <span><a href="../index.html">All prototypes</a> &middot; <a href="index.html">Home</a> &middot; <a href="search.html">Search</a></span>
+  </footer>
+
+  <script src="games.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Game Search &mdash; The Editorial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-site="editorial" data-page="search">
+
+  <header class="masthead">
+    <p class="masthead__kicker">A backlog, reconsidered</p>
+    <h1 class="masthead__name">Backlog <em>Boss</em></h1>
+    <nav class="masthead__nav small-caps">
+      <a href="index.html">Home</a>
+      <a href="search.html" class="is-active" aria-current="page">Game Search</a>
+      <a href="backlog.html">My Backlog</a>
+    </nav>
+    <p class="masthead__utility">
+      <span data-logged-in>Signed in as <strong>nelson</strong> &middot; Steam library connected</span>
+      <span data-logged-out>Not signed in &middot; <a href="#">Sign in with Steam</a></span>
+    </p>
+  </header>
+
+  <main class="main">
+    <header class="page-head">
+      <p class="eyebrow">The catalog</p>
+      <h1>Discover Games</h1>
+      <p>Search the Backlog Boss catalog and, when needed, pull fresh Steam game data from IGDB.</p>
+    </header>
+
+    <div class="search-bar">
+      <label class="search-bar__input">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" placeholder="Search by game name" data-search autocomplete="off">
+      </label>
+    </div>
+
+    <div class="genre-chips" data-genres></div>
+
+    <p class="result-count" data-count></p>
+
+    <div class="hint" data-hint>
+      <h3>Search by title</h3>
+      <p>Results include the game name, review score, and time-to-beat when available. Filter by genre with the index above.</p>
+    </div>
+
+    <div data-results></div>
+  </main>
+
+  <footer class="site-footer">
+    <span>Throwaway prototype &middot; editorial direction &middot; real Steam data</span>
+    <span><a href="../index.html">All prototypes</a> &middot; <a href="index.html">Home</a> &middot; <a href="backlog.html">Backlog</a></span>
+  </footer>
+
+  <script src="games.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

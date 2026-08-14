@@ -1,0 +1,40 @@
+/* Backlog Boss design prototypes — shared game dataset.
+   Real, recognizable titles with real cover art (Steam CDN), plus
+   realistic rating (0-100) and time-to-beat (hours) values. */
+
+window.BB_GAMES = [
+  { id: 620, title: "Portal 2", rating: 91, hours: 9, genres: ["Puzzle", "Platformer"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 220, title: "Half-Life 2", rating: 96, hours: 13, genres: ["Shooter", "Sci-Fi"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 72850, title: "The Elder Scrolls V: Skyrim", rating: 89, hours: 34, genres: ["RPG", "Open World"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 105600, title: "Terraria", rating: 91, hours: 100, genres: ["Sandbox", "Adventure", "Survival"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 1145360, title: "Hades", rating: 89, hours: 23, genres: ["Roguelike", "Action"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 1245620, title: "Elden Ring", rating: 96, hours: 59, genres: ["Action RPG", "Soulslike", "Open World"], platforms: ["Windows"] },
+  { id: 1086940, title: "Baldur's Gate 3", rating: 96, hours: 66, genres: ["RPG", "Strategy"], platforms: ["Windows", "Mac"] },
+  { id: 367520, title: "Hollow Knight", rating: 90, hours: 26, genres: ["Metroidvania", "Platformer"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 504230, title: "Celeste", rating: 89, hours: 8, genres: ["Platformer", "Indie"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 413150, title: "Stardew Valley", rating: 88, hours: 52, genres: ["Simulation", "Farming"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 1091500, title: "Cyberpunk 2077", rating: 86, hours: 25, genres: ["Action RPG", "Open World"], platforms: ["Windows"] },
+  { id: 1174180, title: "Red Dead Redemption 2", rating: 95, hours: 49, genres: ["Action", "Open World", "Western"], platforms: ["Windows"] },
+  { id: 632470, title: "Disco Elysium — The Final Cut", rating: 90, hours: 23, genres: ["RPG", "Narrative"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 1593500, title: "God of War", rating: 94, hours: 21, genres: ["Action", "Adventure"], platforms: ["Windows"] },
+  { id: 814380, title: "Sekiro: Shadows Die Twice", rating: 93, hours: 30, genres: ["Action", "Soulslike"], platforms: ["Windows"] },
+  { id: 782330, title: "DOOM Eternal", rating: 90, hours: 15, genres: ["Shooter", "Action"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 870780, title: "Control", rating: 85, hours: 12, genres: ["Action", "Supernatural"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 264710, title: "Subnautica", rating: 88, hours: 29, genres: ["Survival", "Open World"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 427520, title: "Factorio", rating: 94, hours: 86, genres: ["Strategy", "Automation", "Sandbox"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 374320, title: "Dark Souls III", rating: 90, hours: 32, genres: ["Soulslike", "Action RPG"], platforms: ["Windows"] },
+  { id: 244850, title: "Life is Strange", rating: 84, hours: 13, genres: ["Narrative", "Adventure"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 245620, title: "Prison Architect", rating: 82, hours: 24, genres: ["Simulation", "Strategy"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 960090, title: "Slay the Spire", rating: 90, hours: 12, genres: ["Roguelike", "Card Game", "Strategy"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 1284210, title: "Resident Evil Village", rating: 87, hours: 10, genres: ["Horror", "Survival", "Action"], platforms: ["Windows"] },
+  { id: 397540, title: "Borderlands 3", rating: 78, hours: 23, genres: ["Shooter", "Looter"], platforms: ["Windows", "Mac"] },
+  { id: 387290, title: "Ori and the Blind Forest", rating: 89, hours: 8, genres: ["Platformer", "Metroidvania"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 945360, title: "Among Us", rating: 74, hours: 4, genres: ["Party", "Social Deduction"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 892970, title: "Valheim", rating: 87, hours: 43, genres: ["Survival", "Sandbox"], platforms: ["Windows", "Linux"] },
+  { id: 271590, title: "Grand Theft Auto V", rating: 90, hours: 32, genres: ["Open World", "Action"], platforms: ["Windows"] },
+  { id: 1238810, title: "Outer Wilds", rating: 92, hours: 17, genres: ["Adventure", "Exploration", "Mystery"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 1267910, title: "It Takes Two", rating: 92, hours: 12, genres: ["Co-op", "Adventure", "Platformer"], platforms: ["Windows"] },
+  { id: 858820, title: "Vampire Survivors", rating: 86, hours: 5, genres: ["Roguelike", "Bullet Heaven"], platforms: ["Windows", "Mac", "Linux"] },
+  { id: 1394520, title: "Marvel's Spider-Man Remastered", rating: 91, hours: 17, genres: ["Action", "Open World", "Superhero"], platforms: ["Windows"] },
+  { id: 1097150, title: "Fall Guys", rating: 79, hours: 5, genres: ["Party", "Platformer"], platforms: ["Windows", "Mac", "Linux"] }
+];

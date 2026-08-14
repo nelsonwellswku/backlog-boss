@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Editorial &mdash; Backlog Boss prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-site="editorial" data-page="home">
+
+  <header class="masthead">
+    <p class="masthead__kicker">A backlog, reconsidered</p>
+    <h1 class="masthead__name">Backlog <em>Boss</em></h1>
+    <nav class="masthead__nav small-caps">
+      <a href="index.html" class="is-active" aria-current="page">Home</a>
+      <a href="search.html">Game Search</a>
+      <a href="backlog.html">My Backlog</a>
+    </nav>
+    <p class="masthead__utility">
+      <span data-logged-in>Signed in as <strong>nelson</strong> &middot; Steam library connected</span>
+      <span data-logged-out>Not signed in &middot; <a href="#">Sign in with Steam</a></span>
+    </p>
+  </header>
+
+  <main class="main">
+    <section class="hero">
+      <p class="eyebrow">Why you own it &middot; Why you should play it</p>
+      <h1>Conquer Your Gaming Backlog</h1>
+      <p class="hero__copy">
+        Stop wondering what to play next. Let Backlog Boss prioritize your game
+        library so you can focus on playing.
+      </p>
+
+      <div data-logged-in>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="backlog.html">View My Backlog</a>
+          <a class="btn" href="search.html">Discover Games</a>
+        </div>
+      </div>
+
+      <div data-logged-out>
+        <div class="hero__actions">
+          <a class="btn btn--steam" href="#">Sign in with Steam</a>
+        </div>
+        <p class="hero__note">Your owned games import automatically. No extra accounts.</p>
+      </div>
+
+      <p class="hero__note">
+        <button class="btn btn--ghost btn--small" data-toggle-signin type="button">
+          Preview what new visitors see
+        </button>
+      </p>
+    </section>
+
+    <hr class="rule">
+
+    <section class="ledger" aria-label="Backlog summary">
+      <div class="ledger__cell">
+        <div class="ledger__value" data-stat="active">&mdash;</div>
+        <div class="ledger__label">Active games</div>
+      </div>
+      <div class="ledger__cell">
+        <div class="ledger__value" data-stat="completed">&mdash;</div>
+        <div class="ledger__label">Completed</div>
+      </div>
+      <div class="ledger__cell">
+        <div class="ledger__value" data-stat="hours">&mdash;</div>
+        <div class="ledger__label">Hours remaining</div>
+      </div>
+      <div class="ledger__cell">
+        <div class="ledger__value" data-stat="score">&mdash;</div>
+        <div class="ledger__label">Avg rating</div>
+      </div>
+    </section>
+
+    <hr class="rule rule--soft">
+
+    <section class="picks">
+      <div class="section-head">
+        <p class="eyebrow" style="text-align:center;">Next in the queue</p>
+      </div>
+      <div data-picks></div>
+    </section>
+
+    <hr class="rule">
+
+    <section class="features">
+      <article class="feature">
+        <div class="feature__number">I</div>
+        <div>
+          <h3>Smart Organization</h3>
+          <p>Automatically sync your Steam library and organize your games with intelligent categorization and filtering.</p>
+        </div>
+      </article>
+      <article class="feature">
+        <div class="feature__number">II</div>
+        <div>
+          <h3>Priority Ranking</h3>
+          <p>Get personalized recommendations based on ratings, playtime, and your gaming preferences.</p>
+        </div>
+      </article>
+      <article class="feature">
+        <div class="feature__number">III</div>
+        <div>
+          <h3>Track Progress</h3>
+          <p>Monitor your gaming journey and see your progress as you work through your backlog.</p>
+        </div>
+      </article>
+    </section>
+
+    <hr class="rule">
+
+    <section class="cta">
+      <h2>Ready to Take Control?</h2>
+      <div data-logged-in>
+        <p>Your gaming library awaits!</p>
+        <a class="btn btn--primary" href="backlog.html">Go to My Backlog</a>
+      </div>
+      <div data-logged-out>
+        <p>Sign in with Steam and start conquering your backlog today.</p>
+        <a class="btn btn--steam" href="#">Sign in with Steam</a>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <span>Throwaway prototype &middot; editorial direction &middot; real Steam data</span>
+      <span><a href="../index.html">All prototypes</a> &middot; <a href="search.html">Search</a> &middot; <a href="backlog.html">Backlog</a></span>
+    </footer>
+  </main>
+
+  <script src="games.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

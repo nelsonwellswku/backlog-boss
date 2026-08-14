@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Cockpit — Backlog Boss prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-site="cockpit" data-page="home">
+
+  <aside class="rail">
+    <div class="rail__logo">
+      <div class="rail__logo-mark">BB</div>
+      <div class="rail__logo-name">Backlog Boss <small>mission control</small></div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav__link is-active" href="index.html" aria-current="page">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+        Home
+      </a>
+      <a class="nav__link" href="search.html">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Game Search
+      </a>
+      <a class="nav__link" href="backlog.html">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        My Backlog
+      </a>
+    </nav>
+
+    <div class="rail__user" data-logged-in>
+      <div class="rail__avatar">N</div>
+      <div><span>nelson</span><small>Steam · online</small></div>
+    </div>
+    <a class="rail__user" href="#" data-logged-out style="text-decoration:none;">
+      <div class="rail__avatar">?</div>
+      <div><span>Sign in with Steam</span></div>
+    </a>
+  </aside>
+
+  <main class="main">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Backlog Boss</p>
+        <h1>Conquer Your Gaming Backlog</h1>
+        <p class="hero__copy">
+          Stop wondering what to play next. Let Backlog Boss prioritize your game
+          library so you can focus on playing.
+        </p>
+
+        <div data-logged-in>
+          <div class="hero__actions">
+            <a class="btn btn--primary" href="backlog.html">View My Backlog</a>
+            <a class="btn" href="search.html">Discover Games</a>
+          </div>
+        </div>
+
+        <div data-logged-out>
+          <div class="hero__actions">
+            <a class="btn btn--steam" href="#">Sign in with Steam</a>
+          </div>
+          <p class="hero__note">Securely imports your owned games. No extra accounts, no password.</p>
+        </div>
+
+        <button class="btn btn--ghost btn--small" data-toggle-signin type="button"
+          style="margin-top: 1.2rem;">Preview what new visitors see</button>
+      </div>
+
+      <div class="hero__panel" aria-hidden="true">
+        <p class="hero__panel-title">Session summary</p>
+        <div class="hero__panel-row"><span>Steam library</span><b>212 owned</b></div>
+        <div class="hero__panel-row"><span>Imported</span><b>186 games</b></div>
+        <div class="hero__panel-row"><span>With rating + time</span><b>143 games</b></div>
+        <div class="hero__panel-row"><span>Last sync</span><b>2 h ago</b></div>
+        <div class="hero__panel-row"><span>Next pick</span><b>Vampire Survivors</b></div>
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Backlog summary">
+      <div class="stat">
+        <div class="stat__label">Active games</div>
+        <div class="stat__value" data-stat="active">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat__label">Completed</div>
+        <div class="stat__value" data-stat="completed">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat__label">Hours remaining</div>
+        <div class="stat__value" data-stat="hours">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat__label">Avg rating</div>
+        <div class="stat__value" data-stat="score">—</div>
+      </div>
+    </section>
+
+    <section class="picks">
+      <div class="section-head">
+        <h2>Next up</h2>
+        <span class="section-head__note">Blended priority — score and time to beat</span>
+      </div>
+      <div data-picks></div>
+    </section>
+
+    <section class="features">
+      <article class="feature">
+        <div class="feature__icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 7v10"/></svg>
+        </div>
+        <h3>Smart Organization</h3>
+        <p>Automatically syncs your Steam library and organizes your games with intelligent categorization and filtering.</p>
+      </article>
+      <article class="feature">
+        <div class="feature__icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>
+        </div>
+        <h3>Priority Ranking</h3>
+        <p>Get personalized recommendations based on ratings, playtime, and your gaming preferences.</p>
+      </article>
+      <article class="feature">
+        <div class="feature__icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        </div>
+        <h3>Track Progress</h3>
+        <p>Monitor your gaming journey and see your progress as you work through your backlog.</p>
+      </article>
+    </section>
+
+    <section class="cta">
+      <h2>Ready to Take Control?</h2>
+      <div data-logged-in>
+        <p>Your gaming library awaits!</p>
+        <a class="btn btn--primary" href="backlog.html">Go to My Backlog</a>
+      </div>
+      <div data-logged-out>
+        <p>Sign in with Steam and start conquering your backlog today.</p>
+        <a class="btn btn--steam" href="#">Sign in with Steam</a>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <span>Throwaway prototype · dark cockpit direction · real Steam data</span>
+      <span><a href="../index.html">All prototypes</a> · <a href="search.html">Search</a> · <a href="backlog.html">Backlog</a></span>
+    </footer>
+  </main>
+
+  <script src="games.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

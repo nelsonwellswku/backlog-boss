@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backlog Boss — Design Prototypes</title>
+  <style>
+    :root { --ink: #14171c; --paper: #f6f7f9; --line: #d8dce2; --accent: #2563eb; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.55;
+    }
+    .wrap { max-width: 64rem; margin: 0 auto; padding: 4rem 1.5rem 5rem; }
+    h1 { font-size: 1.9rem; margin: 0 0 .5rem; letter-spacing: -0.02em; }
+    .lead { font-size: 1.05rem; color: #4b5563; margin: 0 0 2.5rem; max-width: 46rem; }
+    .notice {
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      background: #fff;
+      padding: .75rem 1rem;
+      border-radius: 6px;
+      font-size: .9rem;
+      margin-bottom: 2.5rem;
+      color: #374151;
+    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1.25rem; }
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(20, 23, 28, .1); }
+    .tag {
+      align-self: flex-start;
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: .2rem .55rem;
+      border-radius: 999px;
+      color: #fff;
+    }
+    .tag--cockpit { background: #0b0e14; border: 1px solid #2a3342; color: #7dd3fc; }
+    .tag--editorial { background: #fdf6ec; border: 1px solid #d8c6a8; color: #7a5a21; }
+    .tag--brut { background: #ff3b00; color: #fff; }
+    .tag--aurora { background: #0b1022; border: 1px solid #e879f9; color: #7be0ff; }
+    .card h2 { margin: 0; font-size: 1.25rem; }
+    .card p { margin: 0; font-size: .92rem; color: #4b5563; flex: 1; }
+    .card a {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      font-size: .95rem;
+    }
+    .card a:hover { text-decoration: underline; }
+    .card .pages { font-size: .8rem; color: #6b7280; }
+    footer { margin-top: 2.5rem; font-size: .8rem; color: #6b7280; }
+    @media (max-width: 600px) { .wrap { padding-top: 2rem; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Backlog Boss — Design Prototypes</h1>
+    <p class="lead">
+      Three throwaway visual directions for the same three screens: Home, Game Search, and
+      My Backlog. Real data, working controls, no backend. Pick a direction, click through
+      it, and move on to the next.
+    </p>
+    <div class="notice">
+      These prototypes are decision-making aids only. They are not shipped, are excluded
+      from version control, and have no effect on the real application.
+    </div>
+
+    <div class="grid">
+      <article class="card">
+        <span class="tag tag--cockpit">Dark · dashboard</span>
+        <h2>The Cockpit</h2>
+        <p>
+          Full-bleed dark gaming dashboard with a left navigation rail, glowing accents,
+          and stat tiles. Built for speed and at-a-glance clarity.
+        </p>
+        <span class="pages">Home · Game Search · My Backlog</span>
+        <a href="cockpit/index.html">Open The Cockpit →</a>
+      </article>
+
+      <article class="card">
+        <span class="tag tag--editorial">Light · editorial</span>
+        <h2>The Editorial</h2>
+        <p>
+          Light, top-navigated, elegant. Wide centered content, serif headlines, and a
+          magazine feel for the games you own but haven't played.
+        </p>
+        <span class="pages">Home · Game Search · My Backlog</span>
+        <a href="editorial/index.html">Open The Editorial →</a>
+      </article>
+
+      <article class="card">
+        <span class="tag tag--brut">Light · stark</span>
+        <h2>The Brut</h2>
+        <p>
+          Full-bleed, high-contrast, border-heavy. Sharp edges, hard shadows, and no
+          apologies. The backlog as a blunt instrument.
+        </p>
+        <span class="pages">Home · Game Search · My Backlog</span>
+        <a href="brut/index.html">Open The Brut →</a>
+      </article>
+
+      <article class="card">
+        <span class="tag tag--aurora">Dark · glass · aurora</span>
+        <h2>The Aurora</h2>
+        <p>
+          Frosted translucent panels floating over a slow-drifting gradient sky.
+          Depth from blur and light, airy and modern.
+        </p>
+        <span class="pages">Home · Game Search · My Backlog</span>
+        <a href="aurora/index.html">Open The Aurora →</a>
+      </article>
+    </div>
+
+    <footer>
+      Throwaway artifact · design-prototypes product-requirements ·
+      real data from the Steam catalog
+    </footer>
+  </div>
+</body>
+</html>

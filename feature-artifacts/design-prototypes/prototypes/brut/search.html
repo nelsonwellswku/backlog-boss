@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Game Search &mdash; The Brut</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-site="brut" data-page="search">
+
+  <header class="topbar">
+    <a class="topbar__logo" href="index.html">
+      <span class="topbar__logo-mark">BB</span>
+      Backlog Boss
+    </a>
+    <nav class="topbar__nav">
+      <a href="index.html">Home</a>
+      <a href="search.html" class="is-active" aria-current="page">Search</a>
+      <a href="backlog.html">Backlog</a>
+    </nav>
+    <div class="topbar__user" data-logged-in>
+      <span class="dot"></span>
+      nelson &middot; Steam
+    </div>
+    <a class="topbar__user" href="#" data-logged-out style="text-decoration:none;">
+      <span class="dot"></span>
+      Sign in with Steam
+    </a>
+  </header>
+
+  <main class="main">
+    <header class="page-head">
+      <h1>Discover <span class="accent">Games</span></h1>
+      <p>Search the Backlog Boss catalog and, when needed, pull fresh Steam game data from IGDB.</p>
+    </header>
+
+    <div class="search-bar">
+      <label class="search-bar__input">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" placeholder="Search by game name" data-search autocomplete="off">
+      </label>
+    </div>
+
+    <div class="genre-chips" data-genres></div>
+
+    <p class="result-count"><span data-count></span></p>
+
+    <div class="hint" data-hint>
+      <h3>Search by title</h3>
+      <p>Results include the game name, review score, and time-to-beat when available. Use the genre buttons above to filter hard.</p>
+    </div>
+
+    <div data-results></div>
+  </main>
+
+  <footer class="site-footer">
+    <span>Throwaway prototype &middot; brutal direction &middot; real Steam data</span>
+    <span><a href="../index.html">All prototypes</a> &middot; <a href="index.html">Home</a> &middot; <a href="backlog.html">Backlog</a></span>
+  </footer>
+
+  <script src="games.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
