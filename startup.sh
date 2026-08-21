@@ -3,12 +3,46 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Start Backlog Boss development environment (SQL Server, Grate migrations,
+backend API, and frontend dev server).
+
+Options:
+  -r, --reset  Remove Docker volumes before starting (clean database state)
+  -h, --help   Show this help message and exit
+
+Services:
+  Backend     http://localhost:8000
+  Frontend    http://localhost:5173
+EOF
+    exit 0
+}
+
+# Parse flags
+RESET=false
+for arg in "$@"; do
+    case "$arg" in
+        -r|--reset) RESET=true ;;
+        -h|--help) usage ;;
+        *) echo "Unknown option: $arg"; usage ;;
+    esac
+done
+
 # 1. Check Docker is running
 if ! docker info > /dev/null 2>&1; then
     echo "❌ Docker is not running. Please start Docker and try again."
     exit 1
 fi
 echo "✅ Docker is running"
+
+# Optionally remove volumes for a clean start
+if [ "$RESET" = true ]; then
+    echo "🔄 Removing Docker volumes for a clean start..."
+    docker compose -f "$REPO_ROOT/docker-compose.yaml" down -v --remove-orphans 2>/dev/null || true
+fi
 
 # 2. Spin up Docker compose (SQL Server + Grate)
 echo "🚀 Starting Docker compose services (sqlserver + grate)..."
@@ -33,8 +67,9 @@ done
 
 # 4. Wait for grate to finish
 echo "⏳ Waiting for grate migrations to finish..."
-MAX_RETRIES=30
+MAX_RETRIES=15
 INTERVAL=2
+ATTEMPT=0
 for ((i=1; i<=MAX_RETRIES; i++)); do
     STATUS=$(docker compose -f "$REPO_ROOT/docker-compose.yaml" ps -a grate --format '{{.State}}' 2>/dev/null || true)
     if [[ "$STATUS" == "exited" ]]; then
@@ -45,7 +80,10 @@ for ((i=1; i<=MAX_RETRIES; i++)); do
         echo "❌ Grate did not finish after $((MAX_RETRIES * INTERVAL)) seconds"
         exit 1
     fi
-    echo "   Attempt $i/$MAX_RETRIES... waiting $INTERVAL s"
+    if (( i == 1 || i % 3 == 0 )); then
+        ATTEMPT=$((ATTEMPT + 1))
+        echo "   Attempt $ATTEMPT/$MAX_RETRIES... waited $((i * INTERVAL)) s"
+    fi
     sleep "$INTERVAL"
 done
 
