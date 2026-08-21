@@ -61,7 +61,7 @@ npm run genclient
 npm run dev
 ```
 
-#### And then...
+### Accessing the Application
 
 Once both the backend and frontend are running, you can access the application and its OpenAPI documentation at the following URLs:
 
