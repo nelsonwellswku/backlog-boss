@@ -7,6 +7,7 @@ LOGS_PID=""
 BACKEND_PID=""
 FRONTEND_PID=""
 CLEANED_UP=false
+DB_WAS_RUNNING=false
 
 cleanup() {
     if [[ "$CLEANED_UP" == true ]]; then
@@ -26,12 +27,15 @@ cleanup() {
     if [[ -n "$LOGS_PID" ]]; then
         kill "$LOGS_PID" 2>/dev/null || true
     fi
-    echo "🛑 Stopping database..."
-    docker compose -f "$REPO_ROOT/docker-compose.yaml" down > /dev/null 2>&1 || true
+    if [[ "$DB_WAS_RUNNING" == false ]]; then
+        echo "🛑 Stopping database..."
+        docker compose -f "$REPO_ROOT/docker-compose.yaml" down > /dev/null 2>&1 || true
+    fi
     echo "✅ Shutdown complete."
 }
 
-trap cleanup INT TERM EXIT
+trap 'cleanup; exit 130' INT TERM
+trap cleanup EXIT
 
 usage() {
     cat <<EOF
@@ -48,7 +52,7 @@ Services:
   Backend     http://localhost:8000
   Frontend    http://localhost:5173
 EOF
-    exit 0
+    exit "${1:-0}"
 }
 
 # Parse flags
@@ -56,8 +60,8 @@ RESET=false
 for arg in "$@"; do
     case "$arg" in
         -r|--reset) RESET=true ;;
-        -h|--help) usage ;;
-        *) echo "Unknown option: $arg"; usage ;;
+        -h|--help) usage 0 ;;
+        *) echo "Unknown option: $arg"; usage 1 ;;
     esac
 done
 
@@ -75,6 +79,11 @@ if [ "$RESET" = true ]; then
 fi
 
 # 2. Spin up Docker compose (SQL Server + Grate)
+# Record whether the database was already running so we only stop what we
+# started (leaving a pre-existing database untouched on exit).
+if docker compose -f "$REPO_ROOT/docker-compose.yaml" ps sqlserver --format '{{.State}}' 2>/dev/null | grep -q "running"; then
+    DB_WAS_RUNNING=true
+fi
 echo "🚀 Starting Docker compose services (sqlserver + grate)..."
 docker compose -f "$REPO_ROOT/docker-compose.yaml" up -d
 
@@ -147,7 +156,8 @@ setsid bash -c 'npm run dev' &
 FRONTEND_PID=$!
 echo "   Frontend PID: $FRONTEND_PID"
 
-# 10. Tail logs from all processes with prefixes
+# 10. Block until a service exits (backend/frontend output streams to the
+# terminal directly; docker compose logs are tailed separately above).
 echo ""
 echo "=== Backlog Boss is running ==="
 echo "  Backend:  http://localhost:8000"
@@ -155,7 +165,7 @@ echo "  Frontend: http://localhost:5173"
 echo "  Press Ctrl+C to stop all services"
 echo ""
 
-wait -n
+wait -n || true
 EXIT_CODE=$?
 
 echo "🛑 One process exited with code $EXIT_CODE"
