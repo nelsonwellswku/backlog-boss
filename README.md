@@ -8,7 +8,21 @@ Video game backlog prioritizer
 * [node](https://nodejs.org)
 * [docker](https://docker.com)
 
-### Database
+### Quick Start
+
+Copy `backend/.env.sample` to `backend/.env` and fill in the required values, then run:
+
+```
+./startup.sh
+```
+
+This starts the database, generates the TypeScript client, and launches both the backend and frontend dev servers. Press `Ctrl+C` to stop everything.
+
+### Manual Setup
+
+If you prefer to set up each service individually, follow these steps:
+
+#### Database
 
 The database is SQL Server. [grate](https://github.com/grate-devs/grate) creates the local database and runs the database migrations.
 
@@ -18,7 +32,7 @@ From the root directory, run:
 docker compose up
 ```
 
-### Backend
+#### Backend
 
 Navigate to `/backend` and then run:
 
@@ -29,7 +43,7 @@ fastapi dev main.py
 
 For additional information, see the [backend readme](./backend/README.md).
 
-### Frontend
+#### Frontend
 
 Navigate to `/backend` and then run:
 
@@ -47,7 +61,7 @@ npm run genclient
 npm run dev
 ```
 
-### And then...
+#### And then...
 
 Once both the backend and frontend are running, you can access the application and its OpenAPI documentation at the following URLs:
 
