@@ -3,6 +3,36 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+LOGS_PID=""
+BACKEND_PID=""
+FRONTEND_PID=""
+CLEANED_UP=false
+
+cleanup() {
+    if [[ "$CLEANED_UP" == true ]]; then
+        return
+    fi
+    CLEANED_UP=true
+    echo
+    echo "🛑 Stopping all services..."
+    if [[ -n "$FRONTEND_PID" ]]; then
+        echo "🛑 Stopping frontend..."
+        kill -- -"$FRONTEND_PID" 2>/dev/null || kill "$FRONTEND_PID" 2>/dev/null || true
+    fi
+    if [[ -n "$BACKEND_PID" ]]; then
+        echo "🛑 Stopping backend..."
+        kill -- -"$BACKEND_PID" 2>/dev/null || kill "$BACKEND_PID" 2>/dev/null || true
+    fi
+    if [[ -n "$LOGS_PID" ]]; then
+        kill "$LOGS_PID" 2>/dev/null || true
+    fi
+    echo "🛑 Stopping database..."
+    docker compose -f "$REPO_ROOT/docker-compose.yaml" down > /dev/null 2>&1 || true
+    echo "✅ Shutdown complete."
+}
+
+trap cleanup INT TERM EXIT
+
 usage() {
     cat <<EOF
 Usage: $(basename "$0") [OPTIONS]
@@ -69,20 +99,22 @@ done
 echo "⏳ Waiting for grate migrations to finish..."
 MAX_RETRIES=15
 INTERVAL=2
-ATTEMPT=0
 for ((i=1; i<=MAX_RETRIES; i++)); do
-    STATUS=$(docker compose -f "$REPO_ROOT/docker-compose.yaml" ps -a grate --format '{{.State}}' 2>/dev/null || true)
-    if [[ "$STATUS" == "exited" ]]; then
+    STATUS=$(docker compose -f "$REPO_ROOT/docker-compose.yaml" ps -a grate --format '{{.State}} {{.ExitCode}}' 2>/dev/null || true)
+    if [[ "$STATUS" == "exited 0" ]]; then
         echo "✅ Grate migrations complete"
         break
+    fi
+    if [[ "$STATUS" == exited\ * ]]; then
+        echo "❌ Grate migrations failed (exit code: ${STATUS#* })"
+        exit 1
     fi
     if (( i == MAX_RETRIES )); then
         echo "❌ Grate did not finish after $((MAX_RETRIES * INTERVAL)) seconds"
         exit 1
     fi
     if (( i == 1 || i % 3 == 0 )); then
-        ATTEMPT=$((ATTEMPT + 1))
-        echo "   Attempt $ATTEMPT/$MAX_RETRIES... waited $((i * INTERVAL)) s"
+        echo "   Waiting for grate... $((i * INTERVAL)) s"
     fi
     sleep "$INTERVAL"
 done
@@ -101,17 +133,17 @@ echo "🎨 Running npm run genclient to generate TypeScript client..."
 cd "$REPO_ROOT/frontend"
 npm run genclient
 
-# 8. Start the backend
+# 8. Start the backend (in its own process group so child processes are killed too)
 echo "🦅 Starting backend (uv run fastapi dev main.py)..."
 cd "$REPO_ROOT/backend"
-uv run fastapi dev main.py &
+setsid bash -c 'uv run fastapi dev main.py' &
 BACKEND_PID=$!
 echo "   Backend PID: $BACKEND_PID"
 
-# 9. Start the frontend
+# 9. Start the frontend (in its own process group so child processes are killed too)
 echo "🎨 Starting frontend (npm run dev)..."
 cd "$REPO_ROOT/frontend"
-npm run dev &
+setsid bash -c 'npm run dev' &
 FRONTEND_PID=$!
 echo "   Frontend PID: $FRONTEND_PID"
 
@@ -123,12 +155,8 @@ echo "  Frontend: http://localhost:5173"
 echo "  Press Ctrl+C to stop all services"
 echo ""
 
-trap "echo '🛑 Stopping all services...'; kill $LOGS_PID $BACKEND_PID $FRONTEND_PID 2>/dev/null; docker compose -f $REPO_ROOT/docker-compose.yaml down; exit 0" INT TERM
-
 wait -n
 EXIT_CODE=$?
 
 echo "🛑 One process exited with code $EXIT_CODE"
-kill $LOGS_PID $BACKEND_PID $FRONTEND_PID 2>/dev/null
-docker compose -f "$REPO_ROOT/docker-compose.yaml" down > /dev/null 2>&1
 exit $EXIT_CODE
