@@ -113,9 +113,13 @@ def _window_start(now: datetime, window: timedelta) -> datetime:
 
 
 class RateLimiter:
+    """Database-backed fixed-window rate limiter."""
+
+    def __init__(self, db: DbSession):
+        self.db = db
+
     def check(
         self,
-        db: Session,
         key: str,
         rule: RateLimitRule,
         now_fn: Callable[[], datetime] = _utc_now,
@@ -127,7 +131,6 @@ class RateLimiter:
         requests do not increment the counter.
 
         Args:
-            db: Session used for the counter transaction.
             key: Fully-qualified storage key (identity + scope).
             rule: Max requests allowed per aligned window.
             now_fn: Clock source; overridable in tests.
@@ -140,60 +143,75 @@ class RateLimiter:
         window_end = window_start + rule.window
 
         hit = RateLimitHit(rate_limit_key=key, window_start=window_start, hit_count=0)
-        db.add(hit)
+        self.db.add(hit)
         try:
-            db.flush()
+            self.db.flush()
         except IntegrityError:
-            db.rollback()
+            self.db.rollback()
 
         stmt = (
             select(RateLimitHit)
             .where(RateLimitHit.rate_limit_key == key)
             .where(RateLimitHit.window_start == window_start)
         )
-        hit = db.scalars(
+        hit = self.db.scalars(
             stmt.with_hint(RateLimitHit, "WITH (UPDLOCK, ROWLOCK)", dialect_name="mssql")
         ).one()
 
         if hit.hit_count >= rule.max_requests:
-            db.commit()  # release locks without incrementing
+            self.db.commit()  # release locks without incrementing
             return RateLimiterResult(
                 allowed=False,
                 retry_after_seconds=max(1, int((window_end - now).total_seconds())),
             )
 
         hit.hit_count += 1
-        db.execute(
+        self.db.execute(
             delete(RateLimitHit)
             .where(RateLimitHit.rate_limit_key == key)
             .where(RateLimitHit.window_start < window_start)
         )
-        db.commit()
+        self.db.commit()
         return RateLimiterResult(allowed=True, retry_after_seconds=0)
 
 
-def limited(scope: str, rule: RateLimitRule):
-    """Build a FastAPI dependency enforcing a per-user rate limit.
+RateLimiterDep: TypeAlias = Annotated[RateLimiter, Depends(RateLimiter)]
 
-    Args:
-        scope: Name of the protected operation; part of the storage key.
-        rule: Max requests allowed per user per window.
 
-    Returns:
-        A dependency callable suitable for ``dependencies=[...]``.
+class RateLimited:
+    """FastAPI dependency enforcing a per-user rate limit.
+
+    Construct once at route declaration time; FastAPI invokes ``__call__``
+    per request with its parameters resolved through DI.
     """
 
-    def _dep(db: DbSession, current_user: RequiredCurrentUser) -> None:
-        key = f"user:{current_user.app_user_id}:{scope}"
-        result = RateLimiter().check(db, key=key, rule=rule)
+    def __init__(self, scope: str, rule: RateLimitRule):
+        self.scope = scope
+        self.rule = rule
+
+    def __call__(
+        self,
+        limiter: RateLimiterDep,
+        current_user: RequiredCurrentUser,
+    ) -> None:
+        """Check the caller's rate limit and raise 429 when exceeded.
+
+        Args:
+            limiter: Rate limiter bound to the request's DB session.
+            current_user: Authenticated user keying the limit.
+
+        Raises:
+            HTTPException: 429 with a ``Retry-After`` header when the
+                user's allowance for this window is exhausted.
+        """
+        key = f"user:{current_user.app_user_id}:{self.scope}"
+        result = limiter.check(key=key, rule=self.rule)
         if not result.allowed:
             raise HTTPException(
                 status.HTTP_429_TOO_MANY_REQUESTS,
                 "Too many requests. Try again later.",
                 headers={"Retry-After": str(result.retry_after_seconds)},
             )
-
-    return _dep
 ```
 
 Key details:
@@ -213,17 +231,19 @@ In `backend/app/features/user/user_router.py`, add the import and decorate the e
 ```python
 from datetime import timedelta
 
-from app.infrastructure.rate_limiter import limited
+from app.infrastructure.rate_limiter import RateLimited, RateLimitRule
 # ... existing imports ...
+
+_REFRESH_MY_BACKLOG_LIMIT = RateLimitRule(
+    max_requests=1, window=timedelta(minutes=1)
+)
+
 
 @user_router.post(
     "/api/user/refresh-my-backlog",
     dependencies=[
         Depends(
-            limited(
-                scope="refresh-my-backlog",
-                rule=RateLimitRule(max_requests=1, window=timedelta(minutes=1)),
-            )
+            RateLimited(scope="refresh-my-backlog", rule=_REFRESH_MY_BACKLOG_LIMIT)
         )
     ],
 )
@@ -251,7 +271,7 @@ def _clock(minutes: float = 0.0):
     return lambda: BASE_TIME + timedelta(minutes=minutes)
 ```
 
-Test cases (call `RateLimiter().check(db_session, key="user:1:test-scope", rule=RULE, now_fn=_clock(...))` directly):
+Test cases (call `RateLimiter(db_session).check(key="user:1:test-scope", rule=RULE, now_fn=_clock(...))` directly):
 
 1. **`test_first_request_allowed`** — first check at T returns `allowed=True`.
 2. **`test_second_request_same_window_rejected`** — two checks at the same instant: second returns `allowed=False` with `retry_after_seconds == 60`.
@@ -277,7 +297,7 @@ Docker must be running (Testcontainers). No OpenAPI codegen needed — a plain d
 |----------|--------|-----------|
 | Algorithm | Fixed window, clock-aligned | Trivial SQL, burst-at-boundary acceptable for abuse prevention; windows identical across replicas |
 | Keying | User id via `RequiredCurrentUser` | Endpoint requires auth; unauthenticated requests get 401 before counting; IP fallback deferred (YAGNI) |
-| Enforcement point | Dependency factory `limited(scope, rule)` | Matches repo's thin-routes/DI convention; adopting on a new endpoint is one decorator line |
+| Enforcement point | Callable dependency class `RateLimited(scope, rule)` | Matches repo's thin-routes/DI convention; adopting on a new endpoint is one decorator line |
 | Limit config | Inline at endpoint | Values are route-specific behavior like any other code; avoids stringly-typed env parsing |
 | Storage shape | Row per `(RateLimitKey, WindowStart)` | Enables opportunistic cleanup without a scheduler |
 | Cleanup | Per-key delete of older windows on allow path | No background jobs; bounded growth (~2 rows/key); no cross-replica sweep races |
