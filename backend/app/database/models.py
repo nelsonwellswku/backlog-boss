@@ -2,7 +2,15 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import BigInteger, ForeignKey, Identity, MetaData, String
+from sqlalchemy import (
+    BigInteger,
+    ForeignKey,
+    Identity,
+    Integer,
+    MetaData,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.mssql import DATETIMEOFFSET
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -180,4 +188,21 @@ class IgdbGameTimeToBeat(Base):
 
     igdb_game: Mapped["IgdbGame"] = relationship(
         "IgdbGame", back_populates="time_to_beat"
+    )
+
+
+class RateLimitHit(Base):
+    __tablename__ = "RateLimitHit"
+
+    rate_limit_hit_id: Mapped[int] = mapped_column(
+        "RateLimitHitId", BigInteger, Identity(), primary_key=True
+    )
+    rate_limit_key: Mapped[str] = mapped_column("RateLimitKey", String(450))
+    window_start: Mapped[datetime] = mapped_column("WindowStart", DATETIMEOFFSET)
+    hit_count: Mapped[int] = mapped_column("HitCount", Integer)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "RateLimitKey", "WindowStart", name="UQ_RateLimitHit_Key_Window"
+        ),
     )
