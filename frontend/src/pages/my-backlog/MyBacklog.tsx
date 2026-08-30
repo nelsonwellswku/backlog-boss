@@ -43,9 +43,9 @@ export function MyBacklog() {
   const [sortType, setSortType] = useState<SortType>("score");
   const [showCreating, setShowCreating] = useState(false);
   const [activeTab, setActiveTab] = useState<TabValue>("active");
-  const [completedInSessionIds, setCompletedInSessionIds] = useState<number[]>(
-    [],
-  );
+  const [optimisticOverrides, setOptimisticOverrides] = useState<
+    Map<number, boolean>
+  >(() => new Map());
 
   const activeTabQuery = useGetMyBacklogTab("active");
   const completedTabQuery = useGetMyBacklogTab("completed");
@@ -82,8 +82,6 @@ export function MyBacklog() {
 
   const handleToggleCompleted = useCallback(
     (game: BacklogGameRow) => {
-      const isMarkingCompleted = !game.completedOn;
-
       updateBacklogGame(
         {
           backlogGameId: game.backlogGameId,
@@ -92,14 +90,10 @@ export function MyBacklog() {
         },
         {
           onSuccess: () => {
-            setCompletedInSessionIds((current) => {
-              if (isMarkingCompleted) {
-                return current.includes(game.backlogGameId)
-                  ? current
-                  : [...current, game.backlogGameId];
-              }
-
-              return current.filter((id) => id !== game.backlogGameId);
+            setOptimisticOverrides((current) => {
+              const next = new Map(current);
+              next.set(game.backlogGameId, !game.completedOn);
+              return next;
             });
           },
         },
@@ -118,9 +112,11 @@ export function MyBacklog() {
         },
         {
           onSuccess: async () => {
-            setCompletedInSessionIds((current) =>
-              current.filter((id) => id !== game.backlogGameId),
-            );
+            setOptimisticOverrides((current) => {
+              const next = new Map(current);
+              next.delete(game.backlogGameId);
+              return next;
+            });
             await queryClient.invalidateQueries({ queryKey: ["myBacklog"] });
           },
         },
@@ -163,11 +159,6 @@ export function MyBacklog() {
   const completedGames = useMemo(() => {
     return completedTabQuery.data?.data?.games ?? [];
   }, [completedTabQuery.data]);
-
-  const completedInSessionSet = useMemo(
-    () => new Set(completedInSessionIds),
-    [completedInSessionIds],
-  );
 
   const updatingBacklogGameId = isUpdating
     ? (updateVariables?.backlogGameId ?? null)
@@ -236,7 +227,7 @@ export function MyBacklog() {
           ) : (
             <BacklogTabContent
               games={activeTab === "active" ? sortedActiveGames : completedGames}
-              completedInSessionSet={completedInSessionSet}
+              optimisticOverrides={optimisticOverrides}
               onToggleCompleted={handleToggleCompleted}
               onRemoveGame={handleRemoveGame}
               updatingBacklogGameId={updatingBacklogGameId}

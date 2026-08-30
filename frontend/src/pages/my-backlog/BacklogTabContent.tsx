@@ -8,7 +8,7 @@ import { RemoveGameDialog } from "./RemoveGameDialog";
 
 type BacklogTabContentProps = {
   games: BacklogGameRow[];
-  completedInSessionSet: Set<number>;
+  optimisticOverrides: Map<number, boolean>;
   onToggleCompleted: (game: BacklogGameRow) => void;
   onRemoveGame: (game: BacklogGameRow) => void;
   updatingBacklogGameId: number | null;
@@ -17,7 +17,7 @@ type BacklogTabContentProps = {
 
 export function BacklogTabContent({
   games,
-  completedInSessionSet,
+  optimisticOverrides,
   onToggleCompleted,
   onRemoveGame,
   updatingBacklogGameId,
@@ -46,8 +46,8 @@ export function BacklogTabContent({
               key={game.backlogGameId}
               game={game}
               isCompleted={
-                Boolean(game.completedOn) ||
-                completedInSessionSet.has(game.backlogGameId)
+                optimisticOverrides.get(game.backlogGameId) ??
+                Boolean(game.completedOn)
               }
               isLast={index === games.length - 1}
               isUpdating={updatingBacklogGameId === game.backlogGameId}

@@ -34,7 +34,7 @@ function renderTabContent(
   return render(
     <BacklogTabContent
       games={[activeGame]}
-      completedInSessionSet={new Set()}
+      optimisticOverrides={new Map()}
       onToggleCompleted={noop}
       onRemoveGame={noop}
       updatingBacklogGameId={null}
@@ -154,10 +154,10 @@ describe("BacklogTabContent", () => {
     expect(screen.getAllByText("Completed").length).toBeGreaterThanOrEqual(1);
   });
 
-  test("shows completed cue for games in completedInSessionSet", () => {
+  test("shows completed cue for games with optimistic override", () => {
     renderTabContent({
       games: [activeGame],
-      completedInSessionSet: new Set([activeGame.backlogGameId]),
+      optimisticOverrides: new Map([[activeGame.backlogGameId, true]]),
     });
     expect(screen.getAllByText("Completed").length).toBeGreaterThanOrEqual(1);
   });
