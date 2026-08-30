@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.features.user.create_my_backlog_handler import (
     CreateMyBacklogHandler,
@@ -36,9 +36,10 @@ def create_my_backlog(
 
 @user_router.get("/api/user/get-my-backlog")
 def get_my_backlog(
+    status: str | None = Query(None),
     handler: GetMyBacklogHandler = Depends(),
 ) -> GetMyBacklogResponse:
-    return handler.handle()
+    return handler.handle(status=status)
 
 
 @user_router.post(

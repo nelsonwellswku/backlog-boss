@@ -33,7 +33,7 @@ class GetMyBacklogHandler:
         self.db = db
         self.current_user = current_user
 
-    def handle(self):
+    def handle(self, status: str | None = None):
         backlog_games_loader = joinedload(
             Backlog.backlog_games.and_(BacklogGame.removed_on.is_(None))
         )
@@ -52,6 +52,12 @@ class GetMyBacklogHandler:
         backlog = self.db.scalars(stmt).unique().one_or_none()
         if not backlog:
             raise HTTPException(404, "Backlog not found.")
+
+        filtered_games = backlog.backlog_games
+        if status == "active":
+            filtered_games = [g for g in filtered_games if g.completed_on is None]
+        elif status == "completed":
+            filtered_games = [g for g in filtered_games if g.completed_on is not None]
 
         backlog_game_rows = [
             BacklogGameRow(
@@ -75,7 +81,7 @@ class GetMyBacklogHandler:
                 ),
                 platform_ids=[p.igdb_platform_id for p in g.igdb_game.platforms],
             )
-            for g in backlog.backlog_games
+            for g in filtered_games
         ]
 
         return GetMyBacklogResponse(

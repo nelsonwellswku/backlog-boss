@@ -2,12 +2,26 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router";
 
 const mockGetMyBacklog = vi.hoisted(() => vi.fn());
+const mockGetMyBacklogTab = vi.hoisted(() => vi.fn());
 const mockCreateMyBacklog = vi.hoisted(() => vi.fn());
 const mockRefreshMyBacklog = vi.hoisted(() => vi.fn());
 const mockUpdateBacklogGame = vi.hoisted(() => vi.fn());
+const mockQueryClient = vi.hoisted(() => ({
+  invalidateQueries: vi.fn().mockResolvedValue(undefined),
+}));
 
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
+  return {
+    ...actual,
+    useQueryClient: () => mockQueryClient,
+  };
+});
 vi.mock("@bb/hooks/useGetMyBacklog", () => ({
   useGetMyBacklog: mockGetMyBacklog,
+}));
+vi.mock("@bb/hooks/useGetMyBacklogTab", () => ({
+  useGetMyBacklogTab: mockGetMyBacklogTab,
 }));
 vi.mock("@bb/hooks/useCreateMyBacklog", () => ({
   useCreateMyBacklog: mockCreateMyBacklog,
@@ -26,6 +40,13 @@ function setupDefaultMocks() {
     data: undefined,
     isSuccess: false,
     refetch: vi.fn(),
+  });
+  mockGetMyBacklogTab.mockReturnValue({
+    data: undefined,
+    isLoading: true,
+    isFetching: false,
+    isPreviousData: false,
+    isPlaceholderData: false,
   });
   mockCreateMyBacklog.mockReturnValue({
     mutate: vi.fn(),
@@ -101,35 +122,43 @@ describe("MyBacklog", () => {
       isSuccess: true,
       refetch: vi.fn(),
     });
+    mockGetMyBacklogTab.mockReturnValue({
+      data: { data: { games: [] }, response: { status: 200 } },
+      isLoading: false,
+      isFetching: false,
+      isPlaceholderData: false,
+    });
 
     const markup = renderMyBacklog();
     expect(markup).toContain("No games in your backlog");
   });
 
   test("renders My Backlog header when games exist", () => {
-    mockGetMyBacklog.mockReturnValue({
-      data: {
-        data: {
-          games: [
-            {
-              backlogGameId: 1,
-              gameId: 10,
-              title: "Hades",
-              totalRating: 90,
-              timeToBeat: 36000,
-              genres: ["Action"],
-              completedOn: null,
-              removedOn: null,
-              addedOn: "2025-01-01T00:00:00Z",
-              igdbId: 100,
-              steamAppId: 1000,
-            },
-          ],
-        },
-        response: { status: 200 },
+    const games = [
+      {
+        backlogGameId: 1,
+        gameId: 10,
+        title: "Hades",
+        totalRating: 90,
+        timeToBeat: 36000,
+        genres: ["Action"],
+        completedOn: null,
+        removedOn: null,
+        addedOn: "2025-01-01T00:00:00Z",
+        igdbId: 100,
+        steamAppId: 1000,
       },
+    ];
+    mockGetMyBacklog.mockReturnValue({
+      data: { data: { games }, response: { status: 200 } },
       isSuccess: true,
       refetch: vi.fn(),
+    });
+    mockGetMyBacklogTab.mockReturnValue({
+      data: { data: { games }, response: { status: 200 } },
+      isLoading: false,
+      isFetching: false,
+      isPlaceholderData: false,
     });
 
     const markup = renderMyBacklog();
@@ -138,29 +167,31 @@ describe("MyBacklog", () => {
   });
 
   test("renders Refresh Backlog button", () => {
-    mockGetMyBacklog.mockReturnValue({
-      data: {
-        data: {
-          games: [
-            {
-              backlogGameId: 1,
-              gameId: 10,
-              title: "Hades",
-              totalRating: 90,
-              timeToBeat: 36000,
-              genres: [],
-              completedOn: null,
-              removedOn: null,
-              addedOn: "2025-01-01T00:00:00Z",
-              igdbId: 100,
-              steamAppId: 1000,
-            },
-          ],
-        },
-        response: { status: 200 },
+    const games = [
+      {
+        backlogGameId: 1,
+        gameId: 10,
+        title: "Hades",
+        totalRating: 90,
+        timeToBeat: 36000,
+        genres: [],
+        completedOn: null,
+        removedOn: null,
+        addedOn: "2025-01-01T00:00:00Z",
+        igdbId: 100,
+        steamAppId: 1000,
       },
+    ];
+    mockGetMyBacklog.mockReturnValue({
+      data: { data: { games }, response: { status: 200 } },
       isSuccess: true,
       refetch: vi.fn(),
+    });
+    mockGetMyBacklogTab.mockReturnValue({
+      data: { data: { games }, response: { status: 200 } },
+      isLoading: false,
+      isFetching: false,
+      isPlaceholderData: false,
     });
 
     const markup = renderMyBacklog();
@@ -172,29 +203,31 @@ describe("MyBacklog", () => {
       mutate: vi.fn(),
       isPending: true,
     });
-    mockGetMyBacklog.mockReturnValue({
-      data: {
-        data: {
-          games: [
-            {
-              backlogGameId: 1,
-              gameId: 10,
-              title: "Hades",
-              totalRating: 90,
-              timeToBeat: 36000,
-              genres: [],
-              completedOn: null,
-              removedOn: null,
-              addedOn: "2025-01-01T00:00:00Z",
-              igdbId: 100,
-              steamAppId: 1000,
-            },
-          ],
-        },
-        response: { status: 200 },
+    const games = [
+      {
+        backlogGameId: 1,
+        gameId: 10,
+        title: "Hades",
+        totalRating: 90,
+        timeToBeat: 36000,
+        genres: [],
+        completedOn: null,
+        removedOn: null,
+        addedOn: "2025-01-01T00:00:00Z",
+        igdbId: 100,
+        steamAppId: 1000,
       },
+    ];
+    mockGetMyBacklog.mockReturnValue({
+      data: { data: { games }, response: { status: 200 } },
       isSuccess: true,
       refetch: vi.fn(),
+    });
+    mockGetMyBacklogTab.mockReturnValue({
+      data: { data: { games }, response: { status: 200 } },
+      isLoading: false,
+      isFetching: false,
+      isPlaceholderData: false,
     });
 
     const markup = renderMyBacklog();
@@ -206,29 +239,31 @@ describe("MyBacklog", () => {
       mutate: vi.fn(),
       isPending: true,
     });
-    mockGetMyBacklog.mockReturnValue({
-      data: {
-        data: {
-          games: [
-            {
-              backlogGameId: 1,
-              gameId: 10,
-              title: "Hades",
-              totalRating: 90,
-              timeToBeat: 36000,
-              genres: [],
-              completedOn: null,
-              removedOn: null,
-              addedOn: "2025-01-01T00:00:00Z",
-              igdbId: 100,
-              steamAppId: 1000,
-            },
-          ],
-        },
-        response: { status: 200 },
+    const games = [
+      {
+        backlogGameId: 1,
+        gameId: 10,
+        title: "Hades",
+        totalRating: 90,
+        timeToBeat: 36000,
+        genres: [],
+        completedOn: null,
+        removedOn: null,
+        addedOn: "2025-01-01T00:00:00Z",
+        igdbId: 100,
+        steamAppId: 1000,
       },
+    ];
+    mockGetMyBacklog.mockReturnValue({
+      data: { data: { games }, response: { status: 200 } },
       isSuccess: true,
       refetch: vi.fn(),
+    });
+    mockGetMyBacklogTab.mockReturnValue({
+      data: { data: { games }, response: { status: 200 } },
+      isLoading: false,
+      isFetching: false,
+      isPlaceholderData: false,
     });
 
     const markup = renderMyBacklog();
@@ -236,29 +271,31 @@ describe("MyBacklog", () => {
   });
 
   test("does not show LinearProgress when not refreshing", () => {
-    mockGetMyBacklog.mockReturnValue({
-      data: {
-        data: {
-          games: [
-            {
-              backlogGameId: 1,
-              gameId: 10,
-              title: "Hades",
-              totalRating: 90,
-              timeToBeat: 36000,
-              genres: [],
-              completedOn: null,
-              removedOn: null,
-              addedOn: "2025-01-01T00:00:00Z",
-              igdbId: 100,
-              steamAppId: 1000,
-            },
-          ],
-        },
-        response: { status: 200 },
+    const games = [
+      {
+        backlogGameId: 1,
+        gameId: 10,
+        title: "Hades",
+        totalRating: 90,
+        timeToBeat: 36000,
+        genres: [],
+        completedOn: null,
+        removedOn: null,
+        addedOn: "2025-01-01T00:00:00Z",
+        igdbId: 100,
+        steamAppId: 1000,
       },
+    ];
+    mockGetMyBacklog.mockReturnValue({
+      data: { data: { games }, response: { status: 200 } },
       isSuccess: true,
       refetch: vi.fn(),
+    });
+    mockGetMyBacklogTab.mockReturnValue({
+      data: { data: { games }, response: { status: 200 } },
+      isLoading: false,
+      isFetching: false,
+      isPlaceholderData: false,
     });
 
     const markup = renderMyBacklog();
@@ -266,29 +303,31 @@ describe("MyBacklog", () => {
   });
 
   test("renders sort button group", () => {
-    mockGetMyBacklog.mockReturnValue({
-      data: {
-        data: {
-          games: [
-            {
-              backlogGameId: 1,
-              gameId: 10,
-              title: "Hades",
-              totalRating: 90,
-              timeToBeat: 36000,
-              genres: [],
-              completedOn: null,
-              removedOn: null,
-              addedOn: "2025-01-01T00:00:00Z",
-              igdbId: 100,
-              steamAppId: 1000,
-            },
-          ],
-        },
-        response: { status: 200 },
+    const games = [
+      {
+        backlogGameId: 1,
+        gameId: 10,
+        title: "Hades",
+        totalRating: 90,
+        timeToBeat: 36000,
+        genres: [],
+        completedOn: null,
+        removedOn: null,
+        addedOn: "2025-01-01T00:00:00Z",
+        igdbId: 100,
+        steamAppId: 1000,
       },
+    ];
+    mockGetMyBacklog.mockReturnValue({
+      data: { data: { games }, response: { status: 200 } },
       isSuccess: true,
       refetch: vi.fn(),
+    });
+    mockGetMyBacklogTab.mockReturnValue({
+      data: { data: { games }, response: { status: 200 } },
+      isLoading: false,
+      isFetching: false,
+      isPlaceholderData: false,
     });
 
     const markup = renderMyBacklog();
