@@ -15,7 +15,9 @@ describe("BacklogCreatingLoader", () => {
 
   test("renders 'This will only take a moment' subtitle", () => {
     render(<BacklogCreatingLoader />);
-    expect(screen.getByText("This will only take a moment")).toBeInTheDocument();
+    expect(
+      screen.getByText("This will only take a moment"),
+    ).toBeInTheDocument();
   });
 
   test("renders CircularProgress", () => {
@@ -70,9 +72,7 @@ describe("BacklogCreatingLoader", () => {
       });
     }
 
-    expect(
-      screen.getByText("Finalizing your backlog..."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Finalizing your backlog...")).toBeInTheDocument();
   });
 
   test("cleans up interval on unmount", () => {

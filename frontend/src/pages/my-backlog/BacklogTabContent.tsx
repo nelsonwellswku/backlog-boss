@@ -36,10 +36,7 @@ export function BacklogTabContent({
 
   return (
     <>
-      <Paper
-        elevation={2}
-        sx={{ borderRadius: 2, overflow: "hidden" }}
-      >
+      <Paper elevation={2} sx={{ borderRadius: 2, overflow: "hidden" }}>
         <List sx={{ py: 0 }}>
           {games.map((game, index) => (
             <BacklogListItem

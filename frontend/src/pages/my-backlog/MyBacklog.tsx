@@ -24,8 +24,11 @@ import { CreateBacklogPrompt } from "@bb/pages/my-backlog/CreateBacklogPrompt";
 type TabValue = "active" | "completed";
 
 export function MyBacklog() {
-  const { data: backlogCheck, isSuccess: backlogExists, refetch } =
-    useGetMyBacklog();
+  const {
+    data: backlogCheck,
+    isSuccess: backlogExists,
+    refetch,
+  } = useGetMyBacklog();
   const {
     mutate: createBacklog,
     isPending: isCreating,
@@ -164,9 +167,11 @@ export function MyBacklog() {
     ? (updateVariables?.backlogGameId ?? null)
     : null;
 
-  const currentQuery = activeTab === "active" ? activeTabQuery : completedTabQuery;
+  const currentQuery =
+    activeTab === "active" ? activeTabQuery : completedTabQuery;
   const isFirstLoad =
-    currentQuery.isLoading || (currentQuery.isFetching && !currentQuery.isPlaceholderData);
+    currentQuery.isLoading ||
+    (currentQuery.isFetching && !currentQuery.isPlaceholderData);
 
   return (
     <Box sx={{ mt: 4 }}>
@@ -226,7 +231,9 @@ export function MyBacklog() {
             <BacklogListSkeleton />
           ) : (
             <BacklogTabContent
-              games={activeTab === "active" ? sortedActiveGames : completedGames}
+              games={
+                activeTab === "active" ? sortedActiveGames : completedGames
+              }
               optimisticOverrides={optimisticOverrides}
               onToggleCompleted={handleToggleCompleted}
               onRemoveGame={handleRemoveGame}

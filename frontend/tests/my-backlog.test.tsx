@@ -553,7 +553,9 @@ describe("MyBacklog interactions", () => {
 
     renderMyBacklogInteractive();
     fireEvent.click(screen.getByText("⏱️ Shortest Time"));
-    const titles = screen.getAllByText(/Hades|Celeste/).map((el) => el.textContent);
+    const titles = screen
+      .getAllByText(/Hades|Celeste/)
+      .map((el) => el.textContent);
     expect(titles[0]).toBe("Celeste");
     expect(titles[1]).toBe("Hades");
   });
@@ -577,7 +579,9 @@ describe("MyBacklog interactions", () => {
     });
 
     renderMyBacklogInteractive();
-    const markButtons = screen.getAllByRole("button", { name: /mark complete/i });
+    const markButtons = screen.getAllByRole("button", {
+      name: /mark complete/i,
+    });
     fireEvent.click(markButtons[0]);
     expect(mutate).toHaveBeenCalled();
   });
@@ -595,9 +599,7 @@ describe("MyBacklog interactions", () => {
       name: /remove from backlog/i,
     });
     fireEvent.click(removeButtons[0]);
-    expect(
-      screen.getByText("Remove game from backlog?"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Remove game from backlog?")).toBeInTheDocument();
   });
 
   test("calls updateBacklogGame with removedOn when remove is confirmed", () => {

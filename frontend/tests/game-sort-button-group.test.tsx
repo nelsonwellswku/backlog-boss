@@ -10,7 +10,11 @@ function renderSortButtonGroup(
   return {
     setSortType,
     ...render(
-      <GameSortButtonGroup sortType="score" setSortType={setSortType} {...overrides} />,
+      <GameSortButtonGroup
+        sortType="score"
+        setSortType={setSortType}
+        {...overrides}
+      />,
     ),
   };
 }
