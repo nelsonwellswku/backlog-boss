@@ -12,10 +12,10 @@ describe("BacklogListSkeleton", () => {
     expect(markup).toContain("MuiSkeleton");
   });
 
-  test("renders 6 skeleton rows", () => {
+  test("renders 15 skeleton rows", () => {
     const markup = renderSkeleton();
     const listItems = markup.split("<li");
-    expect(listItems.length - 1).toBe(6);
+    expect(listItems.length - 1).toBe(15);
   });
 
   test("renders single Paper container", () => {
@@ -32,7 +32,7 @@ describe("BacklogListSkeleton", () => {
   test("renders dividers between rows", () => {
     const markup = renderSkeleton();
     const dividers = markup.split("<hr");
-    expect(dividers.length - 1).toBe(5);
+    expect(dividers.length - 1).toBe(14);
   });
 
   test("renders time and rating skeleton placeholders", () => {

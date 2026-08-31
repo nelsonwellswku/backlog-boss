@@ -34,10 +34,10 @@ export function BacklogListSkeleton() {
   return (
     <Paper elevation={2} sx={{ borderRadius: 2, overflow: "hidden" }}>
       <List sx={{ py: 0 }}>
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 15 }).map((_, i) => (
           <Box key={i}>
             <BacklogListItemSkeleton />
-            {i < 5 && <Divider />}
+            {i < 14 && <Divider />}
           </Box>
         ))}
       </List>
