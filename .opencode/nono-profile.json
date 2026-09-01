@@ -8,7 +8,7 @@
   "filesystem": {
     "allow": [
       "/opt/microsoft",
-      "/home/nelson/.config/gh"
+      "~/.config/gh"
     ],
     "allow_file": [
       "/var/run/docker.sock",
