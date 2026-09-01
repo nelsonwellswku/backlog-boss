@@ -33,7 +33,7 @@ export const BacklogListItem = memo(function BacklogListItem({
   onRemoveGame: (game: BacklogGameRow) => void;
 }) {
   return (
-    <>
+    <Box sx={{ position: "relative" }}>
       <ListItem
         sx={{
           py: 2,
@@ -173,7 +173,21 @@ export const BacklogListItem = memo(function BacklogListItem({
           </Tooltip>
         </Box>
       </ListItem>
+      {game.releaseYear != null && (
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            position: "absolute",
+            bottom: 16,
+            left: 120,
+            textDecoration: isCompleted ? "line-through" : "none",
+          }}
+        >
+          Release Date - {game.releaseYear}
+        </Typography>
+      )}
       {!isLast && <Divider />}
-    </>
+    </Box>
   );
 });

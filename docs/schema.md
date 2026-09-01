@@ -46,6 +46,7 @@ Schema: `bb`
 | Uid | int(10) | NO |  |  |
 | IgdbGameId | int(10) | NO |  | FK → IgdbGame.Id |
 | IgdbExternalGameSourceId | int(10) | NO |  | FK → IgdbExternalGameSource.Id |
+| Year | int(10) | YES |  |  |
 
 ## bb.IgdbExternalGameSource
 

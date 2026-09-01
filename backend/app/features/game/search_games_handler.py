@@ -20,6 +20,7 @@ class GameSearchRow(ApiResponseModel):
     cover_image_id: str | None
     steam_app_id: int | None = None
     platform_ids: list[int] = []
+    release_year: int | None = None
 
 
 class SearchGamesResponse(ApiResponseModel):
@@ -115,4 +116,12 @@ class SearchGamesHandler:
                 None,
             ),
             platform_ids=[p.igdb_platform_id for p in game.platforms],
+            release_year=next(
+                (
+                    eg.year
+                    for eg in game.external_games
+                    if eg.igdb_external_game_source_id == 1
+                ),
+                None,
+            ),
         )

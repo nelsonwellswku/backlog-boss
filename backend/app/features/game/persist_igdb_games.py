@@ -97,6 +97,7 @@ def persist_igdb_games(db: Session, games: list[IgdbGameResponse]) -> bool:
                     igdb_external_game_id=external_game.id,
                     uid=parsed_uid,
                     igdb_external_game_source_id=1,
+                    year=external_game.year,
                 )
             )
             existing_external_uids.add(parsed_uid)
