@@ -39,7 +39,7 @@ export function GameListItem({
   onAddToBacklog,
 }: GameListItemProps) {
   return (
-    <Box>
+    <Box sx={{ position: "relative" }}>
       <ListItem sx={{ py: 2, px: 2 }}>
         <Box sx={{ display: "flex", gap: 2, flex: 1, minWidth: 0 }}>
           <CoverImage imageId={game.coverImageId} title={game.title} />
@@ -100,11 +100,6 @@ export function GameListItem({
                   }
                 />
                 <GenreChips genres={game.genres} />
-                {game.releaseYear != null && (
-                  <Typography variant="body2" color="text.secondary">
-                    Release Date - {game.releaseYear}
-                  </Typography>
-                )}
               </Stack>
             }
           />
@@ -134,6 +129,19 @@ export function GameListItem({
           </Box>
         ) : null}
       </ListItem>
+      {game.releaseYear != null && (
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            position: "absolute",
+            bottom: 16,
+            left: 120,
+          }}
+        >
+          Release Date - {game.releaseYear}
+        </Typography>
+      )}
       {!isLast ? <Divider /> : null}
     </Box>
   );
