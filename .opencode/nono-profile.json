@@ -7,7 +7,8 @@
   "extends": "always-further/opencode",
   "filesystem": {
     "allow": [
-      "/opt/microsoft"
+      "/opt/microsoft",
+      "/home/nelson/.config/gh"
     ],
     "allow_file": [
       "/var/run/docker.sock",

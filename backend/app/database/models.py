@@ -158,6 +158,7 @@ class IgdbExternalGame(Base):
     igdb_external_game_source_id: Mapped[int] = mapped_column(
         "IgdbExternalGameSourceId", ForeignKey("bb.IgdbExternalGameSource.Id")
     )
+    year: Mapped[Optional[int]] = mapped_column("Year")
 
     igdb_game: Mapped["IgdbGame"] = relationship(
         "IgdbGame",

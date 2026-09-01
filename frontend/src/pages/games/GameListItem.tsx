@@ -100,6 +100,11 @@ export function GameListItem({
                   }
                 />
                 <GenreChips genres={game.genres} />
+                {game.releaseYear != null && (
+                  <Typography variant="body2" color="text.secondary">
+                    Release Date - {game.releaseYear}
+                  </Typography>
+                )}
               </Stack>
             }
           />

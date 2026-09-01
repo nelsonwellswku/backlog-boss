@@ -26,6 +26,7 @@ class BacklogGameRow(ApiResponseModel):
     cover_image_id: str | None = None
     steam_app_id: int | None = None
     platform_ids: list[int] = []
+    release_year: int | None = None
 
 
 class GetMyBacklogHandler:
@@ -80,6 +81,14 @@ class GetMyBacklogHandler:
                     None,
                 ),
                 platform_ids=[p.igdb_platform_id for p in g.igdb_game.platforms],
+                release_year=next(
+                    (
+                        eg.year
+                        for eg in g.igdb_game.external_games
+                        if eg.igdb_external_game_source_id == 1
+                    ),
+                    None,
+                ),
             )
             for g in filtered_games
         ]

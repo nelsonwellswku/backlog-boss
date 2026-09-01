@@ -79,6 +79,7 @@ class ExternalGameResponse(BaseModel):
     game: int
     uid: str
     external_game_source: int
+    year: int | None = None
 
 
 class TimeToBeatResponse(BaseModel):
@@ -253,7 +254,7 @@ class IgdbClient:
         # Paginate through results
         while True:
             query = f"""
-                fields id, game, uid, external_game_source;
+                fields id, game, uid, external_game_source, year;
                 where game = ({formatted_game_ids}) & external_game_source = 1;
                 offset {offset};
                 limit {limit};

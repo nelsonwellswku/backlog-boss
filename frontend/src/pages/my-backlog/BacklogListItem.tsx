@@ -113,6 +113,18 @@ export const BacklogListItem = memo(function BacklogListItem({
                   </Typography>
                 )}
                 <GenreChips genres={game.genres} />
+                {game.releaseYear != null && (
+                  <Typography
+                    component="span"
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      textDecoration: isCompleted ? "line-through" : "none",
+                    }}
+                  >
+                    Release Date - {game.releaseYear}
+                  </Typography>
+                )}
                 {isCompleted && (
                   <Chip
                     icon={<CheckCircleIcon />}
