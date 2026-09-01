@@ -1,5 +1,5 @@
 import { backlogGameUpdateGame } from "@bb/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 
 type UpdateBacklogGameParams = {
   backlogGameId: number;
@@ -8,8 +8,6 @@ type UpdateBacklogGameParams = {
 };
 
 export function useUpdateBacklogGame() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationKey: ["update-backlog-game"],
     mutationFn: ({
@@ -21,8 +19,5 @@ export function useUpdateBacklogGame() {
         path: { backlog_game_id: backlogGameId },
         body: { completedOn, removedOn },
       }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["myBacklog"] });
-    },
   });
 }

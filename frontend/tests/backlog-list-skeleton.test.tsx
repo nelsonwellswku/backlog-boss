@@ -12,39 +12,27 @@ describe("BacklogListSkeleton", () => {
     expect(markup).toContain("MuiSkeleton");
   });
 
-  test("renders 6 active skeleton rows", () => {
+  test("renders 15 skeleton rows", () => {
     const markup = renderSkeleton();
     const listItems = markup.split("<li");
-    expect(listItems.length - 1).toBe(8);
+    expect(listItems.length - 1).toBe(15);
   });
 
-  test("renders completed games section", () => {
+  test("renders single Paper container", () => {
     const markup = renderSkeleton();
-    expect(markup).toContain("MuiPaper-elevation1");
+    expect(markup).toContain("MuiPaper-elevation2");
   });
 
-  test("renders action button skeletons for active rows", () => {
+  test("renders action button skeletons for rows", () => {
     const markup = renderSkeleton();
     expect(markup).toContain("width:110px");
     expect(markup).toContain("width:40px");
   });
 
-  test("renders dividers between active rows", () => {
+  test("renders dividers between rows", () => {
     const markup = renderSkeleton();
     const dividers = markup.split("<hr");
-    expect(dividers.length - 1).toBe(6);
-  });
-
-  test("renders title skeleton placeholders", () => {
-    const markup = renderSkeleton();
-    expect(markup).toContain("width:180px");
-    expect(markup).toContain("width:200px");
-  });
-
-  test("renders subtitle skeleton placeholders", () => {
-    const markup = renderSkeleton();
-    expect(markup).toContain("width:140px");
-    expect(markup).toContain("width:160px");
+    expect(dividers.length - 1).toBe(14);
   });
 
   test("renders time and rating skeleton placeholders", () => {
