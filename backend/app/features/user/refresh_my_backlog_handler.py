@@ -93,15 +93,23 @@ class RefreshMyBacklogHandler:
                 steam_to_igdb[mapping.uid] = mapping.igdb_game_id
 
         # 4. Insert ownership for ALL owned games not already tracked
-        # existing_owned_ids was loaded in step 2 — no per-row SELECT needed
+        # existing_owned_ids was loaded in step 2 — no per-row SELECT needed.
+        # newly_queued tracks igdb_game_ids added in this session to avoid
+        # duplicates when multiple Steam games map to the same IGDB game.
+        newly_queued: set[int] = set()
         for steam_id in owned_game_steam_ids:
             igdb_game_id = steam_to_igdb.get(steam_id)
-            if igdb_game_id and igdb_game_id not in existing_owned_ids:
+            if (
+                igdb_game_id
+                and igdb_game_id not in existing_owned_ids
+                and igdb_game_id not in newly_queued
+            ):
                 ownership = UserOwnedGame(
                     app_user_id=self.current_user.app_user_id,
                     igdb_game_id=igdb_game_id,
                 )
                 self.db.add(ownership)
+                newly_queued.add(igdb_game_id)
 
         # 5. Query qualified games via UserOwnedGame
         stmt = (

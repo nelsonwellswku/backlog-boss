@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import pytest
 from fastapi import HTTPException
 from pytest_mock import MockerFixture
-from sqlalchemy import select
+from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
 from app.database.models import (
@@ -480,6 +480,51 @@ def test_handle_fetches_new_igdb_games_and_adds_qualifying_ones(
         )
     ).all()
     assert set(backlog_game_ids) == {1, 2}
+
+
+def test_handle_does_not_duplicate_when_multiple_steam_games_map_to_same_igdb_game(
+    db_session: Session,
+    mocker: MockerFixture,
+):
+    current_user = _create_current_user(db_session)
+    _create_backlog(db_session, current_user)
+    # Two Steam IDs (111, 222) both map to the same IGDB game (id=1)
+    _create_game(db_session, 1, "Shared Game", 111)
+    db_session.execute(
+        insert(IgdbExternalGame).values(
+            igdb_external_game_id=1002,
+            uid=222,
+            igdb_external_game_source_id=1,
+            igdb_game_id=1,
+        )
+    )
+    db_session.commit()
+
+    steam_client = mocker.Mock()
+    steam_client.get_owned_games.return_value = [
+        SteamGame(steam_game_id=111),
+        SteamGame(steam_game_id=222),
+    ]
+    handler = RefreshMyBacklogHandler(
+        db_session,
+        steam_client,
+        current_user,
+        mocker.Mock(),
+        mocker.Mock(),
+        mocker.Mock(),
+        mocker.Mock(),
+    )
+
+    actual = handler.handle()
+
+    owned_game_ids = db_session.scalars(
+        select(UserOwnedGame.igdb_game_id).where(
+            UserOwnedGame.app_user_id == current_user.app_user_id
+        )
+    ).all()
+
+    assert actual.games_added_count == 1
+    assert set(owned_game_ids) == {1}
 
 
 def test_handle_creates_ownership_for_preexisting_games(
