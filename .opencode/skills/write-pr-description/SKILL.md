@@ -49,10 +49,6 @@ Output the PR description as raw markdown in a code block so it can be copied/pa
 
 - <Bullet list of meaningful changes, grouped by area of concern. Focus on *what* changed and *why*, not implementation details.>
 
-## Testing
-
-<How to verify the changes work. Include specific steps or commands if applicable.>
-
 ## Notes
 
 <Any caveats, follow-up work, or context reviewers should know. Omit this section if not needed.>
@@ -65,4 +61,3 @@ Output the PR description as raw markdown in a code block so it can be copied/pa
 - Skip trivial changes (formatting, whitespace, import ordering) unless they are the entire diff.
 - Keep the summary under 2 sentences.
 - If the diff is very large or complex, call out the most important areas for reviewers to focus on.
-- Do not fabricate testing steps — only include instructions if the diff reveals clear verification paths (e.g. new endpoints, CLI flags, UI changes).
