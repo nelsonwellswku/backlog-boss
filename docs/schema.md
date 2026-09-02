@@ -99,3 +99,20 @@ Schema: `bb`
 |--------|------|----------|---------|-------------|
 | Id | int(10) | NO |  | PK |
 | Name | varchar(32) | NO |  |  |
+
+## bb.RateLimitHit
+
+| Column | Type | Nullable | Default | Constraints |
+|--------|------|----------|---------|-------------|
+| RateLimitHitId | bigint(19) | NO |  | PK |
+| RateLimitKey | nvarchar(450) | NO |  | UNIQUE |
+| WindowStart | datetimeoffset | NO |  | UNIQUE |
+| HitCount | int(10) | NO |  |  |
+
+## bb.UserOwnedGame
+
+| Column | Type | Nullable | Default | Constraints |
+|--------|------|----------|---------|-------------|
+| UserOwnedGameId | int(10) | NO |  | PK |
+| AppUserId | int(10) | NO |  | FK → AppUser.AppUserId, UNIQUE |
+| IgdbGameId | int(10) | NO |  | FK → IgdbGame.Id, UNIQUE |
