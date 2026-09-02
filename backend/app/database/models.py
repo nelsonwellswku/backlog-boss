@@ -85,6 +85,21 @@ class BacklogGame(Base):
     igdb_game: Mapped["IgdbGame"] = relationship("IgdbGame", lazy="raise")
 
 
+class UserOwnedGame(Base):
+    __tablename__ = "UserOwnedGame"
+
+    user_owned_game_id: Mapped[int] = mapped_column("UserOwnedGameId", primary_key=True)
+    app_user_id: Mapped[int] = mapped_column(
+        "AppUserId", ForeignKey("bb.AppUser.AppUserId")
+    )
+    igdb_game_id: Mapped[int] = mapped_column(
+        "IgdbGameId", ForeignKey("bb.IgdbGame.Id")
+    )
+
+    app_user: Mapped["AppUser"] = relationship("AppUser", lazy="raise")
+    igdb_game: Mapped["IgdbGame"] = relationship("IgdbGame", lazy="raise")
+
+
 class IgdbGame(Base):
     __tablename__ = "IgdbGame"
 

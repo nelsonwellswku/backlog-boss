@@ -13,6 +13,7 @@ from app.database.models import (
     IgdbExternalGame,
     IgdbGame,
     IgdbGameTimeToBeat,
+    UserOwnedGame,
 )
 from app.features.auth.get_current_user import User
 from app.features.user.refresh_my_backlog_handler import RefreshMyBacklogHandler
@@ -133,8 +134,15 @@ def test_handle_returns_zero_when_no_new_games_to_add(
 
     actual = handler.handle()
 
+    owned_game_ids = db_session.scalars(
+        select(UserOwnedGame.igdb_game_id).where(
+            UserOwnedGame.app_user_id == current_user.app_user_id
+        )
+    ).all()
+
     assert actual.backlog_id == backlog.backlog_id
     assert actual.games_added_count == 0
+    assert set(owned_game_ids) == {1}
     steam_client.get_owned_games.assert_called_once_with(current_user.steam_id)
 
 
@@ -173,6 +181,12 @@ def test_handle_adds_qualifying_new_game_skips_active_game(
 
     actual = handler.handle()
 
+    owned_game_ids = db_session.scalars(
+        select(UserOwnedGame.igdb_game_id).where(
+            UserOwnedGame.app_user_id == current_user.app_user_id
+        )
+    ).all()
+
     assert actual.backlog_id == backlog.backlog_id
     assert actual.games_added_count == 1
 
@@ -182,6 +196,7 @@ def test_handle_adds_qualifying_new_game_skips_active_game(
         )
     ).all()
     assert set(backlog_game_ids) == {1, 2}
+    assert set(owned_game_ids) == {1, 2}
 
     cover_fetcher.fetch_and_persist.assert_called_once()
     assert set(cover_fetcher.fetch_and_persist.call_args[0][0]) == {1, 2}
@@ -280,7 +295,14 @@ def test_handle_skips_game_without_rating(
 
     actual = handler.handle()
 
+    owned_game_ids = db_session.scalars(
+        select(UserOwnedGame.igdb_game_id).where(
+            UserOwnedGame.app_user_id == current_user.app_user_id
+        )
+    ).all()
+
     assert actual.games_added_count == 0
+    assert set(owned_game_ids) == {1}
 
     backlog_game_ids = db_session.scalars(
         select(BacklogGame.igdb_game_id).where(
@@ -320,7 +342,14 @@ def test_handle_skips_game_without_time_to_beat(
 
     actual = handler.handle()
 
+    owned_game_ids = db_session.scalars(
+        select(UserOwnedGame.igdb_game_id).where(
+            UserOwnedGame.app_user_id == current_user.app_user_id
+        )
+    ).all()
+
     assert actual.games_added_count == 0
+    assert set(owned_game_ids) == {1}
 
 
 def test_handle_does_not_re_add_removed_game(
@@ -352,7 +381,14 @@ def test_handle_does_not_re_add_removed_game(
 
     actual = handler.handle()
 
+    owned_game_ids = db_session.scalars(
+        select(UserOwnedGame.igdb_game_id).where(
+            UserOwnedGame.app_user_id == current_user.app_user_id
+        )
+    ).all()
+
     assert actual.games_added_count == 0
+    assert set(owned_game_ids) == {1}
 
     backlog_game_ids = db_session.scalars(
         select(BacklogGame.igdb_game_id).where(
@@ -426,10 +462,61 @@ def test_handle_fetches_new_igdb_games_and_adds_qualifying_ones(
 
     actual = handler.handle()
 
+    owned_game_ids = db_session.scalars(
+        select(UserOwnedGame.igdb_game_id).where(
+            UserOwnedGame.app_user_id == current_user.app_user_id
+        )
+    ).all()
+
     assert actual.backlog_id == backlog.backlog_id
     assert actual.games_added_count == 1
+    assert set(owned_game_ids) == {1, 2, 3}
 
     igdb_client.get_games_by_steam_id.assert_called_once_with({222, 333})
+
+    backlog_game_ids = db_session.scalars(
+        select(BacklogGame.igdb_game_id).where(
+            BacklogGame.backlog_id == backlog.backlog_id
+        )
+    ).all()
+    assert set(backlog_game_ids) == {1, 2}
+
+
+def test_handle_creates_ownership_for_preexisting_games(
+    db_session: Session,
+    mocker: MockerFixture,
+):
+    current_user = _create_current_user(db_session)
+    backlog = _create_backlog(db_session, current_user)
+    _create_game(db_session, 1, "Game One", 111)
+    _create_game(db_session, 2, "Game Two", 222)
+    db_session.commit()
+
+    steam_client = mocker.Mock()
+    steam_client.get_owned_games.return_value = [
+        SteamGame(steam_game_id=111),
+        SteamGame(steam_game_id=222),
+    ]
+    handler = RefreshMyBacklogHandler(
+        db_session,
+        steam_client,
+        current_user,
+        mocker.Mock(),
+        mocker.Mock(),
+        mocker.Mock(),
+        mocker.Mock(),
+    )
+
+    actual = handler.handle()
+
+    owned_game_ids = db_session.scalars(
+        select(UserOwnedGame.igdb_game_id).where(
+            UserOwnedGame.app_user_id == current_user.app_user_id
+        )
+    ).all()
+
+    assert actual.games_added_count == 2
+    assert set(owned_game_ids) == {1, 2}
 
     backlog_game_ids = db_session.scalars(
         select(BacklogGame.igdb_game_id).where(

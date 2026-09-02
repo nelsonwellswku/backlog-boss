@@ -9,6 +9,7 @@ from app.database.models import (
     IgdbExternalGame,
     IgdbGame,
     IgdbGameTimeToBeat,
+    UserOwnedGame,
 )
 from app.features.auth.get_current_user import User
 from app.features.user.create_my_backlog_handler import CreateMyBacklogHandler
@@ -135,8 +136,15 @@ def test_handle_creates_backlog_and_adds_only_games_with_rating_and_time_to_beat
         select(IgdbExternalGame.uid).where(IgdbExternalGame.igdb_game_id == 2)
     ).all()
 
+    owned_game_ids = db_session.scalars(
+        select(UserOwnedGame.igdb_game_id).where(
+            UserOwnedGame.app_user_id == current_user.app_user_id
+        )
+    ).all()
+
     assert backlog.app_user_id == current_user.app_user_id
     assert set(backlog_game_ids) == {1, 2}
     assert inserted_external_uids == [222]
+    assert set(owned_game_ids) == {1, 2, 3}
     steam_client.get_owned_games.assert_called_once_with(current_user.steam_id)
     igdb_client.get_games_by_steam_id.assert_called_once_with({222, 333})
