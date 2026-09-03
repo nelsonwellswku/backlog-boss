@@ -1,5 +1,5 @@
 from pytest_mock import MockerFixture
-from sqlalchemy import select
+from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
 from app.database.models import (
@@ -9,6 +9,7 @@ from app.database.models import (
     IgdbExternalGame,
     IgdbGame,
     IgdbGameTimeToBeat,
+    UserOwnedGame,
 )
 from app.features.auth.get_current_user import User
 from app.features.user.create_my_backlog_handler import CreateMyBacklogHandler
@@ -135,8 +136,68 @@ def test_handle_creates_backlog_and_adds_only_games_with_rating_and_time_to_beat
         select(IgdbExternalGame.uid).where(IgdbExternalGame.igdb_game_id == 2)
     ).all()
 
+    owned_game_ids = db_session.scalars(
+        select(UserOwnedGame.igdb_game_id).where(
+            UserOwnedGame.app_user_id == current_user.app_user_id
+        )
+    ).all()
+
     assert backlog.app_user_id == current_user.app_user_id
     assert set(backlog_game_ids) == {1, 2}
     assert inserted_external_uids == [222]
+    assert set(owned_game_ids) == {1, 2, 3}
     steam_client.get_owned_games.assert_called_once_with(current_user.steam_id)
     igdb_client.get_games_by_steam_id.assert_called_once_with({222, 333})
+
+
+def test_handle_does_not_duplicate_when_multiple_steam_games_map_to_same_igdb_game(
+    db_session: Session,
+    mocker: MockerFixture,
+):
+    current_user = _create_current_user(db_session)
+    # Two Steam IDs (111, 222) both map to the same IGDB game (id=1)
+    game = IgdbGame(igdb_game_id=1, name="Shared Game", total_rating=88.0)
+    game.time_to_beat = IgdbGameTimeToBeat(
+        igdb_game_time_to_beat_id=101,
+        igdb_game_id=1,
+        normally=3600,
+    )
+    game.external_games.append(
+        IgdbExternalGame(
+            igdb_external_game_id=1001,
+            uid=111,
+            igdb_external_game_source_id=1,
+        )
+    )
+    db_session.add(game)
+    db_session.flush()
+    db_session.execute(
+        insert(IgdbExternalGame).values(
+            igdb_external_game_id=1002,
+            uid=222,
+            igdb_external_game_source_id=1,
+            igdb_game_id=1,
+        )
+    )
+    db_session.commit()
+
+    steam_client = mocker.Mock()
+    steam_client.get_owned_games.return_value = [
+        SteamGame(steam_game_id=111),
+        SteamGame(steam_game_id=222),
+    ]
+    igdb_client = mocker.Mock()
+    handler = CreateMyBacklogHandler(
+        db_session, steam_client, current_user, igdb_client
+    )
+
+    handler.handle()
+
+    owned_game_ids = db_session.scalars(
+        select(UserOwnedGame.igdb_game_id).where(
+            UserOwnedGame.app_user_id == current_user.app_user_id
+        )
+    ).all()
+
+    assert set(owned_game_ids) == {1}
+    igdb_client.get_games_by_steam_id.assert_not_called()
