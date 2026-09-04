@@ -12,7 +12,9 @@ def test_handle_returns_started_response(
     mocker: MockerFixture,
 ):
     background_tasks = mocker.Mock()
-    handler = RefreshIgdbGamesHandler(db_session)
+    current_user = mocker.Mock()
+    current_user.app_user_id = 1
+    handler = RefreshIgdbGamesHandler(db_session, current_user)
 
     response = handler.handle(background_tasks)
 
@@ -25,7 +27,9 @@ def test_handle_schedules_background_task(
     mocker: MockerFixture,
 ):
     background_tasks = mocker.Mock()
-    handler = RefreshIgdbGamesHandler(db_session)
+    current_user = mocker.Mock()
+    current_user.app_user_id = 1
+    handler = RefreshIgdbGamesHandler(db_session, current_user)
 
     handler.handle(background_tasks)
 
@@ -33,3 +37,5 @@ def test_handle_schedules_background_task(
     call_args = background_tasks.add_task.call_args
     # First positional arg should be a callable (job.run)
     assert callable(call_args[0][0])
+    # Second positional arg should be the triggering user's id
+    assert call_args[0][1] == 1

@@ -1,25 +1,25 @@
--- Add LastRefreshedAt to IgdbGame
-ALTER TABLE bb.IgdbGame ADD LastRefreshedAt datetimeoffset null CONSTRAINT DF_IgdbGame_LastRefreshedAt DEFAULT '2000-01-01 00:00:00 +00:00';
-ALTER TABLE bb.IgdbGame DROP CONSTRAINT DF_IgdbGame_LastRefreshedAt;
-ALTER TABLE bb.IgdbGame ALTER COLUMN LastRefreshedAt datetimeoffset not null;
+-- Add LastRefreshedAt to IgdbGame (with values backfills existing rows in the same statement)
+alter table bb.IgdbGame add LastRefreshedAt datetimeoffset null constraint DF_IgdbGame_LastRefreshedAt default '2000-01-01 00:00:00 +00:00' with values;
+alter table bb.IgdbGame drop constraint DF_IgdbGame_LastRefreshedAt;
+alter table bb.IgdbGame alter column LastRefreshedAt datetimeoffset not null;
 
 -- Create AppUserRole table
-CREATE TABLE bb.AppUserRole (
+create table bb.AppUserRole (
     AppUserId int not null,
     Role varchar(50) not null,
-    CONSTRAINT PK_AppUserRole PRIMARY KEY (AppUserId, Role),
-    CONSTRAINT FK_AppUserRole_AppUser FOREIGN KEY (AppUserId) REFERENCES bb.AppUser(AppUserId)
+    constraint PK_AppUserRole primary key (AppUserId, Role),
+    constraint FK_AppUserRole_AppUser foreign key (AppUserId) references bb.AppUser(AppUserId)
 );
 
 -- Assign admin role to Revenant
-INSERT INTO bb.AppUserRole (AppUserId, Role)
-SELECT AppUserId, 'admin' FROM bb.AppUser WHERE PersonaName = 'Revenant';
+insert into bb.AppUserRole (AppUserId, Role)
+select AppUserId, 'admin' from bb.AppUser where PersonaName = 'Revenant';
 
 -- Create IgdbRefreshLock table
-CREATE TABLE bb.IgdbRefreshLock (
-    LockId varchar(50) not null PRIMARY KEY,
+create table bb.IgdbRefreshLock (
+    LockId varchar(50) not null primary key,
     StartedOn datetimeoffset not null,
     LastUpdatedOn datetimeoffset not null,
     AppUserId int not null,
-    CONSTRAINT FK_IgdbRefreshLock_AppUser FOREIGN KEY (AppUserId) REFERENCES bb.AppUser(AppUserId)
+    constraint FK_IgdbRefreshLock_AppUser foreign key (AppUserId) references bb.AppUser(AppUserId)
 );

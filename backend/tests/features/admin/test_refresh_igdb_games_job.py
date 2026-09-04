@@ -89,15 +89,16 @@ def test_acquire_lock_creates_lock_when_none_exists(
     db_session: Session,
     mocker: MockerFixture,
 ):
-    mock_session = mocker.Mock()
-    mock_session.scalars.return_value.one_or_none.return_value = None
+    app_user = _create_app_user(db_session)
     job = RefreshIgdbGamesJob()
 
-    result = job._acquire_lock(mock_session)
+    result = job._acquire_lock(db_session, app_user.app_user_id)
 
     assert result is True
-    mock_session.add.assert_called_once()
-    mock_session.commit.assert_called_once()
+    lock = db_session.scalars(
+        select(IgdbRefreshLock).where(IgdbRefreshLock.lock_id == LOCK_ID)
+    ).one()
+    assert lock.app_user_id == app_user.app_user_id
 
 
 def test_acquire_lock_returns_false_when_lock_exists_and_is_fresh(
@@ -108,7 +109,7 @@ def test_acquire_lock_returns_false_when_lock_exists_and_is_fresh(
     _create_lock(db_session, app_user, last_updated_on=datetime.now(tz=timezone.utc))
     job = RefreshIgdbGamesJob()
 
-    result = job._acquire_lock(db_session)
+    result = job._acquire_lock(db_session, app_user.app_user_id)
 
     assert result is False
 
@@ -122,13 +123,14 @@ def test_acquire_lock_takes_over_stale_lock(
     _create_lock(db_session, app_user, last_updated_on=stale_time)
     job = RefreshIgdbGamesJob()
 
-    result = job._acquire_lock(db_session)
+    result = job._acquire_lock(db_session, app_user.app_user_id)
 
     assert result is True
     lock = db_session.scalars(
         select(IgdbRefreshLock).where(IgdbRefreshLock.lock_id == LOCK_ID)
     ).one()
     assert lock.last_updated_on > stale_time
+    assert lock.app_user_id == app_user.app_user_id
 
 
 # --- _release_lock tests ---
@@ -431,8 +433,9 @@ def test_run_skips_when_lock_is_held(
     )
     job = RefreshIgdbGamesJob()
     mocker.patch.object(job, "_acquire_lock", return_value=False)
+    app_user = _create_app_user(db_session)
 
-    job.run()
+    job.run(app_user.app_user_id)
 
     igdb_client.get_covers_by_game_ids.assert_not_called()
 
@@ -467,8 +470,9 @@ def test_run_processes_stale_games_in_batches(
     mocker.patch("app.features.admin.refresh_igdb_games_job.time.sleep")
     job = RefreshIgdbGamesJob()
     mocker.patch.object(job, "_acquire_lock", return_value=True)
+    app_user = _create_app_user(db_session)
 
-    job.run()
+    job.run(app_user.app_user_id)
 
     igdb_client.get_covers_by_game_ids.assert_called_once()
     called_ids = igdb_client.get_covers_by_game_ids.call_args[0][0]
@@ -500,8 +504,9 @@ def test_run_releases_lock_on_completion(
     mocker.patch("app.features.admin.refresh_igdb_games_job.time.sleep")
     job = RefreshIgdbGamesJob()
     mocker.patch.object(job, "_acquire_lock", return_value=True)
+    app_user = _create_app_user(db_session)
 
-    job.run()
+    job.run(app_user.app_user_id)
 
     lock = db_session.scalars(
         select(IgdbRefreshLock).where(IgdbRefreshLock.lock_id == LOCK_ID)
@@ -528,9 +533,10 @@ def test_run_releases_lock_on_error(
     mocker.patch("app.features.admin.refresh_igdb_games_job.time.sleep")
     job = RefreshIgdbGamesJob()
     mocker.patch.object(job, "_acquire_lock", return_value=True)
+    app_user = _create_app_user(db_session)
 
     with pytest.raises(RuntimeError, match="IGDB down"):
-        job.run()
+        job.run(app_user.app_user_id)
 
     lock = db_session.scalars(
         select(IgdbRefreshLock).where(IgdbRefreshLock.lock_id == LOCK_ID)

@@ -21,6 +21,13 @@ Schema: `bb`
 | FirstName | nvarchar(20) | YES |  |  |
 | LastName | nvarchar(20) | YES |  |  |
 
+## bb.AppUserRole
+
+| Column | Type | Nullable | Default | Constraints |
+|--------|------|----------|---------|-------------|
+| AppUserId | int(10) | NO |  | PK, FK → AppUser.AppUserId |
+| Role | varchar(50) | NO |  | PK |
+
 ## bb.Backlog
 
 | Column | Type | Nullable | Default | Constraints |
@@ -63,6 +70,7 @@ Schema: `bb`
 | Name | nvarchar(255) | NO |  |  |
 | TotalRating | decimal(8,5) | YES |  |  |
 | CoverImageId | nvarchar(100) | YES |  |  |
+| LastRefreshedAt | datetimeoffset | NO |  |  |
 
 ## bb.IgdbGameGenre
 
@@ -99,6 +107,15 @@ Schema: `bb`
 |--------|------|----------|---------|-------------|
 | Id | int(10) | NO |  | PK |
 | Name | varchar(32) | NO |  |  |
+
+## bb.IgdbRefreshLock
+
+| Column | Type | Nullable | Default | Constraints |
+|--------|------|----------|---------|-------------|
+| LockId | varchar(50) | NO |  | PK |
+| StartedOn | datetimeoffset | NO |  |  |
+| LastUpdatedOn | datetimeoffset | NO |  |  |
+| AppUserId | int(10) | NO |  | FK → AppUser.AppUserId |
 
 ## bb.RateLimitHit
 

@@ -28,13 +28,18 @@ LOCK_ID = "igdb_refresh"
 class RefreshIgdbGamesJob:
     """Background job that refreshes stale IGDB game data."""
 
-    def run(self) -> None:
-        """Execute the refresh job."""
+    def run(self, app_user_id: int) -> None:
+        """Execute the refresh job.
+
+        Args:
+            app_user_id: Id of the admin user who triggered the refresh.
+                Recorded on the lock row to satisfy the FK to AppUser.
+        """
         igdb_client = IgdbClient.create()
 
         with create_db_session() as db:
             try:
-                if not self._acquire_lock(db):
+                if not self._acquire_lock(db, app_user_id):
                     logger.info("Refresh already running, skipping")
                     return
 
@@ -53,11 +58,20 @@ class RefreshIgdbGamesJob:
                 self._release_lock(db)
                 logger.info("Refresh completed")
             except Exception:
-                self._release_lock(db)
+                db.rollback()
+                try:
+                    self._release_lock(db)
+                except Exception:
+                    db.rollback()
+                    raise
                 raise
 
-    def _acquire_lock(self, db) -> bool:
+    def _acquire_lock(self, db, app_user_id: int) -> bool:
         """Try to acquire the refresh lock.
+
+        Args:
+            db: Active SQLAlchemy session.
+            app_user_id: Id of the user acquiring the lock.
 
         Returns True if lock was acquired, False if already running.
         """
@@ -74,14 +88,18 @@ class RefreshIgdbGamesJob:
             db.execute(
                 update(IgdbRefreshLock)
                 .where(IgdbRefreshLock.lock_id == LOCK_ID)
-                .values(last_updated_on=now, started_on=now)
+                .values(
+                    last_updated_on=now,
+                    started_on=now,
+                    app_user_id=app_user_id,
+                )
             )
         else:
             lock = IgdbRefreshLock(
                 lock_id=LOCK_ID,
                 started_on=now,
                 last_updated_on=now,
-                app_user_id=0,
+                app_user_id=app_user_id,
             )
             db.add(lock)
 
@@ -89,7 +107,11 @@ class RefreshIgdbGamesJob:
         return True
 
     def _release_lock(self, db) -> None:
-        """Release the refresh lock."""
+        """Release the refresh lock.
+
+        Args:
+            db: Active SQLAlchemy session.
+        """
         db.execute(delete(IgdbRefreshLock).where(IgdbRefreshLock.lock_id == LOCK_ID))
         db.commit()
 
