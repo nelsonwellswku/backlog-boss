@@ -116,13 +116,19 @@ class RefreshIgdbGamesJob:
         db.commit()
 
     def _get_stale_game_ids(self, db) -> list[int]:
-        """Get game IDs that need refreshing."""
+        """Get game IDs that need refreshing.
+
+        Args:
+            db: Active SQLAlchemy session.
+
+        Returns:
+            Ids of games whose last refresh is older than the staleness threshold.
+        """
         threshold = datetime.now(tz=timezone.utc) - timedelta(
             days=STALENESS_THRESHOLD_DAYS
         )
         stmt = select(IgdbGame.igdb_game_id).where(
-            (IgdbGame.last_refreshed_at == None)  # noqa: E711
-            | (IgdbGame.last_refreshed_at < threshold)
+            IgdbGame.last_refreshed_at < threshold
         )
         return list(db.scalars(stmt).all())
 

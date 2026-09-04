@@ -109,7 +109,7 @@ class IgdbGame(Base):
     name: Mapped[str] = mapped_column("Name", String(255))
     total_rating: Mapped[Optional[float]] = mapped_column("TotalRating")
     cover_image_id: Mapped[Optional[str]] = mapped_column("CoverImageId", String(100))
-    last_refreshed_at: Mapped[Optional[datetime]] = mapped_column(
+    last_refreshed_at: Mapped[datetime] = mapped_column(
         "LastRefreshedAt", DATETIMEOFFSET
     )
 
