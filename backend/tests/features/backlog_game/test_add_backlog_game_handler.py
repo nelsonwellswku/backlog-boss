@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import pytest
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -33,7 +35,12 @@ def _create_user(db_session: Session, steam_id: str) -> User:
 def test_handle_adds_new_game_to_backlog(db_session: Session):
     current_user = _create_user(db_session, "76561198000000000")
     backlog = Backlog(app_user_id=current_user.app_user_id)
-    igdb_game = IgdbGame(igdb_game_id=1, name="New Game", total_rating=85.0)
+    igdb_game = IgdbGame(
+        igdb_game_id=1,
+        name="New Game",
+        total_rating=85.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
     db_session.add_all([backlog, igdb_game])
     db_session.commit()
 
@@ -53,7 +60,12 @@ def test_handle_adds_new_game_to_backlog(db_session: Session):
 def test_handle_reactivates_previously_removed_game(db_session: Session):
     current_user = _create_user(db_session, "76561198000000000")
     backlog = Backlog(app_user_id=current_user.app_user_id)
-    igdb_game = IgdbGame(igdb_game_id=1, name="Return Game", total_rating=75.0)
+    igdb_game = IgdbGame(
+        igdb_game_id=1,
+        name="Return Game",
+        total_rating=75.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
     db_session.add_all([backlog, igdb_game])
     db_session.flush()
 
@@ -82,7 +94,12 @@ def test_handle_reactivates_previously_removed_game(db_session: Session):
 def test_handle_raises_conflict_when_game_already_in_backlog(db_session: Session):
     current_user = _create_user(db_session, "76561198000000000")
     backlog = Backlog(app_user_id=current_user.app_user_id)
-    igdb_game = IgdbGame(igdb_game_id=1, name="Conflict Game", total_rating=80.0)
+    igdb_game = IgdbGame(
+        igdb_game_id=1,
+        name="Conflict Game",
+        total_rating=80.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
     db_session.add_all([backlog, igdb_game])
     db_session.flush()
 

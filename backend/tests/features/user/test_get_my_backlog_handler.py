@@ -38,14 +38,29 @@ def _create_current_user(db_session: Session) -> User:
 def test_handle_returns_backlog_games_excluding_removed_entries(db_session: Session):
     current_user = _create_current_user(db_session)
     backlog = Backlog(app_user_id=current_user.app_user_id)
-    game_with_time = IgdbGame(igdb_game_id=1, name="Keep Me", total_rating=90.0)
+    game_with_time = IgdbGame(
+        igdb_game_id=1,
+        name="Keep Me",
+        total_rating=90.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
     game_with_time.time_to_beat = IgdbGameTimeToBeat(
         igdb_game_time_to_beat_id=101,
         igdb_game_id=1,
         normally=5400,
     )
-    game_without_time = IgdbGame(igdb_game_id=2, name="No Time", total_rating=70.0)
-    removed_game = IgdbGame(igdb_game_id=3, name="Removed", total_rating=50.0)
+    game_without_time = IgdbGame(
+        igdb_game_id=2,
+        name="No Time",
+        total_rating=70.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
+    removed_game = IgdbGame(
+        igdb_game_id=3,
+        name="Removed",
+        total_rating=50.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
     db_session.add_all([backlog, game_with_time, game_without_time, removed_game])
     db_session.flush()
 
@@ -85,7 +100,12 @@ def test_handle_includes_steam_app_id_from_external_games(
 ):
     current_user = _create_current_user(db_session)
     backlog = Backlog(app_user_id=current_user.app_user_id)
-    game_with_steam = IgdbGame(igdb_game_id=1, name="Portal 2", total_rating=95.0)
+    game_with_steam = IgdbGame(
+        igdb_game_id=1,
+        name="Portal 2",
+        total_rating=95.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
     game_with_steam.external_games.append(
         IgdbExternalGame(
             igdb_external_game_id=101,
@@ -94,7 +114,10 @@ def test_handle_includes_steam_app_id_from_external_games(
         )
     )
     game_without_steam = IgdbGame(
-        igdb_game_id=2, name="Some Other Game", total_rating=70.0
+        igdb_game_id=2,
+        name="Some Other Game",
+        total_rating=70.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
     )
     game_without_steam.external_games.append(
         IgdbExternalGame(
@@ -103,7 +126,12 @@ def test_handle_includes_steam_app_id_from_external_games(
             igdb_external_game_source_id=5,
         )
     )
-    game_no_external = IgdbGame(igdb_game_id=3, name="No External", total_rating=50.0)
+    game_no_external = IgdbGame(
+        igdb_game_id=3,
+        name="No External",
+        total_rating=50.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
     db_session.add_all([backlog, game_with_steam, game_without_steam, game_no_external])
     db_session.flush()
 

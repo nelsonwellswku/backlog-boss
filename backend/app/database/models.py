@@ -109,6 +109,9 @@ class IgdbGame(Base):
     name: Mapped[str] = mapped_column("Name", String(255))
     total_rating: Mapped[Optional[float]] = mapped_column("TotalRating")
     cover_image_id: Mapped[Optional[str]] = mapped_column("CoverImageId", String(100))
+    last_refreshed_at: Mapped[Optional[datetime]] = mapped_column(
+        "LastRefreshedAt", DATETIMEOFFSET
+    )
 
     external_games: Mapped[list["IgdbExternalGame"]] = relationship(
         "IgdbExternalGame", back_populates="igdb_game"
@@ -222,3 +225,27 @@ class RateLimitHit(Base):
             "RateLimitKey", "WindowStart", name="UQ_RateLimitHit_Key_Window"
         ),
     )
+
+
+class AppUserRole(Base):
+    __tablename__ = "AppUserRole"
+
+    app_user_id: Mapped[int] = mapped_column(
+        "AppUserId", ForeignKey("bb.AppUser.AppUserId"), primary_key=True
+    )
+    role: Mapped[str] = mapped_column("Role", String(50), primary_key=True)
+
+    app_user: Mapped["AppUser"] = relationship("AppUser")
+
+
+class IgdbRefreshLock(Base):
+    __tablename__ = "IgdbRefreshLock"
+
+    lock_id: Mapped[str] = mapped_column("LockId", String(50), primary_key=True)
+    started_on: Mapped[datetime] = mapped_column("StartedOn", DATETIMEOFFSET)
+    last_updated_on: Mapped[datetime] = mapped_column("LastUpdatedOn", DATETIMEOFFSET)
+    app_user_id: Mapped[int] = mapped_column(
+        "AppUserId", ForeignKey("bb.AppUser.AppUserId")
+    )
+
+    app_user: Mapped["AppUser"] = relationship("AppUser")

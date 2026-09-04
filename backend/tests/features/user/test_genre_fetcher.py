@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from pytest_mock import MockerFixture
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -12,6 +14,7 @@ def _create_game(db_session: Session, igdb_game_id: int) -> IgdbGame:
         igdb_game_id=igdb_game_id,
         name=f"Game {igdb_game_id}",
         total_rating=80.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
     )
     db_session.add(game)
     db_session.flush()

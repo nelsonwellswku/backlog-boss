@@ -63,6 +63,7 @@ def _create_game(
         igdb_game_id=igdb_game_id,
         name=name,
         total_rating=total_rating,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
     )
     if time_to_beat is not None:
         game.time_to_beat = IgdbGameTimeToBeat(

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from pytest_mock import MockerFixture
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
@@ -67,7 +69,12 @@ def test_handle_creates_backlog_and_adds_only_games_with_rating_and_time_to_beat
     mocker: MockerFixture,
 ):
     current_user = _create_current_user(db_session)
-    existing_game = IgdbGame(igdb_game_id=1, name="Existing Game", total_rating=88.0)
+    existing_game = IgdbGame(
+        igdb_game_id=1,
+        name="Existing Game",
+        total_rating=88.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
     existing_game.time_to_beat = IgdbGameTimeToBeat(
         igdb_game_time_to_beat_id=101,
         igdb_game_id=1,
@@ -156,7 +163,12 @@ def test_handle_does_not_duplicate_when_multiple_steam_games_map_to_same_igdb_ga
 ):
     current_user = _create_current_user(db_session)
     # Two Steam IDs (111, 222) both map to the same IGDB game (id=1)
-    game = IgdbGame(igdb_game_id=1, name="Shared Game", total_rating=88.0)
+    game = IgdbGame(
+        igdb_game_id=1,
+        name="Shared Game",
+        total_rating=88.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
     game.time_to_beat = IgdbGameTimeToBeat(
         igdb_game_time_to_beat_id=101,
         igdb_game_id=1,
