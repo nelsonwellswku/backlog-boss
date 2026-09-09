@@ -1,5 +1,4 @@
 from pytest_mock import MockerFixture
-from sqlalchemy.orm import Session
 
 from app.features.admin.refresh_igdb_games_handler import (
     RefreshIgdbGamesHandler,
@@ -8,13 +7,12 @@ from app.features.admin.refresh_igdb_games_handler import (
 
 
 def test_handle_returns_started_response(
-    db_session: Session,
     mocker: MockerFixture,
 ):
     background_tasks = mocker.Mock()
     current_user = mocker.Mock()
     current_user.app_user_id = 1
-    handler = RefreshIgdbGamesHandler(db_session, current_user)
+    handler = RefreshIgdbGamesHandler(current_user)
 
     response = handler.handle(background_tasks)
 
@@ -23,13 +21,12 @@ def test_handle_returns_started_response(
 
 
 def test_handle_schedules_background_task(
-    db_session: Session,
     mocker: MockerFixture,
 ):
     background_tasks = mocker.Mock()
     current_user = mocker.Mock()
     current_user.app_user_id = 1
-    handler = RefreshIgdbGamesHandler(db_session, current_user)
+    handler = RefreshIgdbGamesHandler(current_user)
 
     handler.handle(background_tasks)
 

@@ -1,9 +1,10 @@
-from fastapi import BackgroundTasks
+from typing import Annotated, TypeAlias
 
-from app.database.engine import DbSession
+from fastapi import BackgroundTasks, Depends
+
+from app.features.admin.refresh_igdb_games_job import RefreshIgdbGamesJob
 from app.features.api_model import ApiResponseModel
 from app.features.auth.get_current_user import RequiredCurrentUser
-from app.features.admin.refresh_igdb_games_job import RefreshIgdbGamesJob
 
 
 class RefreshIgdbGamesResponse(ApiResponseModel):
@@ -11,8 +12,7 @@ class RefreshIgdbGamesResponse(ApiResponseModel):
 
 
 class RefreshIgdbGamesHandler:
-    def __init__(self, db: DbSession, current_user: RequiredCurrentUser):
-        self.db = db
+    def __init__(self, current_user: RequiredCurrentUser):
         self.current_user = current_user
 
     def handle(self, background_tasks: BackgroundTasks) -> RefreshIgdbGamesResponse:
@@ -27,3 +27,8 @@ class RefreshIgdbGamesHandler:
         job = RefreshIgdbGamesJob()
         background_tasks.add_task(job.run, self.current_user.app_user_id)
         return RefreshIgdbGamesResponse(status="started")
+
+
+RefreshIgdbGamesHandlerDep: TypeAlias = Annotated[
+    RefreshIgdbGamesHandler, Depends(RefreshIgdbGamesHandler)
+]

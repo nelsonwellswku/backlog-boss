@@ -439,5 +439,49 @@ class IgdbClient:
 
         return platforms
 
+    def get_ratings_by_game_ids(self, game_ids: list[int]) -> dict[int, float]:
+        """Fetch total ratings from IGDB for the given game IDs.
+
+        Args:
+            game_ids: IGDB game IDs to fetch ratings for.
+
+        Returns:
+            Mapping of game ID to total rating. Games without a rating are
+            omitted so callers preserve the stored value.
+        """
+        if not game_ids:
+            return {}
+
+        formatted_ids = self._format_ids(game_ids)
+        endpoint = "games"
+        limit = 500
+        offset = 0
+        ratings: dict[int, float] = {}
+
+        while True:
+            query = f"""
+                fields id, total_rating;
+                where id = ({formatted_ids}) & total_rating != null;
+                offset {offset};
+                limit {limit};
+            """
+
+            response_bytes = self._api_request(endpoint, query)
+            response_json = json.loads(response_bytes)
+
+            if not response_json:
+                break
+
+            for game in response_json:
+                if game.get("total_rating") is not None:
+                    ratings[game["id"]] = game["total_rating"]
+
+            if len(response_json) < limit:
+                break
+
+            offset += limit
+
+        return ratings
+
 
 IgdbClientDep: TypeAlias = Annotated[IgdbClient, Depends(IgdbClient)]

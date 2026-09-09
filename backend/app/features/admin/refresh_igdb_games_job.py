@@ -7,13 +7,9 @@ from sqlalchemy import delete, select, update
 from app.database.engine import create_db_session
 from app.database.models import (
     IgdbGame,
-    IgdbGameGenre,
-    IgdbGamePlatform,
-    IgdbGameTimeToBeat,
-    IgdbGenre,
-    IgdbPlatform,
     IgdbRefreshLock,
 )
+from app.features.admin.update_igdb_games_handler import UpdateIgdbGamesHandler
 from app.infrastructure.igdb_client import IgdbClient
 
 logger = logging.getLogger(__name__)
@@ -133,7 +129,14 @@ class RefreshIgdbGamesJob:
         return list(db.scalars(stmt).all())
 
     def _process_batch(self, db, igdb_client: IgdbClient, game_ids: list[int]) -> None:
-        """Process a batch of games."""
+        """Fetch fresh IGDB data for a batch and persist it atomically.
+
+        Args:
+            db: Active SQLAlchemy session.
+            igdb_client: Client used to fetch covers, genres, platforms,
+                time-to-beats, external games, and ratings.
+            game_ids: IGDB ids in this batch.
+        """
         logger.info("Processing batch of %d games", len(game_ids))
 
         # Fetch data from IGDB
@@ -141,20 +144,35 @@ class RefreshIgdbGamesJob:
         genres = igdb_client.get_genres_by_game_ids(game_ids)
         platforms = igdb_client.get_platforms_by_game_ids(game_ids)
         time_to_beats_list = igdb_client.get_game_time_to_beats(game_ids)
+        external_games_list = igdb_client.get_external_games(game_ids)
+        ratings = igdb_client.get_ratings_by_game_ids(game_ids)
 
         # Convert time_to_beats list to dict keyed by game_id
         time_to_beats = {}
         for ttb in time_to_beats_list:
             time_to_beats[ttb.game_id] = ttb.normally
 
+        # Group external games by game_id
+        externals: dict[int, list] = {}
+        for external_game in external_games_list:
+            externals.setdefault(external_game.game, []).append(external_game)
+
         now = datetime.now(tz=timezone.utc)
 
         # Begin transaction
         try:
             # Update games
+            handler = UpdateIgdbGamesHandler(db)
             for game_id in game_ids:
-                self._update_game(
-                    db, game_id, covers, genres, platforms, time_to_beats, now
+                handler.update_game(
+                    game_id,
+                    covers,
+                    genres,
+                    platforms,
+                    time_to_beats,
+                    now,
+                    externals,
+                    ratings,
                 )
 
             # Update lock timestamp
@@ -180,8 +198,10 @@ class RefreshIgdbGamesJob:
         platforms: dict[int, list[int]],
         time_to_beats: dict[int, int | None],
         now: datetime,
+        externals: dict[int, list] | None = None,
+        ratings: dict[int, float] | None = None,
     ) -> None:
-        """Update a single game and its related data.
+        """Update a single game via the handler (kept for backwards compat).
 
         Args:
             db: Active SQLAlchemy session.
@@ -191,66 +211,10 @@ class RefreshIgdbGamesJob:
             platforms: Mapping of game id to platform ids.
             time_to_beats: Mapping of game id to normal time-to-beat value.
             now: Timestamp to stamp as last_refreshed_at.
+            externals: Mapping of game id to external game data.
+            ratings: Mapping of game id to total rating.
         """
-        # Update core game fields
-        game = db.get(IgdbGame, game_id)
-        if game is None:
-            return
-
-        if game_id in covers:
-            game.cover_image_id = covers[game_id]
-        game.last_refreshed_at = now
-
-        # Update time to beat. NOTE: IgdbGame.time_to_beat uses lazy="raise",
-        # so it must not be accessed here (db.get never eager-loads it).
-        # Query the row directly instead.
-        if game_id in time_to_beats:
-            ttb_value = time_to_beats[game_id]
-            ttb = db.scalars(
-                select(IgdbGameTimeToBeat).where(
-                    IgdbGameTimeToBeat.igdb_game_id == game_id
-                )
-            ).one_or_none()
-            if ttb is not None:
-                ttb.normally = ttb_value
-            else:
-                db.add(
-                    IgdbGameTimeToBeat(
-                        igdb_game_time_to_beat_id=game_id,
-                        normally=ttb_value,
-                        igdb_game_id=game_id,
-                    )
-                )
-
-        # Replace genres
-        if game_id in genres:
-            db.execute(
-                delete(IgdbGameGenre).where(IgdbGameGenre.igdb_game_id == game_id)
-            )
-            for genre_data in genres[game_id]:
-                genre_id = genre_data.id
-                # Ensure genre exists, flushing it first so the association
-                # row below never precedes its parent row.
-                if db.get(IgdbGenre, genre_id) is None:
-                    db.add(IgdbGenre(igdb_genre_id=genre_id, name=genre_data.name))
-                    db.flush()
-                db.add(IgdbGameGenre(igdb_game_id=game_id, igdb_genre_id=genre_id))
-
-        # Replace platforms
-        if game_id in platforms:
-            db.execute(
-                delete(IgdbGamePlatform).where(IgdbGamePlatform.igdb_game_id == game_id)
-            )
-            for platform_id in platforms[game_id]:
-                # Ensure platform exists, flushing it first so the
-                # association row below never precedes its parent row.
-                if db.get(IgdbPlatform, platform_id) is None:
-                    db.add(
-                        IgdbPlatform(
-                            igdb_platform_id=platform_id, name=str(platform_id)
-                        )
-                    )
-                    db.flush()
-                db.add(
-                    IgdbGamePlatform(igdb_game_id=game_id, igdb_platform_id=platform_id)
-                )
+        handler = UpdateIgdbGamesHandler(db)
+        handler.update_game(
+            game_id, covers, genres, platforms, time_to_beats, now, externals, ratings
+        )

@@ -366,7 +366,7 @@ def test_update_game_replaces_platform_associations(
     assert platform_ids == [14]
 
 
-def test_update_game_creates_new_platform_when_missing(
+def test_update_game_skips_unknown_platform_when_missing(
     db_session: Session,
     mocker: MockerFixture,
 ):
@@ -378,21 +378,20 @@ def test_update_game_creates_new_platform_when_missing(
     job._update_game(
         db_session,
         16,
-        covers={},
+        covers={16: "abc"},
         genres={},
         platforms={16: [48]},
         time_to_beats={},
         now=now,
     )
 
-    platform = db_session.get(IgdbPlatform, 48)
-    assert platform is not None
+    assert db_session.get(IgdbPlatform, 48) is None
     platform_ids = db_session.scalars(
         select(IgdbGamePlatform.igdb_platform_id).where(
             IgdbGamePlatform.igdb_game_id == 16
         )
     ).all()
-    assert platform_ids == [48]
+    assert platform_ids == []
 
 
 def test_update_game_skips_when_game_not_found(
@@ -459,6 +458,8 @@ def test_run_processes_stale_games_in_batches(
     igdb_client.get_genres_by_game_ids.return_value = {}
     igdb_client.get_platforms_by_game_ids.return_value = {}
     igdb_client.get_game_time_to_beats.return_value = []
+    igdb_client.get_external_games.return_value = []
+    igdb_client.get_ratings_by_game_ids.return_value = {}
     mocker.patch(
         "app.features.admin.refresh_igdb_games_job.IgdbClient.create",
         return_value=igdb_client,
@@ -493,6 +494,8 @@ def test_run_releases_lock_on_completion(
     igdb_client.get_genres_by_game_ids.return_value = {}
     igdb_client.get_platforms_by_game_ids.return_value = {}
     igdb_client.get_game_time_to_beats.return_value = []
+    igdb_client.get_external_games.return_value = []
+    igdb_client.get_ratings_by_game_ids.return_value = {}
     mocker.patch(
         "app.features.admin.refresh_igdb_games_job.IgdbClient.create",
         return_value=igdb_client,
