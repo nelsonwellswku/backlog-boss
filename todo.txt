@@ -1,0 +1,52 @@
+TODO: Fix N+1 queries in IGDB refresh job (issue #75 follow-up)
+
+Description:
+The IGDB refresh background job processes stale games in batches of up to 500.
+For each batch it loops over every game ID one at a time and, inside that loop,
+issues several individual database queries (fetch the game row, fetch its
+time-to-beat row, delete and re-insert its genre and platform links, look up
+each genre/platform/external row by primary key). That turns one batch into
+thousands of small sequential round-trips to SQL Server instead of a handful
+of set-based queries. The job still produces correct results because all of
+the work happens inside a single transaction per batch and the job runs
+infrequently in the background, so the extra latency (typically seconds per
+batch) is tolerable today. The concern is scalability and convention: as the
+library grows to many batches, total refresh time grows linearly with per-game
+queries, and the codebase standard is to batch-load with WHERE ... IN (...) up
+front. A future change should load each batch's games and related rows once,
+then apply the updates in memory before committing.
+
+Location:
+- backend/app/features/admin/refresh_igdb_games_job.py:166 (_process_batch loops
+  up to 500 game_ids, calling handler.update_game per game)
+- backend/app/features/admin/update_igdb_games_handler.py:update_game does per-game DB hits:
+  - :58  db.get(IgdbGame, game_id) -> 1 query x 500
+  - :84  select(IgdbGameTimeToBeat) where game_id == X -> up to +500
+  - :102 delete(IgdbGameGenre) where game_id == X -> up to +500
+  - :109 db.get(IgdbGenre, genre_id) per genre per game -> ~+1000
+  - :116 delete(IgdbGamePlatform) where game_id == X -> up to +500
+  - :122 db.get(IgdbPlatform, ...) per platform per game -> ~+500-1000
+  - :138 db.get(IgdbExternalGame, external.id) per external per game -> ~+500
+  Worst case ~3000-4000 round-trips per 500-game batch, all in one txn
+  (commit at refresh_igdb_games_job.py:190).
+
+Why it still works:
+- Admin-triggered background job, 30-day staleness cadence. A few thousand PK
+  lookups on SQL Server is seconds, not fatal. Perf issue, not correctness.
+
+Convention violated:
+- AGENTS.md: batch-load with WHERE ... IN (...) + selectinload/joinedload;
+  never db.get()/scalars() in a loop.
+
+Options (deferred by user, pick one):
+1. Full batch rewrite: new update_batch() - load games/TTBs/externals with
+   WHERE IN, 2 bulk deletes + bulk inserts for associations. ~10 queries/batch.
+   Breaks per-game tests in tests/features/admin/test_refresh_igdb_games_job.py,
+   needs new tests.
+2. Hybrid preload: keep update_game() API, preload genre/platform/TTB/external
+   caches in _process_batch and pass in. Cuts gets, keeps per-game deletes.
+   Backward compatible.
+3. Leave as-is: accept cost, add comment explaining why (infrequent admin job).
+
+Next step: user to choose 1/2/3, then implement + update tests + run
+`uv run pytest -q tests/features/admin/` (needs Docker/Testcontainers).
