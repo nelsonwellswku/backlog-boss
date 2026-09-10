@@ -9,7 +9,7 @@ from app.database.models import (
     IgdbGame,
     IgdbRefreshLock,
 )
-from app.features.admin.update_igdb_games_handler import UpdateIgdbGamesHandler
+from app.features.admin.igdb_game_updater import IgdbGameUpdater
 from app.infrastructure.igdb_client import IgdbClient
 
 logger = logging.getLogger(__name__)
@@ -161,19 +161,18 @@ class RefreshIgdbGamesJob:
 
         # Begin transaction
         try:
-            # Update games
-            handler = UpdateIgdbGamesHandler(db)
-            for game_id in game_ids:
-                handler.update_game(
-                    game_id,
-                    covers,
-                    genres,
-                    platforms,
-                    time_to_beats,
-                    now,
-                    externals,
-                    ratings,
-                )
+            # Update games with set-based queries (single batch call).
+            updater = IgdbGameUpdater(db)
+            updater.update_batch(
+                game_ids,
+                covers,
+                genres,
+                platforms,
+                time_to_beats,
+                now,
+                externals,
+                ratings,
+            )
 
             # Update lock timestamp
             db.execute(
@@ -188,33 +187,3 @@ class RefreshIgdbGamesJob:
             raise
 
         time.sleep(BATCH_DELAY_SECONDS)
-
-    def _update_game(
-        self,
-        db,
-        game_id: int,
-        covers: dict[int, str],
-        genres: dict[int, list],
-        platforms: dict[int, list[int]],
-        time_to_beats: dict[int, int | None],
-        now: datetime,
-        externals: dict[int, list] | None = None,
-        ratings: dict[int, float] | None = None,
-    ) -> None:
-        """Update a single game via the handler (kept for backwards compat).
-
-        Args:
-            db: Active SQLAlchemy session.
-            game_id: IGDB id of the game to update.
-            covers: Mapping of game id to cover image id.
-            genres: Mapping of game id to genre data.
-            platforms: Mapping of game id to platform ids.
-            time_to_beats: Mapping of game id to normal time-to-beat value.
-            now: Timestamp to stamp as last_refreshed_at.
-            externals: Mapping of game id to external game data.
-            ratings: Mapping of game id to total rating.
-        """
-        handler = UpdateIgdbGamesHandler(db)
-        handler.update_game(
-            game_id, covers, genres, platforms, time_to_beats, now, externals, ratings
-        )

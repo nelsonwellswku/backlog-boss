@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.database.models import (
     AppUser,
+    IgdbExternalGame,
     IgdbGame,
     IgdbGameGenre,
     IgdbGamePlatform,
@@ -20,7 +21,8 @@ from app.features.admin.refresh_igdb_games_job import (
     LOCK_ID,
     RefreshIgdbGamesJob,
 )
-from app.infrastructure.igdb_client import GenreResponse
+from app.features.admin.igdb_game_updater import IgdbGameUpdater
+from app.infrastructure.igdb_client import ExternalGameResponse, GenreResponse
 
 
 def _create_app_user(db_session: Session) -> AppUser:
@@ -197,20 +199,18 @@ def test_get_stale_game_ids_excludes_recently_refreshed_games(
     assert 3 not in ids
 
 
-# --- _update_game tests ---
+# --- update_batch tests ---
 
 
-def test_update_game_updates_cover_and_refreshed_at(
+def test_update_batch_updates_cover_and_refreshed_at(
     db_session: Session,
     mocker: MockerFixture,
 ):
     _create_game(db_session, 10, last_refreshed_at=datetime.now(tz=timezone.utc))
-    job = RefreshIgdbGamesJob()
     now = datetime.now(tz=timezone.utc)
 
-    job._update_game(
-        db_session,
-        10,
+    IgdbGameUpdater(db_session).update_batch(
+        [10],
         covers={10: "abc123"},
         genres={},
         platforms={},
@@ -224,17 +224,15 @@ def test_update_game_updates_cover_and_refreshed_at(
     assert game.last_refreshed_at == now
 
 
-def test_update_game_creates_time_to_beat_when_missing(
+def test_update_batch_creates_time_to_beat_when_missing(
     db_session: Session,
     mocker: MockerFixture,
 ):
     _create_game(db_session, 11)
-    job = RefreshIgdbGamesJob()
     now = datetime.now(tz=timezone.utc)
 
-    job._update_game(
-        db_session,
-        11,
+    IgdbGameUpdater(db_session).update_batch(
+        [11],
         covers={},
         genres={},
         platforms={},
@@ -248,7 +246,7 @@ def test_update_game_creates_time_to_beat_when_missing(
     assert ttb.normally == 3600
 
 
-def test_update_game_updates_existing_time_to_beat(
+def test_update_batch_updates_existing_time_to_beat(
     db_session: Session,
     mocker: MockerFixture,
 ):
@@ -259,12 +257,10 @@ def test_update_game_updates_existing_time_to_beat(
         normally=1000,
     )
     db_session.flush()
-    job = RefreshIgdbGamesJob()
     now = datetime.now(tz=timezone.utc)
 
-    job._update_game(
-        db_session,
-        12,
+    IgdbGameUpdater(db_session).update_batch(
+        [12],
         covers={},
         genres={},
         platforms={},
@@ -277,7 +273,7 @@ def test_update_game_updates_existing_time_to_beat(
     assert loaded_game.time_to_beat.normally == 5000
 
 
-def test_update_game_replaces_genre_associations(
+def test_update_batch_replaces_genre_associations(
     db_session: Session,
     mocker: MockerFixture,
 ):
@@ -287,13 +283,11 @@ def test_update_game_replaces_genre_associations(
     db_session.flush()
     db_session.add(IgdbGameGenre(igdb_game_id=13, igdb_genre_id=100))
     db_session.flush()
-    job = RefreshIgdbGamesJob()
     now = datetime.now(tz=timezone.utc)
     genre_data = GenreResponse(id=100, name="Existing Genre")
 
-    job._update_game(
-        db_session,
-        13,
+    IgdbGameUpdater(db_session).update_batch(
+        [13],
         covers={},
         genres={13: [genre_data]},
         platforms={},
@@ -307,18 +301,16 @@ def test_update_game_replaces_genre_associations(
     assert genre_ids == [100]
 
 
-def test_update_game_creates_new_genre_when_missing(
+def test_update_batch_creates_new_genre_when_missing(
     db_session: Session,
     mocker: MockerFixture,
 ):
     _create_game(db_session, 14)
-    job = RefreshIgdbGamesJob()
     now = datetime.now(tz=timezone.utc)
     genre_data = GenreResponse(id=200, name="New Genre")
 
-    job._update_game(
-        db_session,
-        14,
+    IgdbGameUpdater(db_session).update_batch(
+        [14],
         covers={},
         genres={14: [genre_data]},
         platforms={},
@@ -336,7 +328,7 @@ def test_update_game_creates_new_genre_when_missing(
     assert genre_ids == [200]
 
 
-def test_update_game_replaces_platform_associations(
+def test_update_batch_replaces_platform_associations(
     db_session: Session,
     mocker: MockerFixture,
 ):
@@ -345,12 +337,10 @@ def test_update_game_replaces_platform_associations(
     # so only the association row needs creating here.
     db_session.add(IgdbGamePlatform(igdb_game_id=15, igdb_platform_id=6))
     db_session.flush()
-    job = RefreshIgdbGamesJob()
     now = datetime.now(tz=timezone.utc)
 
-    job._update_game(
-        db_session,
-        15,
+    IgdbGameUpdater(db_session).update_batch(
+        [15],
         covers={},
         genres={},
         platforms={15: [14]},
@@ -366,18 +356,16 @@ def test_update_game_replaces_platform_associations(
     assert platform_ids == [14]
 
 
-def test_update_game_skips_unknown_platform_when_missing(
+def test_update_batch_skips_unknown_platform_when_missing(
     db_session: Session,
     mocker: MockerFixture,
 ):
     _create_game(db_session, 16)
-    job = RefreshIgdbGamesJob()
     now = datetime.now(tz=timezone.utc)
 
     # Platform 48 is not in the migration-seeded set (6, 14, 3).
-    job._update_game(
-        db_session,
-        16,
+    IgdbGameUpdater(db_session).update_batch(
+        [16],
         covers={16: "abc"},
         genres={},
         platforms={16: [48]},
@@ -394,16 +382,14 @@ def test_update_game_skips_unknown_platform_when_missing(
     assert platform_ids == []
 
 
-def test_update_game_skips_when_game_not_found(
+def test_update_batch_skips_when_game_not_found(
     db_session: Session,
     mocker: MockerFixture,
 ):
-    job = RefreshIgdbGamesJob()
     now = datetime.now(tz=timezone.utc)
 
-    job._update_game(
-        db_session,
-        99999,
+    IgdbGameUpdater(db_session).update_batch(
+        [99999],
         covers={99999: "abc"},
         genres={99999: [GenreResponse(id=1, name="G")]},
         platforms={99999: [6]},
@@ -412,6 +398,119 @@ def test_update_game_skips_when_game_not_found(
     )
 
     assert db_session.get(IgdbGame, 99999) is None
+
+
+def test_update_batch_updates_multiple_games_with_mixed_payloads(
+    db_session: Session,
+    mocker: MockerFixture,
+):
+    stale = datetime(2000, 1, 1, tzinfo=timezone.utc)
+    _create_game(db_session, 20, last_refreshed_at=stale)
+    _create_game(db_session, 21, last_refreshed_at=stale)
+    _create_game(db_session, 22, last_refreshed_at=stale)
+    db_session.add(
+        IgdbExternalGame(
+            igdb_external_game_id=2001,
+            uid=111,
+            igdb_game_id=20,
+            igdb_external_game_source_id=1,
+            year=2019,
+        )
+    )
+    db_session.flush()
+    now = datetime.now(tz=timezone.utc)
+
+    IgdbGameUpdater(db_session).update_batch(
+        [20, 21, 22, 99998],
+        covers={20: "cover20", 21: "cover21"},
+        genres={20: [GenreResponse(id=300, name="Batch Genre")]},
+        platforms={21: [6]},
+        time_to_beats={20: 1000, 21: 2000},
+        now=now,
+        externals={
+            20: [
+                ExternalGameResponse(
+                    id=2001, game=20, uid="111", external_game_source=1, year=2024
+                )
+            ]
+        },
+        ratings={20: 88.5},
+    )
+
+    game20 = db_session.get(IgdbGame, 20)
+    assert game20 is not None
+    assert game20.cover_image_id == "cover20"
+    assert game20.total_rating == 88.5
+    assert game20.last_refreshed_at == now
+    game21 = db_session.get(IgdbGame, 21)
+    assert game21 is not None
+    assert game21.cover_image_id == "cover21"
+    assert game21.last_refreshed_at == now
+    # Game 22 has no payload data: last_refreshed_at stays stale for retry.
+    game22 = db_session.get(IgdbGame, 22)
+    assert game22 is not None
+    assert game22.last_refreshed_at == stale
+
+    ttb_rows = db_session.execute(
+        select(IgdbGameTimeToBeat.igdb_game_id, IgdbGameTimeToBeat.normally).where(
+            IgdbGameTimeToBeat.igdb_game_id.in_([20, 21])
+        )
+    ).all()
+    ttb_values = {row[0]: row[1] for row in ttb_rows}
+    assert ttb_values == {20: 1000, 21: 2000}
+
+    genre_ids = db_session.scalars(
+        select(IgdbGameGenre.igdb_genre_id).where(IgdbGameGenre.igdb_game_id == 20)
+    ).all()
+    assert genre_ids == [300]
+    platform_ids = db_session.scalars(
+        select(IgdbGamePlatform.igdb_platform_id).where(
+            IgdbGamePlatform.igdb_game_id == 21
+        )
+    ).all()
+    assert platform_ids == [6]
+
+    external = db_session.get(IgdbExternalGame, 2001)
+    assert external is not None
+    assert external.year == 2024
+
+
+def test_update_batch_issues_constant_query_count(
+    db_session: Session,
+    mocker: MockerFixture,
+):
+    """Batch path must not grow queries linearly with batch size."""
+    from sqlalchemy import event
+
+    for game_id in range(30, 40):
+        _create_game(db_session, game_id)
+    db_session.flush()
+    queries: list[str] = []
+    engine = db_session.get_bind()
+
+    def _count(conn, cursor, statement, parameters, context, executemany) -> None:
+        """Record each statement executed during the batch."""
+        queries.append(statement)
+
+    event.listen(engine, "before_cursor_execute", _count)
+    try:
+        IgdbGameUpdater(db_session).update_batch(
+            list(range(30, 40)),
+            covers={game_id: f"cover{game_id}" for game_id in range(30, 40)},
+            genres={
+                game_id: [GenreResponse(id=400, name="Shared Genre")]
+                for game_id in range(30, 40)
+            },
+            platforms={game_id: [6] for game_id in range(30, 40)},
+            time_to_beats={game_id: 1000 + game_id for game_id in range(30, 40)},
+            now=datetime.now(tz=timezone.utc),
+        )
+    finally:
+        event.remove(engine, "before_cursor_execute", _count)
+
+    # 10 games with genres/platforms/TTBs: ~10 set-based statements,
+    # far below the old ~60+ per-game round-trips for the same batch.
+    assert len(queries) < 20
 
 
 # --- run tests ---

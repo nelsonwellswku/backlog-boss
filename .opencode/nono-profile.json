@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "description": "OpenCode profile for Backlog Boss development with ODBC and Docker access"
   },
-  "extends": "always-further/opencode",
+  "extends": "nolabs-ai/opencode",
   "filesystem": {
     "allow": [
       "/opt/microsoft",
