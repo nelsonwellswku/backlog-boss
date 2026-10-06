@@ -22,7 +22,19 @@ def requires_authorization(permission: str, resource: str) -> Any:
         or raises HTTP 403 Forbidden.
     """
 
-    async def _check(current_user: RequiredCurrentUser, db: DbSession) -> User:
+    def _check(current_user: RequiredCurrentUser, db: DbSession) -> User:
+        """Check the current user's roles for the required permission.
+
+        Args:
+            current_user: Authenticated user from the session cookie.
+            db: Active SQLAlchemy session.
+
+        Returns:
+            The current user when authorized.
+
+        Raises:
+            HTTPException: 403 when the user lacks the required permission.
+        """
         stmt = select(AppUserRole.role).where(
             AppUserRole.app_user_id == current_user.app_user_id
         )

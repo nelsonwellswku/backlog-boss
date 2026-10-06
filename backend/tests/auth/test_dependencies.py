@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -42,7 +40,7 @@ def test_returns_user_when_has_required_permission(
     _, user = _create_user_with_roles(db_session, ["admin"])
     dep = requires_authorization(Permission.WRITE, Resource.IGDB_GAMES)
 
-    result = asyncio.run(dep.dependency(current_user=user, db=db_session))
+    result = dep.dependency(current_user=user, db=db_session)
 
     assert result == user
 
@@ -54,7 +52,7 @@ def test_raises_403_when_role_has_no_matching_permission(
     dep = requires_authorization(Permission.WRITE, Resource.IGDB_GAMES)
 
     with pytest.raises(HTTPException) as exc_info:
-        asyncio.run(dep.dependency(current_user=user, db=db_session))
+        dep.dependency(current_user=user, db=db_session)
 
     assert exc_info.value.status_code == 403
     assert exc_info.value.detail == "Not authorized"
@@ -67,7 +65,7 @@ def test_raises_403_when_role_exists_but_lacks_permission_on_resource(
     dep = requires_authorization(Permission.READ, Resource.IGDB_GAMES)
 
     with pytest.raises(HTTPException) as exc_info:
-        asyncio.run(dep.dependency(current_user=user, db=db_session))
+        dep.dependency(current_user=user, db=db_session)
 
     assert exc_info.value.status_code == 403
 
@@ -79,6 +77,6 @@ def test_raises_403_when_user_has_no_roles(
     dep = requires_authorization(Permission.READ, Resource.IGDB_GAMES)
 
     with pytest.raises(HTTPException) as exc_info:
-        asyncio.run(dep.dependency(current_user=user, db=db_session))
+        dep.dependency(current_user=user, db=db_session)
 
     assert exc_info.value.status_code == 403

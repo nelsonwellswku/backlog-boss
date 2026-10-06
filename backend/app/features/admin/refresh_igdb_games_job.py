@@ -3,6 +3,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete, select, update
+from sqlalchemy.exc import IntegrityError
 
 from app.database.engine import create_db_session
 from app.database.models import (
@@ -53,14 +54,15 @@ class RefreshIgdbGamesJob:
 
                 self._release_lock(db)
                 logger.info("Refresh completed")
-            except Exception:
+            except Exception as job_error:
+                logger.exception("IGDB refresh job failed")
                 db.rollback()
                 try:
                     self._release_lock(db)
                 except Exception:
+                    logger.exception("Failed to release IGDB refresh lock")
                     db.rollback()
-                    raise
-                raise
+                raise job_error
 
     def _acquire_lock(self, db, app_user_id: int) -> bool:
         """Try to acquire the refresh lock.
@@ -80,26 +82,40 @@ class RefreshIgdbGamesJob:
             if time_since_update < timedelta(minutes=LOCK_STALE_THRESHOLD_MINUTES):
                 return False
 
-            # Stale lock, take over
-            db.execute(
+            # Stale lock, take over with optimistic concurrency so two
+            # concurrent takeovers do not both proceed.
+            stale_timestamp = existing_lock.last_updated_on
+            result = db.execute(
                 update(IgdbRefreshLock)
-                .where(IgdbRefreshLock.lock_id == LOCK_ID)
+                .where(
+                    IgdbRefreshLock.lock_id == LOCK_ID,
+                    IgdbRefreshLock.last_updated_on == stale_timestamp,
+                )
                 .values(
                     last_updated_on=now,
                     started_on=now,
                     app_user_id=app_user_id,
                 )
             )
-        else:
-            lock = IgdbRefreshLock(
-                lock_id=LOCK_ID,
-                started_on=now,
-                last_updated_on=now,
-                app_user_id=app_user_id,
-            )
-            db.add(lock)
+            db.commit()
+            if result.rowcount == 0:
+                logger.info("Refresh lock takeover raced, skipping")
+                return False
+            return True
 
-        db.commit()
+        lock = IgdbRefreshLock(
+            lock_id=LOCK_ID,
+            started_on=now,
+            last_updated_on=now,
+            app_user_id=app_user_id,
+        )
+        db.add(lock)
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            logger.info("Refresh already running, skipping")
+            return False
         return True
 
     def _release_lock(self, db) -> None:
@@ -147,10 +163,9 @@ class RefreshIgdbGamesJob:
         external_games_list = igdb_client.get_external_games(game_ids)
         ratings = igdb_client.get_ratings_by_game_ids(game_ids)
 
-        # Convert time_to_beats list to dict keyed by game_id
-        time_to_beats = {}
-        for ttb in time_to_beats_list:
-            time_to_beats[ttb.game_id] = ttb.normally
+        # Convert time_to_beats list to dict keyed by game_id, keeping the
+        # full response so the IGDB time-to-beat id is used as primary key.
+        time_to_beats = {ttb.game_id: ttb for ttb in time_to_beats_list}
 
         # Group external games by game_id
         externals: dict[int, list] = {}

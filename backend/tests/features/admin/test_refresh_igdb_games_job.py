@@ -22,7 +22,11 @@ from app.features.admin.refresh_igdb_games_job import (
     RefreshIgdbGamesJob,
 )
 from app.features.admin.igdb_game_updater import IgdbGameUpdater
-from app.infrastructure.igdb_client import ExternalGameResponse, GenreResponse
+from app.infrastructure.igdb_client import (
+    ExternalGameResponse,
+    GenreResponse,
+    TimeToBeatResponse,
+)
 
 
 def _create_app_user(db_session: Session) -> AppUser:
@@ -236,7 +240,7 @@ def test_update_batch_creates_time_to_beat_when_missing(
         covers={},
         genres={},
         platforms={},
-        time_to_beats={11: 3600},
+        time_to_beats={11: TimeToBeatResponse(id=1011, game_id=11, normally=3600)},
         now=now,
     )
 
@@ -244,6 +248,7 @@ def test_update_batch_creates_time_to_beat_when_missing(
         select(IgdbGameTimeToBeat).where(IgdbGameTimeToBeat.igdb_game_id == 11)
     ).one()
     assert ttb.normally == 3600
+    assert ttb.igdb_game_time_to_beat_id == 1011
 
 
 def test_update_batch_updates_existing_time_to_beat(
@@ -264,7 +269,7 @@ def test_update_batch_updates_existing_time_to_beat(
         covers={},
         genres={},
         platforms={},
-        time_to_beats={12: 5000},
+        time_to_beats={12: TimeToBeatResponse(id=12, game_id=12, normally=5000)},
         now=now,
     )
 
@@ -393,7 +398,9 @@ def test_update_batch_skips_when_game_not_found(
         covers={99999: "abc"},
         genres={99999: [GenreResponse(id=1, name="G")]},
         platforms={99999: [6]},
-        time_to_beats={99999: 100},
+        time_to_beats={
+            99999: TimeToBeatResponse(id=99999, game_id=99999, normally=100)
+        },
         now=now,
     )
 
@@ -425,7 +432,10 @@ def test_update_batch_updates_multiple_games_with_mixed_payloads(
         covers={20: "cover20", 21: "cover21"},
         genres={20: [GenreResponse(id=300, name="Batch Genre")]},
         platforms={21: [6]},
-        time_to_beats={20: 1000, 21: 2000},
+        time_to_beats={
+            20: TimeToBeatResponse(id=1020, game_id=20, normally=1000),
+            21: TimeToBeatResponse(id=1021, game_id=21, normally=2000),
+        },
         now=now,
         externals={
             20: [
@@ -502,7 +512,12 @@ def test_update_batch_issues_constant_query_count(
                 for game_id in range(30, 40)
             },
             platforms={game_id: [6] for game_id in range(30, 40)},
-            time_to_beats={game_id: 1000 + game_id for game_id in range(30, 40)},
+            time_to_beats={
+                game_id: TimeToBeatResponse(
+                    id=1000 + game_id, game_id=game_id, normally=1000 + game_id
+                )
+                for game_id in range(30, 40)
+            },
             now=datetime.now(tz=timezone.utc),
         )
     finally:
@@ -644,3 +659,50 @@ def test_run_releases_lock_on_error(
         select(IgdbRefreshLock).where(IgdbRefreshLock.lock_id == LOCK_ID)
     ).one_or_none()
     assert lock is None
+
+
+def test_acquire_lock_returns_false_on_integrity_error(
+    db_session: Session,
+    mocker: MockerFixture,
+):
+    """Concurrent inserts must not raise; loser skips instead of deleting winner."""
+    from sqlalchemy.exc import IntegrityError
+
+    app_user = _create_app_user(db_session)
+    job = RefreshIgdbGamesJob()
+    mocker.patch.object(
+        db_session,
+        "commit",
+        side_effect=[IntegrityError("INSERT", {}, Exception("PK")), None],
+    )
+
+    result = job._acquire_lock(db_session, app_user.app_user_id)
+
+    assert result is False
+
+
+def test_update_batch_preserves_platforms_when_only_unknown(
+    db_session: Session,
+    mocker: MockerFixture,
+):
+    """Unknown-only platform payload must not wipe existing associations."""
+    _create_game(db_session, 17)
+    db_session.add(IgdbGamePlatform(igdb_game_id=17, igdb_platform_id=6))
+    db_session.flush()
+    now = datetime.now(tz=timezone.utc)
+
+    IgdbGameUpdater(db_session).update_batch(
+        [17],
+        covers={17: "abc"},
+        genres={},
+        platforms={17: [48]},
+        time_to_beats={},
+        now=now,
+    )
+
+    platform_ids = db_session.scalars(
+        select(IgdbGamePlatform.igdb_platform_id).where(
+            IgdbGamePlatform.igdb_game_id == 17
+        )
+    ).all()
+    assert platform_ids == [6]

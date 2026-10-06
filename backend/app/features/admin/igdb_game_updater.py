@@ -13,7 +13,11 @@ from app.database.models import (
     IgdbGenre,
     IgdbPlatform,
 )
-from app.infrastructure.igdb_client import ExternalGameResponse, GenreResponse
+from app.infrastructure.igdb_client import (
+    ExternalGameResponse,
+    GenreResponse,
+    TimeToBeatResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +34,7 @@ class IgdbGameUpdater:
         covers: dict[int, str],
         genres: dict[int, list[GenreResponse]],
         platforms: dict[int, list[int]],
-        time_to_beats: dict[int, int | None],
+        time_to_beats: dict[int, TimeToBeatResponse],
         now: datetime,
         externals: dict[int, list[ExternalGameResponse]] | None = None,
         ratings: dict[int, float] | None = None,
@@ -42,7 +46,9 @@ class IgdbGameUpdater:
             covers: Mapping of game id to cover image id.
             genres: Mapping of game id to genre data.
             platforms: Mapping of game id to platform ids.
-            time_to_beats: Mapping of game id to normal time-to-beat value.
+            time_to_beats: Mapping of game id to time-to-beat response. The
+                IGDB time-to-beat id is used as primary key to match
+                persist_igdb_games.
             now: Timestamp to stamp as last_refreshed_at.
             externals: Mapping of game id to external game data. Only existing
                 rows are updated; missing rows are never inserted. A None year
@@ -103,15 +109,15 @@ class IgdbGameUpdater:
                 ).all()
             }
             for game_id in ttb_ids:
-                ttb_value = time_to_beats[game_id]
+                ttb_data = time_to_beats[game_id]
                 existing = existing_ttbs.get(game_id)
                 if existing is not None:
-                    existing.normally = ttb_value
+                    existing.normally = ttb_data.normally
                 else:
                     db.add(
                         IgdbGameTimeToBeat(
-                            igdb_game_time_to_beat_id=game_id,
-                            normally=ttb_value,
+                            igdb_game_time_to_beat_id=ttb_data.id,
+                            normally=ttb_data.normally,
                             igdb_game_id=game_id,
                         )
                     )
@@ -174,12 +180,6 @@ class IgdbGameUpdater:
                         )
                     ).all()
                 )
-            db.execute(
-                delete(IgdbGamePlatform).where(
-                    IgdbGamePlatform.igdb_game_id.in_(platform_game_ids)
-                )
-            )
-            associations = []
             for game_id in platform_game_ids:
                 for platform_id in platforms[game_id]:
                     if platform_id not in known_platform_ids:
@@ -188,14 +188,28 @@ class IgdbGameUpdater:
                             platform_id,
                             game_id,
                         )
-                        continue
-                    associations.append(
-                        IgdbGamePlatform(
-                            igdb_game_id=game_id, igdb_platform_id=platform_id
-                        )
+            valid_platform_game_ids = [
+                game_id
+                for game_id in platform_game_ids
+                if any(
+                    platform_id in known_platform_ids
+                    for platform_id in platforms[game_id]
+                )
+            ]
+            if valid_platform_game_ids:
+                db.execute(
+                    delete(IgdbGamePlatform).where(
+                        IgdbGamePlatform.igdb_game_id.in_(valid_platform_game_ids)
                     )
-            if associations:
-                db.add_all(associations)
+                )
+                associations = [
+                    IgdbGamePlatform(igdb_game_id=game_id, igdb_platform_id=platform_id)
+                    for game_id in valid_platform_game_ids
+                    for platform_id in platforms[game_id]
+                    if platform_id in known_platform_ids
+                ]
+                if associations:
+                    db.add_all(associations)
 
         # Update external game years (update-only, never insert).
         if externals:
