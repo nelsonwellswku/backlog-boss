@@ -14,6 +14,8 @@ from app.features.auth.steam_callback_handler import (
 )
 from app.infrastructure.steam_client import SteamUserDetails
 
+FAKE_STEAM_ID = "76561198000000000"
+
 
 def _build_openid_params() -> OpenIdCallbackParams:
     return OpenIdCallbackParams.model_validate(
@@ -22,9 +24,9 @@ def _build_openid_params() -> OpenIdCallbackParams:
             "openid.mode": "id_res",
             "openid.op_endpoint": "https://steamcommunity.com/openid/login",
             "openid.claimed_id": (
-                "https://steamcommunity.com/openid/id/76561198000000000"
+                f"https://steamcommunity.com/openid/id/{FAKE_STEAM_ID}"
             ),
-            "openid.identity": "https://steamcommunity.com/openid/id/76561198000000000",
+            "openid.identity": f"https://steamcommunity.com/openid/id/{FAKE_STEAM_ID}",
             "openid.return_to": "https://backlogboss.example.com/api/auth/steam/callback",
             "openid.response_nonce": "2026-04-12T00:00:00Zabcdef",
             "openid.assoc_handle": "1234567890",
@@ -51,7 +53,9 @@ def test_handle_creates_user_session_and_redirects(
 
     response = handler.handle(_build_openid_params())
 
-    user = db_session.scalars(select(AppUser)).one()
+    user = db_session.scalars(
+        select(AppUser).where(AppUser.steam_id == FAKE_STEAM_ID)
+    ).one()
     app_session = db_session.scalars(select(AppSession)).one()
 
     assert response.status_code == 307
@@ -60,13 +64,13 @@ def test_handle_creates_user_session_and_redirects(
     assert "HttpOnly" in response.headers["set-cookie"]
     assert "SameSite=lax" in response.headers["set-cookie"]
     assert "Secure" in response.headers["set-cookie"]
-    assert user.steam_id == "76561198000000000"
+    assert user.steam_id == FAKE_STEAM_ID
     assert user.persona_name == "Test Persona"
     assert user.first_name == "Test"
     assert user.last_name == "User"
     assert app_session.app_user_id == user.app_user_id
     assert app_session.expiration_date > datetime.now(timezone.utc)
-    steam_client.get_user_details.assert_called_once_with("76561198000000000")
+    steam_client.get_user_details.assert_called_once_with(FAKE_STEAM_ID)
 
 
 def test_handle_raises_unauthorized_when_openid_verification_fails(
