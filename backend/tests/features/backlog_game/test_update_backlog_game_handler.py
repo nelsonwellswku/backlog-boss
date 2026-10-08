@@ -35,7 +35,12 @@ def _create_user(db_session: Session, steam_id: str) -> User:
 def test_handle_updates_backlog_game_dates(db_session: Session):
     current_user = _create_user(db_session, "76561198000000000")
     backlog = Backlog(app_user_id=current_user.app_user_id)
-    igdb_game = IgdbGame(igdb_game_id=1, name="Update Me", total_rating=77.0)
+    igdb_game = IgdbGame(
+        igdb_game_id=1,
+        name="Update Me",
+        total_rating=77.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
     db_session.add_all([backlog, igdb_game])
     db_session.flush()
 
@@ -83,7 +88,12 @@ def test_handle_raises_unauthorized_for_other_users_backlog_game(db_session: Ses
     owner = _create_user(db_session, "76561198000000000")
     other_user = _create_user(db_session, "76561198000000001")
     backlog = Backlog(app_user_id=owner.app_user_id)
-    igdb_game = IgdbGame(igdb_game_id=1, name="Protected Game", total_rating=77.0)
+    igdb_game = IgdbGame(
+        igdb_game_id=1,
+        name="Protected Game",
+        total_rating=77.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
     db_session.add_all([backlog, igdb_game])
     db_session.flush()
 

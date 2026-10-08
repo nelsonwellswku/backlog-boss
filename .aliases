@@ -1,1 +1,2 @@
 alias nocl='nono run --profile .opencode/nono-profile.json --allow-cwd -- opencode'
+alias nocl1='nono run --profile .opencode/nono-profile-v1.json --allow-cwd -- opencode'

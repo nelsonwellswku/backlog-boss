@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import pytest
 from fastapi import HTTPException
 from pytest_mock import MockerFixture
@@ -38,7 +40,12 @@ def test_handle_returns_database_matches_and_still_calls_igdb(
     mocker: MockerFixture,
 ):
     _create_current_user(db_session)
-    steam_match = IgdbGame(igdb_game_id=10, name="Portal 2", total_rating=95.0)
+    steam_match = IgdbGame(
+        igdb_game_id=10,
+        name="Portal 2",
+        total_rating=95.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
     steam_match.time_to_beat = IgdbGameTimeToBeat(
         igdb_game_time_to_beat_id=101,
         igdb_game_id=10,
@@ -52,7 +59,10 @@ def test_handle_returns_database_matches_and_still_calls_igdb(
         )
     )
     non_steam_match = IgdbGame(
-        igdb_game_id=11, name="Portal Stories VR", total_rating=70.0
+        igdb_game_id=11,
+        name="Portal Stories VR",
+        total_rating=70.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
     )
     non_steam_match.external_games.append(
         IgdbExternalGame(
@@ -151,6 +161,7 @@ def test_handle_limits_database_matches_to_fifty(
                 igdb_game_id=game_id,
                 name=f"Portal {game_id:03d}",
                 total_rating=90.0,
+                last_refreshed_at=datetime.now(tz=timezone.utc),
                 external_games=[
                     IgdbExternalGame(
                         igdb_external_game_id=10_000 + game_id,
@@ -181,7 +192,12 @@ def test_handle_merges_db_and_igdb_results_with_deduplication(
     mocker: MockerFixture,
 ):
     _create_current_user(db_session)
-    existing_game = IgdbGame(igdb_game_id=100, name="Half-Life 2", total_rating=96.0)
+    existing_game = IgdbGame(
+        igdb_game_id=100,
+        name="Half-Life 2",
+        total_rating=96.0,
+        last_refreshed_at=datetime.now(tz=timezone.utc),
+    )
     existing_game.external_games.append(
         IgdbExternalGame(
             igdb_external_game_id=501,

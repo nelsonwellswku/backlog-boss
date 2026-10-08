@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.features.admin.admin_router import admin_router
 from app.features.auth.auth_router import auth_router
 from app.features.backlog_game.backlog_game_router import backlog_game_router
 from app.features.game.game_router import game_router
@@ -28,6 +29,7 @@ app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(backlog_game_router)
 app.include_router(game_router)
+app.include_router(admin_router)
 
 # Serve static files and SPA fallback (only if static directory exists)
 static_dir = Path(__file__).parent / "static"

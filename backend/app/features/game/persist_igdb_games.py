@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -61,6 +63,7 @@ def persist_igdb_games(db: Session, games: list[IgdbGameResponse]) -> bool:
             assert genre_obj is not None
             genre_cache[genre_id] = genre_obj
 
+    now = datetime.now(tz=timezone.utc)
     games_to_add: list[IgdbGame] = []
     for game in games:
         if game.id in existing_game_ids:
@@ -71,6 +74,7 @@ def persist_igdb_games(db: Session, games: list[IgdbGameResponse]) -> bool:
             name=game.name,
             total_rating=game.total_rating,
             cover_image_id=game.cover.image_id if game.cover else None,
+            last_refreshed_at=now,
         )
 
         if game.time_to_beat:
