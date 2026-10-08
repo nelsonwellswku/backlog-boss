@@ -11,10 +11,6 @@ create table bb.AppUserRole (
     constraint FK_AppUserRole_AppUser foreign key (AppUserId) references bb.AppUser(AppUserId)
 );
 
--- NOTE: Admin roles are seeded manually, not in migrations.
--- Example: insert into bb.AppUserRole (AppUserId, Role)
--- select AppUserId, 'admin' from bb.AppUser where PersonaName = '<name>';
-
 -- Create IgdbRefreshLock table
 create table bb.IgdbRefreshLock (
     LockId varchar(50) not null primary key,
