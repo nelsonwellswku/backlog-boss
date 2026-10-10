@@ -1,5 +1,6 @@
 """Unit tests for OpenTelemetry telemetry helpers."""
 
+import logging
 import os
 from typing import cast
 
@@ -26,11 +27,21 @@ _OTEL_ENV_KEYS = (
 
 @pytest.fixture(autouse=True)
 def _restore_telemetry_state():
-    """Restore telemetry module state and OTEL env vars after each test."""
+    """Restore telemetry module state, logger levels and OTEL env vars."""
     saved_env = {key: os.environ.get(key) for key in _OTEL_ENV_KEYS}
     saved_enabled = telemetry._enabled
+    saved_levels = {
+        name: logging.getLogger(name).level
+        for name in telemetry._NOISY_TELEMETRY_LOGGERS
+    }
+    # Start each test with telemetry disabled (empty value) so a local .env
+    # cannot turn the "telemetry off" cases into "telemetry on" cases.
+    os.environ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = ""
+    clear_settings_cache()
     yield
     telemetry._enabled = saved_enabled
+    for name, level in saved_levels.items():
+        logging.getLogger(name).setLevel(level)
     for key, value in saved_env.items():
         if value is None:
             os.environ.pop(key, None)
@@ -71,6 +82,8 @@ def test_configure_telemetry_enables_and_passes_processor(
     monkeypatch, connection_string
 ):
     """With a connection string, configure the distro and instrument the app."""
+    for key in _OTEL_ENV_KEYS[1:]:
+        monkeypatch.delenv(key, raising=False)
     captured: dict = {}
     configure_calls: list[dict] = []
     instrument_app_calls: list = []
@@ -89,6 +102,12 @@ def test_configure_telemetry_enables_and_passes_processor(
         lambda *args, **kwargs: httpx_instrument_calls.append((args, kwargs)),
     )
     app = FastAPI()
+    # Pin the OTEL settings so a local .env cannot change what is mirrored
+    # into the process environment.
+    settings = get_settings()
+    settings.otel_service_name = "backlog-boss"
+    settings.otel_traces_sampler = "parentbased_trace_id_ratio"
+    settings.otel_traces_sampler_arg = "1.0"
 
     telemetry.configure_telemetry(app)
 
@@ -161,6 +180,37 @@ def test_configure_telemetry_fail_soft(monkeypatch, connection_string):
     telemetry.configure_telemetry(FastAPI())
 
     assert telemetry.is_telemetry_enabled() is False
+
+
+def test_configure_telemetry_silences_noisy_library_loggers(
+    monkeypatch, connection_string
+):
+    """Azure/OTel library loggers must be raised to WARNING before export."""
+    monkeypatch.setattr("app.telemetry.configure_azure_monitor", lambda **kwargs: None)
+    monkeypatch.setattr(
+        "opentelemetry.instrumentation.fastapi.FastAPIInstrumentor.instrument_app",
+        lambda *args: None,
+    )
+    monkeypatch.setattr(
+        "opentelemetry.instrumentation.httpx.HTTPXClientInstrumentor.instrument",
+        lambda *args, **kwargs: None,
+    )
+    logging.getLogger("azure").setLevel(logging.INFO)
+    logging.getLogger("opentelemetry").setLevel(logging.INFO)
+
+    telemetry.configure_telemetry(FastAPI())
+
+    assert logging.getLogger("azure").level == logging.WARNING
+    assert logging.getLogger("opentelemetry").level == logging.WARNING
+
+
+def test_configure_telemetry_keeps_logger_levels_without_connection_string():
+    """Telemetry off must leave library logger levels untouched."""
+    logging.getLogger("azure").setLevel(logging.INFO)
+
+    telemetry.configure_telemetry(FastAPI())
+
+    assert logging.getLogger("azure").level == logging.INFO
 
 
 @pytest.mark.parametrize(

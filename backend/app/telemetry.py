@@ -30,6 +30,25 @@ _URL_ATTRIBUTE_KEYS = ("http.url", "url.full", "http.target", "url.query")
 
 _enabled = False
 
+# Library loggers that emit routine chatter at INFO on every export cycle:
+# azure.core logs the full ingestion request/response, the Azure exporter logs
+# "Transmission succeeded", and the OpenTelemetry SDK logs shutdown notes.
+_NOISY_TELEMETRY_LOGGERS = ("azure", "opentelemetry")
+
+
+def _silence_noisy_telemetry_loggers() -> None:
+    """Raise the level of telemetry library loggers to WARNING.
+
+    The Azure distro bridges the root logger into Application Insights, so
+    INFO records from these libraries are both printed locally and fed back
+    into the exporter — which itself logs an INFO line per successful POST,
+    triggering the "recursive logging, skipping" guard. WARNING keeps
+    genuine export and configuration failures visible while dropping the
+    per-cycle noise.
+    """
+    for name in _NOISY_TELEMETRY_LOGGERS:
+        logging.getLogger(name).setLevel(logging.WARNING)
+
 
 def redact_credentials(url: str) -> str:
     """Replace credential-bearing values in a URL.
@@ -106,6 +125,11 @@ def configure_telemetry(app: FastAPI) -> None:
     ``os.environ`` via ``setdefault`` and an operator-supplied OTEL_* variable
     always wins.
 
+    Before configuring the distro, the ``azure`` and ``opentelemetry``
+    library loggers are raised to WARNING so the exporter's per-cycle INFO
+    chatter (ingestion HTTP logging, "Transmission succeeded" summaries)
+    stays out of the console and out of the exported telemetry.
+
     Args:
         app: The FastAPI application to instrument.
     """
@@ -120,6 +144,8 @@ def configure_telemetry(app: FastAPI) -> None:
         os.environ.setdefault(
             "OTEL_TRACES_SAMPLER_ARG", settings.otel_traces_sampler_arg
         )
+
+        _silence_noisy_telemetry_loggers()
 
         configure_azure_monitor(
             connection_string=settings.applicationinsights_connection_string,
