@@ -11,7 +11,6 @@ from fastapi import FastAPI
 from opentelemetry import trace
 from opentelemetry._logs import get_logger_provider
 from opentelemetry.context import Context
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.trace import SpanProcessor
@@ -151,10 +150,6 @@ def configure_telemetry(app: FastAPI) -> None:
             connection_string=settings.applicationinsights_connection_string,
             span_processors=[CredentialRedactingSpanProcessor()],
         )
-
-        # The app was instantiated at import time, before the distro swapped
-        # fastapi.FastAPI, so it is not covered by auto-instrumentation.
-        FastAPIInstrumentor().instrument_app(app)
 
         httpx_instrumentor = HTTPXClientInstrumentor()
         if not getattr(httpx_instrumentor, "_is_instrumented_by_opentelemetry", False):

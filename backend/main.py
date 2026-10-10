@@ -22,6 +22,7 @@ app = FastAPI(
     redoc_url=None,
     description="Prioritize your video game backlog",
     lifespan=app_lifespan,
+    telemetry={"auto_configure": True},
 )
 
 app.include_router(health_router)

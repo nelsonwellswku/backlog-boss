@@ -7,7 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "azure-monitor-opentelemetry>=1.8.11",
     "expiring-dict>=1.1.2",
-    "fastapi[standard]>=0.135.3",
+    "fastapi[standard]>=0.143.0",
     "httpx>=0.28.1",
     "igdb-api-v4>=0.3.3",
     "opentelemetry-instrumentation-httpx>=0.66b1",

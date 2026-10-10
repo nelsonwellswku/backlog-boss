@@ -81,22 +81,17 @@ def test_configure_telemetry_is_noop_without_connection_string(monkeypatch):
 def test_configure_telemetry_enables_and_passes_processor(
     monkeypatch, connection_string
 ):
-    """With a connection string, configure the distro and instrument the app."""
+    """With a connection string, configure the distro and instrument httpx."""
     for key in _OTEL_ENV_KEYS[1:]:
         monkeypatch.delenv(key, raising=False)
     captured: dict = {}
     configure_calls: list[dict] = []
-    instrument_app_calls: list = []
     httpx_instrument_calls: list = []
 
     def _configure(**kwargs):
         configure_calls.append(kwargs)
 
     monkeypatch.setattr("app.telemetry.configure_azure_monitor", _configure)
-    monkeypatch.setattr(
-        "opentelemetry.instrumentation.fastapi.FastAPIInstrumentor.instrument_app",
-        lambda *args: instrument_app_calls.append(args[-1]),
-    )
     monkeypatch.setattr(
         "opentelemetry.instrumentation.httpx.HTTPXClientInstrumentor.instrument",
         lambda *args, **kwargs: httpx_instrument_calls.append((args, kwargs)),
@@ -116,7 +111,6 @@ def test_configure_telemetry_enables_and_passes_processor(
     assert isinstance(
         configure_calls[0]["span_processors"][0], CredentialRedactingSpanProcessor
     )
-    assert instrument_app_calls == [app]
     assert len(httpx_instrument_calls) == 1
     assert os.environ["OTEL_TRACES_SAMPLER"] == "parentbased_trace_id_ratio"
     assert os.environ["OTEL_TRACES_SAMPLER_ARG"] == "1.0"
@@ -128,10 +122,6 @@ def test_configure_telemetry_sampler_env_not_overridden(monkeypatch, connection_
     """Operator-supplied OTEL env vars must not be overwritten (setdefault)."""
     monkeypatch.setenv("OTEL_TRACES_SAMPLER", "always_on")
     monkeypatch.setattr("app.telemetry.configure_azure_monitor", lambda **kwargs: None)
-    monkeypatch.setattr(
-        "opentelemetry.instrumentation.fastapi.FastAPIInstrumentor.instrument_app",
-        lambda *args: None,
-    )
     monkeypatch.setattr(
         "opentelemetry.instrumentation.httpx.HTTPXClientInstrumentor.instrument",
         lambda *args, **kwargs: None,
@@ -153,10 +143,6 @@ def test_configure_telemetry_otel_defaults_come_from_settings(
     settings.otel_traces_sampler = "always_on"
     settings.otel_traces_sampler_arg = "0.5"
     monkeypatch.setattr("app.telemetry.configure_azure_monitor", lambda **kwargs: None)
-    monkeypatch.setattr(
-        "opentelemetry.instrumentation.fastapi.FastAPIInstrumentor.instrument_app",
-        lambda *args: None,
-    )
     monkeypatch.setattr(
         "opentelemetry.instrumentation.httpx.HTTPXClientInstrumentor.instrument",
         lambda *args, **kwargs: None,
@@ -187,10 +173,6 @@ def test_configure_telemetry_silences_noisy_library_loggers(
 ):
     """Azure/OTel library loggers must be raised to WARNING before export."""
     monkeypatch.setattr("app.telemetry.configure_azure_monitor", lambda **kwargs: None)
-    monkeypatch.setattr(
-        "opentelemetry.instrumentation.fastapi.FastAPIInstrumentor.instrument_app",
-        lambda *args: None,
-    )
     monkeypatch.setattr(
         "opentelemetry.instrumentation.httpx.HTTPXClientInstrumentor.instrument",
         lambda *args, **kwargs: None,
