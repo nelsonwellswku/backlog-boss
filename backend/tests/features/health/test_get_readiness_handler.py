@@ -2,6 +2,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi import HTTPException, status
+from pytest_mock import MockerFixture
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
@@ -19,7 +20,22 @@ def test_handle_returns_ready_when_database_query_succeeds(db_session: Session):
 
     actual = handler.handle()
 
-    assert actual == GetReadinessResponse(message="Database is ready.")
+    assert actual == GetReadinessResponse(
+        message="Database is ready.", telemetry="disabled"
+    )
+
+
+def test_handle_reports_telemetry_enabled(db_session: Session, mocker: MockerFixture):
+    """Readiness reflects telemetry state when it is configured."""
+    mocker.patch(
+        "app.features.health.get_readiness_handler.is_telemetry_enabled",
+        return_value=True,
+    )
+    handler = GetReadinessHandler(db_session)
+
+    actual = handler.handle()
+
+    assert actual.telemetry == "enabled"
 
 
 def test_handle_raises_500_when_database_query_fails():

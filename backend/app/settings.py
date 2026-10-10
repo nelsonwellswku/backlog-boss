@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     twitch_client_secret: str
     steam_api_key: str
 
+    # TODO: should this default to empty string or None?
+    applicationinsights_connection_string: str = ""
+
     base_url: str = "http://localhost:5173"
 
     @field_validator("base_url")

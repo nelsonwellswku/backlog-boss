@@ -4,10 +4,12 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.database.engine import DbSession
 from app.features.api_model import ApiResponseModel
+from app.telemetry import is_telemetry_enabled
 
 
 class GetReadinessResponse(ApiResponseModel):
     message: str
+    telemetry: str
 
 
 class GetReadinessHandler:
@@ -23,4 +25,7 @@ class GetReadinessHandler:
                 "Database is not ready.",
             ) from exc
 
-        return GetReadinessResponse(message="Database is ready.")
+        return GetReadinessResponse(
+            message="Database is ready.",
+            telemetry="enabled" if is_telemetry_enabled() else "disabled",
+        )

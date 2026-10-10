@@ -7,6 +7,7 @@ from sqlalchemy import select
 
 from app.database.engine import DbSession
 from app.database.models import AppSession, AppUser
+from app.telemetry import record_user_identity
 
 
 @dataclass
@@ -36,6 +37,8 @@ def get_current_user(request: Request, db: DbSession) -> User | None:
         return None
 
     app_user = app_session.app_user
+
+    record_user_identity(app_user.app_user_id, app_user.steam_id)
 
     return User(
         app_user_id=app_user.app_user_id,

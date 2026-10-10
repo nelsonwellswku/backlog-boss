@@ -9,6 +9,7 @@ from sqlalchemy.engine import URL, Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.settings import Settings, get_settings
+from app.telemetry import instrument_engine
 
 
 def create_connection_url(settings: Settings) -> URL:
@@ -28,7 +29,14 @@ def create_connection_url(settings: Settings) -> URL:
 
 @lru_cache
 def get_db_engine() -> Engine:
-    return create_engine(create_connection_url(get_settings()))
+    """Create the cached database engine and attach telemetry instrumentation.
+
+    Returns:
+        The shared SQLAlchemy engine for the application.
+    """
+    engine = create_engine(create_connection_url(get_settings()))
+    instrument_engine(engine)
+    return engine
 
 
 @lru_cache

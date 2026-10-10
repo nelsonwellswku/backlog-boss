@@ -11,7 +11,7 @@ from app.features.backlog_game.backlog_game_router import backlog_game_router
 from app.features.game.game_router import game_router
 from app.features.health.health_router import health_router
 from app.features.user.user_router import user_router
-from app.http_client import configure_httpx_lifespan
+from app.lifespan import app_lifespan
 
 logging.basicConfig(level=logging.INFO)
 
@@ -21,7 +21,7 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
     redoc_url=None,
     description="Prioritize your video game backlog",
-    lifespan=configure_httpx_lifespan,
+    lifespan=app_lifespan,
 )
 
 app.include_router(health_router)

@@ -190,6 +190,7 @@ jobs:
           TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
           TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
           STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
+          APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
         run: |
           APP_SETTINGS=(
             "DB_HOST=${DB_HOST}"
@@ -209,6 +210,10 @@ jobs:
             APP_SETTINGS+=("BASE_URL=${BASE_URL}")
           fi
 
+          if [ -n "${APPLICATIONINSIGHTS_CONNECTION_STRING}" ]; then
+            APP_SETTINGS+=("APPLICATIONINSIGHTS_CONNECTION_STRING=${APPLICATIONINSIGHTS_CONNECTION_STRING}")
+          fi
+
           az webapp config appsettings set \
             --name "${AZURE_WEBAPP_NAME}" \
             --resource-group "${AZURE_RESOURCE_GROUP}" \
@@ -223,6 +228,10 @@ jobs:
 
           if [ -z "${BASE_URL}" ]; then
             DELETE_SETTINGS+=(BASE_URL)
+          fi
+
+          if [ -z "${APPLICATIONINSIGHTS_CONNECTION_STRING}" ]; then
+            DELETE_SETTINGS+=(APPLICATIONINSIGHTS_CONNECTION_STRING)
           fi
 
           if [ "${#DELETE_SETTINGS[@]}" -gt 0 ]; then

@@ -2,6 +2,7 @@ import logging
 import time
 from datetime import datetime, timedelta, timezone
 
+from opentelemetry.context import Context
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
@@ -12,6 +13,7 @@ from app.database.models import (
 )
 from app.features.admin.igdb_game_updater import IgdbGameUpdater
 from app.infrastructure.igdb_client import IgdbClient
+from app.telemetry import get_tracer
 
 logger = logging.getLogger(__name__)
 
@@ -32,37 +34,42 @@ class RefreshIgdbGamesJob:
             app_user_id: Id of the admin user who triggered the refresh.
                 Recorded on the lock row to satisfy the FK to AppUser.
         """
-        igdb_client = IgdbClient.create()
+        with get_tracer(__name__).start_as_current_span(
+            "job.refresh_igdb_games",
+            context=Context(),
+            attributes={"job.name": "refresh_igdb_games", "user.id": app_user_id},
+        ):
+            igdb_client = IgdbClient.create()
 
-        with create_db_session() as db:
-            try:
-                if not self._acquire_lock(db, app_user_id):
-                    logger.info("Refresh already running, skipping")
-                    return
-
-                game_ids = self._get_stale_game_ids(db)
-                if not game_ids:
-                    logger.info("No stale games to refresh")
-                    self._release_lock(db)
-                    return
-
-                logger.info("Starting refresh for %d games", len(game_ids))
-
-                for i in range(0, len(game_ids), BATCH_SIZE):
-                    batch_ids = game_ids[i : i + BATCH_SIZE]
-                    self._process_batch(db, igdb_client, batch_ids)
-
-                self._release_lock(db)
-                logger.info("Refresh completed")
-            except Exception as job_error:
-                logger.exception("IGDB refresh job failed")
-                db.rollback()
+            with create_db_session() as db:
                 try:
+                    if not self._acquire_lock(db, app_user_id):
+                        logger.info("Refresh already running, skipping")
+                        return
+
+                    game_ids = self._get_stale_game_ids(db)
+                    if not game_ids:
+                        logger.info("No stale games to refresh")
+                        self._release_lock(db)
+                        return
+
+                    logger.info("Starting refresh for %d games", len(game_ids))
+
+                    for i in range(0, len(game_ids), BATCH_SIZE):
+                        batch_ids = game_ids[i : i + BATCH_SIZE]
+                        self._process_batch(db, igdb_client, batch_ids)
+
                     self._release_lock(db)
-                except Exception:
-                    logger.exception("Failed to release IGDB refresh lock")
+                    logger.info("Refresh completed")
+                except Exception as job_error:
+                    logger.exception("IGDB refresh job failed")
                     db.rollback()
-                raise job_error
+                    try:
+                        self._release_lock(db)
+                    except Exception:
+                        logger.exception("Failed to release IGDB refresh lock")
+                        db.rollback()
+                    raise job_error
 
     def _acquire_lock(self, db, app_user_id: int) -> bool:
         """Try to acquire the refresh lock.

@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
 import pytest
+from opentelemetry.context import Context
 from pytest_mock import MockerFixture
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
@@ -551,6 +552,46 @@ def test_run_skips_when_lock_is_held(
     job.run(app_user.app_user_id)
 
     igdb_client.get_covers_by_game_ids.assert_not_called()
+
+
+def test_run_creates_root_job_span(db_session: Session, mocker: MockerFixture):
+    """The job must start a root span with identifiable job attributes."""
+    from app.features.admin import refresh_igdb_games_job as job_module
+
+    captured: dict = {}
+
+    class _FakeSpan:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_info):
+            return False
+
+    class _FakeTracer:
+        def start_as_current_span(self, name, **kwargs):
+            captured["name"] = name
+            captured.update(kwargs)
+            return _FakeSpan()
+
+    mocker.patch.object(job_module, "get_tracer", lambda _name: _FakeTracer())
+    mocker.patch(
+        "app.features.admin.refresh_igdb_games_job.IgdbClient.create",
+        return_value=mocker.Mock(),
+    )
+    mocker.patch(
+        "app.features.admin.refresh_igdb_games_job.create_db_session",
+        side_effect=lambda: _fake_db_session(db_session),
+    )
+    job = RefreshIgdbGamesJob()
+    mocker.patch.object(job, "_acquire_lock", return_value=False)
+    app_user = _create_app_user(db_session)
+
+    job.run(app_user.app_user_id)
+
+    assert captured["name"] == "job.refresh_igdb_games"
+    assert captured["context"] == Context()
+    assert captured["attributes"]["job.name"] == "refresh_igdb_games"
+    assert captured["attributes"]["user.id"] == app_user.app_user_id
 
 
 def test_run_processes_stale_games_in_batches(
