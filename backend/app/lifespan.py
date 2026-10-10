@@ -1,6 +1,6 @@
 """Chained application lifespan for HTTP client and telemetry setup."""
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -9,9 +9,8 @@ from app.http_client import configure_httpx_lifespan
 from app.telemetry import configure_telemetry, shutdown_telemetry
 
 
-# TODO: Fix this deprecation
 @asynccontextmanager
-async def app_lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def app_lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Run application startup and shutdown hooks.
 
     Configures telemetry before the shared HTTP client is created so client

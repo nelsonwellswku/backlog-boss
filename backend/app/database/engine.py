@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from functools import lru_cache
 from typing import Annotated
@@ -56,7 +56,16 @@ def create_db_session_factory(engine: Engine) -> sessionmaker[Session]:
 
 
 @contextmanager
-def create_db_session(engine: Engine | None = None) -> Iterator[Session]:
+def create_db_session(engine: Engine | None = None) -> Generator[Session]:
+    """Open a session from the shared factory, or from an explicit engine.
+
+    Args:
+        engine: Engine to build the session from. When ``None``, the cached
+            application engine is used.
+
+    Yields:
+        A SQLAlchemy session, closed and discarded on exit.
+    """
     session_factory = (
         get_db_session_factory()
         if engine is None

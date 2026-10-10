@@ -4,20 +4,21 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import TYPE_CHECKING
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+from azure.monitor.opentelemetry import configure_azure_monitor
 from fastapi import FastAPI
 from opentelemetry import trace
+from opentelemetry._logs import get_logger_provider
 from opentelemetry.context import Context
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.trace import Span, Tracer
+from sqlalchemy.engine import Engine
 
 from app.settings import get_settings
-
-# TODO: Why does this need to be here?
-if TYPE_CHECKING:
-    from sqlalchemy.engine import Engine
 
 logger = logging.getLogger(__name__)
 
@@ -97,8 +98,13 @@ def configure_telemetry(app: FastAPI) -> None:
 
     No-op when APPLICATIONINSIGHTS_CONNECTION_STRING is unset, so the app
     behaves exactly as before. Never raises: any setup failure (invalid
-    connection string, missing package, exporter init error) is logged once
-    and leaves telemetry disabled.
+    connection string, exporter init error) is logged once and leaves
+    telemetry disabled.
+
+    The Azure distro reads OTEL_SERVICE_NAME and the sampler configuration
+    from the process environment, so those Settings values are mirrored into
+    ``os.environ`` via ``setdefault`` and an operator-supplied OTEL_* variable
+    always wins.
 
     Args:
         app: The FastAPI application to instrument.
@@ -109,16 +115,11 @@ def configure_telemetry(app: FastAPI) -> None:
         return
 
     try:
-        # TODO: These env variables should be set to the values from the settings object
-        os.environ.setdefault("OTEL_SERVICE_NAME", "backlog-boss")
-        os.environ.setdefault("OTEL_TRACES_SAMPLER", "parentbased_trace_id_ratio")
-        os.environ.setdefault("OTEL_TRACES_SAMPLER_ARG", "1.0")
-
-        # TODO: do we need these lazy loaded imports? app crash is _preferable_ because these should always be available.
-        # Imported lazily so a broken/missing Azure package cannot crash app import.
-        from azure.monitor.opentelemetry import configure_azure_monitor
-        from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-        from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+        os.environ.setdefault("OTEL_SERVICE_NAME", settings.otel_service_name)
+        os.environ.setdefault("OTEL_TRACES_SAMPLER", settings.otel_traces_sampler)
+        os.environ.setdefault(
+            "OTEL_TRACES_SAMPLER_ARG", settings.otel_traces_sampler_arg
+        )
 
         configure_azure_monitor(
             connection_string=settings.applicationinsights_connection_string,
@@ -150,8 +151,6 @@ def shutdown_telemetry() -> None:
     global _enabled
     if not _enabled:
         return
-
-    from opentelemetry._logs import get_logger_provider
 
     for get_provider in (trace.get_tracer_provider, get_logger_provider):
         try:
@@ -194,7 +193,6 @@ def instrument_engine(engine: Engine) -> None:
     """
     if not _enabled:
         return
-    from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
     SQLAlchemyInstrumentor().instrument(engine=engine)
 

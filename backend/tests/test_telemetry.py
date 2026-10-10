@@ -9,7 +9,7 @@ from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
 from sqlalchemy.engine import Engine
 
 from app import telemetry
-from app.settings import clear_settings_cache
+from app.settings import clear_settings_cache, get_settings
 from app.telemetry import (
     CredentialRedactingSpanProcessor,
     record_user_identity,
@@ -59,7 +59,7 @@ def test_configure_telemetry_is_noop_without_connection_string(monkeypatch):
     def _record(**kwargs):
         calls.append(kwargs)
 
-    monkeypatch.setattr("azure.monitor.opentelemetry.configure_azure_monitor", _record)
+    monkeypatch.setattr("app.telemetry.configure_azure_monitor", _record)
 
     telemetry.configure_telemetry(FastAPI())
 
@@ -79,9 +79,7 @@ def test_configure_telemetry_enables_and_passes_processor(
     def _configure(**kwargs):
         configure_calls.append(kwargs)
 
-    monkeypatch.setattr(
-        "azure.monitor.opentelemetry.configure_azure_monitor", _configure
-    )
+    monkeypatch.setattr("app.telemetry.configure_azure_monitor", _configure)
     monkeypatch.setattr(
         "opentelemetry.instrumentation.fastapi.FastAPIInstrumentor.instrument_app",
         lambda *args: instrument_app_calls.append(args[-1]),
@@ -110,9 +108,7 @@ def test_configure_telemetry_enables_and_passes_processor(
 def test_configure_telemetry_sampler_env_not_overridden(monkeypatch, connection_string):
     """Operator-supplied OTEL env vars must not be overwritten (setdefault)."""
     monkeypatch.setenv("OTEL_TRACES_SAMPLER", "always_on")
-    monkeypatch.setattr(
-        "azure.monitor.opentelemetry.configure_azure_monitor", lambda **kwargs: None
-    )
+    monkeypatch.setattr("app.telemetry.configure_azure_monitor", lambda **kwargs: None)
     monkeypatch.setattr(
         "opentelemetry.instrumentation.fastapi.FastAPIInstrumentor.instrument_app",
         lambda *args: None,
@@ -127,13 +123,40 @@ def test_configure_telemetry_sampler_env_not_overridden(monkeypatch, connection_
     assert os.environ["OTEL_TRACES_SAMPLER"] == "always_on"
 
 
+def test_configure_telemetry_otel_defaults_come_from_settings(
+    monkeypatch, connection_string
+):
+    """OTEL env defaults are mirrored from Settings rather than literals."""
+    for key in ("OTEL_SERVICE_NAME", "OTEL_TRACES_SAMPLER", "OTEL_TRACES_SAMPLER_ARG"):
+        monkeypatch.delenv(key, raising=False)
+    settings = get_settings()
+    settings.otel_service_name = "custom-service"
+    settings.otel_traces_sampler = "always_on"
+    settings.otel_traces_sampler_arg = "0.5"
+    monkeypatch.setattr("app.telemetry.configure_azure_monitor", lambda **kwargs: None)
+    monkeypatch.setattr(
+        "opentelemetry.instrumentation.fastapi.FastAPIInstrumentor.instrument_app",
+        lambda *args: None,
+    )
+    monkeypatch.setattr(
+        "opentelemetry.instrumentation.httpx.HTTPXClientInstrumentor.instrument",
+        lambda *args, **kwargs: None,
+    )
+
+    telemetry.configure_telemetry(FastAPI())
+
+    assert os.environ["OTEL_SERVICE_NAME"] == "custom-service"
+    assert os.environ["OTEL_TRACES_SAMPLER"] == "always_on"
+    assert os.environ["OTEL_TRACES_SAMPLER_ARG"] == "0.5"
+
+
 def test_configure_telemetry_fail_soft(monkeypatch, connection_string):
     """Exporter init failure must not raise and must leave telemetry disabled."""
 
     def _boom(**kwargs):
         raise RuntimeError("bad")
 
-    monkeypatch.setattr("azure.monitor.opentelemetry.configure_azure_monitor", _boom)
+    monkeypatch.setattr("app.telemetry.configure_azure_monitor", _boom)
 
     telemetry.configure_telemetry(FastAPI())
 
@@ -228,10 +251,7 @@ def test_instrument_engine_skipped_when_disabled(monkeypatch):
         def instrument(self, **kwargs):
             calls.append(kwargs)
 
-    monkeypatch.setattr(
-        "opentelemetry.instrumentation.sqlalchemy.SQLAlchemyInstrumentor",
-        _Recorder,
-    )
+    monkeypatch.setattr("app.telemetry.SQLAlchemyInstrumentor", _Recorder)
     engine = cast(Engine, object())
 
     telemetry.instrument_engine(engine)
