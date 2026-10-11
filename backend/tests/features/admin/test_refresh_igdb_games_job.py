@@ -591,7 +591,7 @@ def test_run_creates_root_job_span(db_session: Session, mocker: MockerFixture):
     assert captured["name"] == "job.refresh_igdb_games"
     assert captured["context"] == Context()
     assert captured["attributes"]["job.name"] == "refresh_igdb_games"
-    assert captured["attributes"]["user.id"] == app_user.app_user_id
+    assert captured["attributes"]["user.user_id"] == app_user.app_user_id
 
 
 def test_run_processes_stale_games_in_batches(

@@ -37,7 +37,7 @@ class RefreshIgdbGamesJob:
         with get_tracer(__name__).start_as_current_span(
             "job.refresh_igdb_games",
             context=Context(),
-            attributes={"job.name": "refresh_igdb_games", "user.id": app_user_id},
+            attributes={"job.name": "refresh_igdb_games", "user.user_id": app_user_id},
         ):
             igdb_client = IgdbClient.create()
 

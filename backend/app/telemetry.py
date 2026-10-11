@@ -7,7 +7,7 @@ import os
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from azure.monitor.opentelemetry import configure_azure_monitor
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from opentelemetry import trace
 from opentelemetry._logs import get_logger_provider
 from opentelemetry.context import Context
@@ -16,6 +16,7 @@ from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.trace import Span, Tracer
 from sqlalchemy.engine import Engine
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.settings import get_settings
 
@@ -218,17 +219,53 @@ def instrument_engine(engine: Engine) -> None:
     SQLAlchemyInstrumentor().instrument(engine=engine)
 
 
-def record_user_identity(app_user_id: int, steam_id: str) -> None:
-    """Attach user identity attributes to the active span, if recording.
+_SERVER_SPAN_SCOPE_KEY = "backlog_boss.server_span"
 
-    No-op when no span is active or telemetry is disabled, so callers need
-    no guards.
+
+class RequestSpanMiddleware:
+    """ASGI middleware that stores the request's server span on the scope.
+
+    FastAPI's native telemetry makes the HTTP SERVER span current while it
+    runs the middleware stack, but dependency resolution later switches to
+    INTERNAL child spans (``fastapi.dependencies`` / ``fastapi.endpoint``),
+    which Application Insights exports as "InProc" dependencies rather than
+    the Request item. Capturing the span here — while it is still current —
+    lets ``record_user_id`` stamp request-scoped attributes onto the span
+    that becomes the Request telemetry item.
+
+    Uses only the public OpenTelemetry API and the plain ASGI ``scope``, so
+    it does not depend on FastAPI internals.
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """Capture the current server span onto the scope for HTTP traffic.
+
+        Args:
+            scope: The ASGI connection scope.
+            receive: ASGI receive callable.
+            send: ASGI send callable.
+        """
+        if scope["type"] in ("http", "websocket"):
+            scope[_SERVER_SPAN_SCOPE_KEY] = trace.get_current_span()
+        await self.app(scope, receive, send)
+
+
+def record_user_id(request: Request, user_id: int) -> None:
+    """Set the ``user.user_id`` custom dimension on the request's server span.
+
+    Prefers the span captured by ``RequestSpanMiddleware`` so the attribute
+    lands on the Application Insights Request item; falls back to the current
+    span when no capture is present (for example a request that bypassed the
+    middleware). No-op when no span is recording or telemetry is disabled, so
+    callers need no guards.
 
     Args:
-        app_user_id: Internal application user id.
-        steam_id: Steam id of the user.
+        request: The current HTTP request, carrying the captured server span.
+        user_id: Internal application user id.
     """
-    span = trace.get_current_span()
+    span = request.scope.get(_SERVER_SPAN_SCOPE_KEY) or trace.get_current_span()
     if span.is_recording():
-        span.set_attribute("user.id", app_user_id)
-        span.set_attribute("user.steam_id", steam_id)
+        span.set_attribute("user.user_id", user_id)

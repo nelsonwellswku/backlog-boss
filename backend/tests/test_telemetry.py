@@ -1,19 +1,24 @@
 """Unit tests for OpenTelemetry telemetry helpers."""
 
+import asyncio
 import logging
 import os
 from typing import cast
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.testclient import TestClient
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from sqlalchemy.engine import Engine
 
 from app import telemetry
 from app.settings import clear_settings_cache, get_settings
 from app.telemetry import (
     CredentialRedactingSpanProcessor,
-    record_user_identity,
+    RequestSpanMiddleware,
+    record_user_id,
     redact_credentials,
 )
 
@@ -255,24 +260,118 @@ def test_span_processor_redacts_url_on_start():
     provider.shutdown()
 
 
-def test_record_user_identity_sets_attributes():
-    """User identity lands on the active recording span."""
+async def _noop_receive():
+    """Stand-in ASGI receive callable for middleware tests."""
+    return {"type": "http.request"}
+
+
+async def _noop_send(message):
+    """Stand-in ASGI send callable for middleware tests."""
+    return None
+
+
+def test_request_span_middleware_captures_server_span_on_scope():
+    """The middleware stores the span current at entry onto the ASGI scope."""
     provider = TracerProvider()
     tracer = provider.get_tracer("test")
+    seen: dict = {}
 
-    with tracer.start_as_current_span("req") as span:
-        record_user_identity(42, "76561198000000000")
+    async def inner(scope, receive, send):
+        seen["scope"] = scope
 
-    attributes = cast(ReadableSpan, span).attributes
-    assert attributes is not None
-    assert attributes["user.id"] == 42
-    assert attributes["user.steam_id"] == "76561198000000000"
+    scope: dict = {"type": "http"}
+
+    async def run():
+        await RequestSpanMiddleware(inner)(scope, _noop_receive, _noop_send)
+
+    with tracer.start_as_current_span("GET /x") as span:
+        asyncio.run(run())
+
+    assert scope[telemetry._SERVER_SPAN_SCOPE_KEY] is span
     provider.shutdown()
 
 
-def test_record_user_identity_noop_without_span():
+def test_request_span_middleware_ignores_lifespan_scope():
+    """Non-HTTP scopes (lifespan) must not be stamped with a span key."""
+
+    async def inner(scope, receive, send):
+        pass
+
+    scope: dict = {"type": "lifespan"}
+
+    async def run():
+        await RequestSpanMiddleware(inner)(scope, _noop_receive, _noop_send)
+
+    asyncio.run(run())
+
+    assert telemetry._SERVER_SPAN_SCOPE_KEY not in scope
+
+
+def test_record_user_id_uses_span_captured_on_scope():
+    """Identity must land on the captured server span, not the current child."""
+    provider = TracerProvider()
+    tracer = provider.get_tracer("test")
+    server_span = tracer.start_span("GET /api/me")
+    request = Request(
+        scope={"type": "http", telemetry._SERVER_SPAN_SCOPE_KEY: server_span}
+    )
+
+    with tracer.start_as_current_span("fastapi.dependencies"):
+        record_user_id(request, 42)
+
+    server_attributes = cast(ReadableSpan, server_span).attributes
+    assert server_attributes is not None
+    assert server_attributes["user.user_id"] == 42
+    assert "user.steam_id" not in server_attributes
+    server_span.end()
+    provider.shutdown()
+
+
+def test_record_user_id_falls_back_to_current_span():
+    """Without a captured span, stamp the active recording span as a fallback."""
+    provider = TracerProvider()
+    tracer = provider.get_tracer("test")
+    request = Request(scope={"type": "http"})
+
+    with tracer.start_as_current_span("req") as span:
+        record_user_id(request, 42)
+
+    attributes = cast(ReadableSpan, span).attributes
+    assert attributes is not None
+    assert attributes["user.user_id"] == 42
+    provider.shutdown()
+
+
+def test_record_user_id_on_real_request_span():
+    """End to end: user id lands on the SERVER span App Insights exports as a Request."""
+    provider = TracerProvider()
+    exporter = InMemorySpanExporter()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    app = FastAPI(telemetry={"tracer_provider": provider})
+    app.add_middleware(RequestSpanMiddleware)
+
+    @app.get("/me")
+    def me(request: Request):
+        record_user_id(request, 42)
+        return {"ok": True}
+
+    with TestClient(app) as client:
+        response = client.get("/me")
+    assert response.status_code == 200
+
+    spans = {span.name: span for span in exporter.get_finished_spans()}
+    server_attributes = spans["GET /me"].attributes
+    assert server_attributes is not None
+    assert server_attributes["user.user_id"] == 42
+    for name, span in spans.items():
+        if name != "GET /me":
+            assert "user.user_id" not in (span.attributes or {}), name
+    provider.shutdown()
+
+
+def test_record_user_id_noop_without_span():
     """Calling with no active span must not raise."""
-    record_user_identity(1, "76561198000000000")
+    record_user_id(Request(scope={"type": "http"}), 1)
 
 
 def test_instrument_engine_skipped_when_disabled(monkeypatch):

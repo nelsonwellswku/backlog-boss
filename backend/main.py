@@ -12,6 +12,7 @@ from app.features.game.game_router import game_router
 from app.features.health.health_router import health_router
 from app.features.user.user_router import user_router
 from app.lifespan import app_lifespan
+from app.telemetry import RequestSpanMiddleware
 
 logging.basicConfig(level=logging.INFO)
 
@@ -24,6 +25,10 @@ app = FastAPI(
     lifespan=app_lifespan,
     telemetry={"auto_configure": True},
 )
+
+# Captures the HTTP server span while it is current, so request-scoped
+# attributes (e.g. user.user_id) land on the Application Insights Request item.
+app.add_middleware(RequestSpanMiddleware)
 
 app.include_router(health_router)
 app.include_router(auth_router)
