@@ -77,7 +77,7 @@ def test_configure_telemetry_is_noop_without_connection_string(monkeypatch):
 
     monkeypatch.setattr("app.telemetry.configure_azure_monitor", _record)
 
-    telemetry.configure_telemetry(FastAPI())
+    telemetry.configure_telemetry()
 
     assert calls == []
     assert telemetry.is_telemetry_enabled() is False
@@ -86,22 +86,15 @@ def test_configure_telemetry_is_noop_without_connection_string(monkeypatch):
 def test_configure_telemetry_enables_and_passes_processor(
     monkeypatch, connection_string
 ):
-    """With a connection string, configure the distro and instrument httpx."""
+    """With a connection string, configure the distro with redacting processor."""
     for key in _OTEL_ENV_KEYS[1:]:
         monkeypatch.delenv(key, raising=False)
-    captured: dict = {}
     configure_calls: list[dict] = []
-    httpx_instrument_calls: list = []
 
     def _configure(**kwargs):
         configure_calls.append(kwargs)
 
     monkeypatch.setattr("app.telemetry.configure_azure_monitor", _configure)
-    monkeypatch.setattr(
-        "opentelemetry.instrumentation.httpx.HTTPXClientInstrumentor.instrument",
-        lambda *args, **kwargs: httpx_instrument_calls.append((args, kwargs)),
-    )
-    app = FastAPI()
     # Pin the OTEL settings so a local .env cannot change what is mirrored
     # into the process environment.
     settings = get_settings()
@@ -109,30 +102,27 @@ def test_configure_telemetry_enables_and_passes_processor(
     settings.otel_traces_sampler = "parentbased_trace_id_ratio"
     settings.otel_traces_sampler_arg = "1.0"
 
-    telemetry.configure_telemetry(app)
+    telemetry.configure_telemetry()
 
     assert telemetry.is_telemetry_enabled() is True
     assert "InstrumentationKey" in configure_calls[0]["connection_string"]
     assert isinstance(
         configure_calls[0]["span_processors"][0], CredentialRedactingSpanProcessor
     )
-    assert len(httpx_instrument_calls) == 1
+    assert configure_calls[0]["instrumentation_options"] == {
+        "fastapi": {"enabled": False}
+    }
     assert os.environ["OTEL_TRACES_SAMPLER"] == "parentbased_trace_id_ratio"
     assert os.environ["OTEL_TRACES_SAMPLER_ARG"] == "1.0"
     assert os.environ["OTEL_SERVICE_NAME"] == "backlog-boss"
-    assert captured == {}
 
 
 def test_configure_telemetry_sampler_env_not_overridden(monkeypatch, connection_string):
     """Operator-supplied OTEL env vars must not be overwritten (setdefault)."""
     monkeypatch.setenv("OTEL_TRACES_SAMPLER", "always_on")
     monkeypatch.setattr("app.telemetry.configure_azure_monitor", lambda **kwargs: None)
-    monkeypatch.setattr(
-        "opentelemetry.instrumentation.httpx.HTTPXClientInstrumentor.instrument",
-        lambda *args, **kwargs: None,
-    )
 
-    telemetry.configure_telemetry(FastAPI())
+    telemetry.configure_telemetry()
 
     assert os.environ["OTEL_TRACES_SAMPLER"] == "always_on"
 
@@ -148,12 +138,8 @@ def test_configure_telemetry_otel_defaults_come_from_settings(
     settings.otel_traces_sampler = "always_on"
     settings.otel_traces_sampler_arg = "0.5"
     monkeypatch.setattr("app.telemetry.configure_azure_monitor", lambda **kwargs: None)
-    monkeypatch.setattr(
-        "opentelemetry.instrumentation.httpx.HTTPXClientInstrumentor.instrument",
-        lambda *args, **kwargs: None,
-    )
 
-    telemetry.configure_telemetry(FastAPI())
+    telemetry.configure_telemetry()
 
     assert os.environ["OTEL_SERVICE_NAME"] == "custom-service"
     assert os.environ["OTEL_TRACES_SAMPLER"] == "always_on"
@@ -168,9 +154,42 @@ def test_configure_telemetry_fail_soft(monkeypatch, connection_string):
 
     monkeypatch.setattr("app.telemetry.configure_azure_monitor", _boom)
 
-    telemetry.configure_telemetry(FastAPI())
+    telemetry.configure_telemetry()
 
     assert telemetry.is_telemetry_enabled() is False
+
+
+def test_configure_telemetry_second_call_is_noop(monkeypatch, connection_string):
+    """Repeat configuration must not re-run the distro or duplicate exporters."""
+    configure_calls: list[dict] = []
+
+    def _configure(**kwargs):
+        configure_calls.append(kwargs)
+
+    monkeypatch.setattr("app.telemetry.configure_azure_monitor", _configure)
+
+    telemetry.configure_telemetry()
+    telemetry.configure_telemetry()
+
+    assert len(configure_calls) == 1
+    assert telemetry.is_telemetry_enabled() is True
+
+
+def test_configure_telemetry_failure_after_success_keeps_enabled(
+    monkeypatch, connection_string
+):
+    """A failed re-configuration must not disable a live pipeline."""
+    monkeypatch.setattr("app.telemetry.configure_azure_monitor", lambda **kwargs: None)
+    telemetry.configure_telemetry()
+    assert telemetry.is_telemetry_enabled() is True
+
+    def _boom(**kwargs):
+        raise RuntimeError("bad")
+
+    monkeypatch.setattr("app.telemetry.configure_azure_monitor", _boom)
+    telemetry.configure_telemetry()
+
+    assert telemetry.is_telemetry_enabled() is True
 
 
 def test_configure_telemetry_silences_noisy_library_loggers(
@@ -178,14 +197,10 @@ def test_configure_telemetry_silences_noisy_library_loggers(
 ):
     """Azure/OTel library loggers must be raised to WARNING before export."""
     monkeypatch.setattr("app.telemetry.configure_azure_monitor", lambda **kwargs: None)
-    monkeypatch.setattr(
-        "opentelemetry.instrumentation.httpx.HTTPXClientInstrumentor.instrument",
-        lambda *args, **kwargs: None,
-    )
     logging.getLogger("azure").setLevel(logging.INFO)
     logging.getLogger("opentelemetry").setLevel(logging.INFO)
 
-    telemetry.configure_telemetry(FastAPI())
+    telemetry.configure_telemetry()
 
     assert logging.getLogger("azure").level == logging.WARNING
     assert logging.getLogger("opentelemetry").level == logging.WARNING
@@ -195,7 +210,7 @@ def test_configure_telemetry_keeps_logger_levels_without_connection_string():
     """Telemetry off must leave library logger levels untouched."""
     logging.getLogger("azure").setLevel(logging.INFO)
 
-    telemetry.configure_telemetry(FastAPI())
+    telemetry.configure_telemetry()
 
     assert logging.getLogger("azure").level == logging.INFO
 
@@ -213,6 +228,27 @@ def test_configure_telemetry_keeps_logger_levels_without_connection_string():
             "https://example.com/?access_token=REDACTED",
         ),
         ("https://example.com/?token=SECRET", "https://example.com/?token=REDACTED"),
+        (
+            "https://id.twitch.tv/oauth2/token?client_id=abc&client_secret=SECRET&grant_type=client_credentials",
+            "https://id.twitch.tv/oauth2/token?client_id=REDACTED&client_secret=REDACTED&grant_type=client_credentials",
+        ),
+        (
+            "https://example.com/?client_secret=SECRET",
+            "https://example.com/?client_secret=REDACTED",
+        ),
+        (
+            "https://example.com/?Client_Secret=SECRET",
+            "https://example.com/?Client_Secret=REDACTED",
+        ),
+        (
+            "https://example.com/?client_id=abc",
+            "https://example.com/?client_id=REDACTED",
+        ),
+        ("https://example.com/?secret=SECRET", "https://example.com/?secret=REDACTED"),
+        (
+            "https://example.com/?password=SECRET",
+            "https://example.com/?password=REDACTED",
+        ),
         ("https://example.com/?Key=SECRET", "https://example.com/?Key=REDACTED"),
         (
             "https://example.com/?key=SECRET&token=SECRET&x=1",
@@ -256,6 +292,28 @@ def test_span_processor_redacts_url_on_start():
     assert attributes is not None
     assert attributes["http.url"] == ("https://api.steampowered.com/v1/?key=REDACTED")
     assert attributes["http.method"] == "GET"
+    span.end()
+    provider.shutdown()
+
+
+def test_span_processor_redacts_twitch_client_secret():
+    """on_start rewrites url.full carrying Twitch OAuth secrets."""
+    provider = TracerProvider()
+    tracer = provider.get_tracer("test")
+    span = tracer.start_span(
+        "x",
+        attributes={
+            "url.full": "https://id.twitch.tv/oauth2/token?client_id=abc&client_secret=SECRET&grant_type=client_credentials",
+        },
+    )
+
+    CredentialRedactingSpanProcessor().on_start(span, None)
+
+    attributes = cast(ReadableSpan, span).attributes
+    assert attributes is not None
+    assert attributes["url.full"] == (
+        "https://id.twitch.tv/oauth2/token?client_id=REDACTED&client_secret=REDACTED&grant_type=client_credentials"
+    )
     span.end()
     provider.shutdown()
 
@@ -374,8 +432,8 @@ def test_record_user_id_noop_without_span():
     record_user_id(Request(scope={"type": "http"}), 1)
 
 
-def test_instrument_engine_skipped_when_disabled(monkeypatch):
-    """SQLAlchemy instrumentation is skipped when telemetry is off, run when on."""
+def test_instrument_engine_always_instruments(monkeypatch):
+    """Engine instrumentation must not depend on telemetry-enabled ordering."""
     calls: list[dict] = []
 
     class _Recorder:
@@ -385,16 +443,84 @@ def test_instrument_engine_skipped_when_disabled(monkeypatch):
     monkeypatch.setattr("app.telemetry.SQLAlchemyInstrumentor", _Recorder)
     engine = cast(Engine, object())
 
-    telemetry.instrument_engine(engine)
-    assert calls == []
-
-    telemetry._enabled = True
+    telemetry._enabled = False
     telemetry.instrument_engine(engine)
     assert len(calls) == 1
     assert calls[0]["engine"] is engine
+
+    telemetry._enabled = True
+    telemetry.instrument_engine(engine)
+    assert len(calls) == 2
+    assert calls[1]["engine"] is engine
 
 
 def test_shutdown_telemetry_is_safe_when_disabled():
     """Shutdown with telemetry never configured must be a no-op."""
     telemetry._enabled = False
     telemetry.shutdown_telemetry()
+
+
+def test_shutdown_telemetry_shuts_down_all_providers(monkeypatch):
+    """Trace, metrics, and logs providers must all be shut down."""
+    shutdown_calls: list[str] = []
+
+    class _Provider:
+        def __init__(self, name: str) -> None:
+            self._name = name
+
+        def shutdown(self) -> None:
+            """Record shutdown for provider ordering assertions."""
+            shutdown_calls.append(self._name)
+
+    monkeypatch.setattr(
+        "app.telemetry.trace.get_tracer_provider",
+        lambda: _Provider("trace"),
+    )
+    monkeypatch.setattr(
+        "app.telemetry.metrics.get_meter_provider",
+        lambda: _Provider("metrics"),
+    )
+    monkeypatch.setattr(
+        "app.telemetry.get_logger_provider",
+        lambda: _Provider("logs"),
+    )
+    telemetry._enabled = True
+
+    telemetry.shutdown_telemetry()
+
+    assert sorted(shutdown_calls) == ["logs", "metrics", "trace"]
+    assert telemetry.is_telemetry_enabled() is False
+
+
+def test_shutdown_telemetry_continues_on_provider_failure(monkeypatch):
+    """One failing provider must not prevent the others from shutting down."""
+    shutdown_calls: list[str] = []
+
+    class _FailingProvider:
+        def shutdown(self) -> None:
+            """Simulate an exporter flush failure during shutdown."""
+            raise RuntimeError("flush failed")
+
+    class _RecordingProvider:
+        def shutdown(self) -> None:
+            """Record successful shutdown after a sibling failure."""
+            shutdown_calls.append("ok")
+
+    monkeypatch.setattr(
+        "app.telemetry.trace.get_tracer_provider",
+        _FailingProvider,
+    )
+    monkeypatch.setattr(
+        "app.telemetry.metrics.get_meter_provider",
+        _RecordingProvider,
+    )
+    monkeypatch.setattr(
+        "app.telemetry.get_logger_provider",
+        _RecordingProvider,
+    )
+    telemetry._enabled = True
+
+    telemetry.shutdown_telemetry()
+
+    assert shutdown_calls == ["ok", "ok"]
+    assert telemetry.is_telemetry_enabled() is False

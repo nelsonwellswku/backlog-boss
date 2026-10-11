@@ -22,7 +22,7 @@ async def app_lifespan(app: FastAPI) -> AsyncGenerator[None]:
     Yields:
         Control to the server while the application is running.
     """
-    configure_telemetry(app)
+    configure_telemetry()
     try:
         async with configure_httpx_lifespan(app):
             yield

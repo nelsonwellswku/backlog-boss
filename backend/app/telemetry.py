@@ -7,11 +7,10 @@ import os
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from azure.monitor.opentelemetry import configure_azure_monitor
-from fastapi import FastAPI, Request
-from opentelemetry import trace
+from fastapi import Request
+from opentelemetry import metrics, trace
 from opentelemetry._logs import get_logger_provider
 from opentelemetry.context import Context
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.trace import Span, Tracer
@@ -23,7 +22,17 @@ from app.settings import get_settings
 logger = logging.getLogger(__name__)
 
 _CREDENTIAL_QUERY_PARAMS = frozenset(
-    {"key", "apikey", "api_key", "access_token", "token"}
+    {
+        "key",
+        "apikey",
+        "api_key",
+        "access_token",
+        "token",
+        "client_id",
+        "client_secret",
+        "secret",
+        "password",
+    }
 )
 _REDACTED = "REDACTED"
 _URL_ATTRIBUTE_KEYS = ("http.url", "url.full", "http.target", "url.query")
@@ -112,9 +121,11 @@ class CredentialRedactingSpanProcessor(SpanProcessor):
                     span.set_attribute(key, redacted)
 
 
-def configure_telemetry(app: FastAPI) -> None:
+def configure_telemetry() -> None:
     """Configure OpenTelemetry export to Azure Application Insights.
 
+    Idempotent: repeat calls are no-ops, so double configuration cannot
+    attach duplicate processors/exporters or disable a live pipeline.
     No-op when APPLICATIONINSIGHTS_CONNECTION_STRING is unset, so the app
     behaves exactly as before. Never raises: any setup failure (invalid
     connection string, exporter init error) is logged once and leaves
@@ -125,15 +136,19 @@ def configure_telemetry(app: FastAPI) -> None:
     ``os.environ`` via ``setdefault`` and an operator-supplied OTEL_* variable
     always wins.
 
+    Legacy FastAPI instrumentation is disabled because FastAPI's native
+    telemetry already emits the HTTP SERVER span; the distro would otherwise
+    add a second span source and ``RequestSpanMiddleware`` could capture the
+    wrong span. httpx instrumentation is provided by the distro.
+
     Before configuring the distro, the ``azure`` and ``opentelemetry``
     library loggers are raised to WARNING so the exporter's per-cycle INFO
     chatter (ingestion HTTP logging, "Transmission succeeded" summaries)
     stays out of the console and out of the exported telemetry.
-
-    Args:
-        app: The FastAPI application to instrument.
     """
     global _enabled
+    if _enabled:
+        return
     settings = get_settings()
     if not settings.applicationinsights_connection_string:
         return
@@ -150,11 +165,8 @@ def configure_telemetry(app: FastAPI) -> None:
         configure_azure_monitor(
             connection_string=settings.applicationinsights_connection_string,
             span_processors=[CredentialRedactingSpanProcessor()],
+            instrumentation_options={"fastapi": {"enabled": False}},
         )
-
-        httpx_instrumentor = HTTPXClientInstrumentor()
-        if not getattr(httpx_instrumentor, "_is_instrumented_by_opentelemetry", False):
-            httpx_instrumentor.instrument()
 
         _enabled = True
     except Exception:
@@ -174,7 +186,11 @@ def shutdown_telemetry() -> None:
     if not _enabled:
         return
 
-    for get_provider in (trace.get_tracer_provider, get_logger_provider):
+    for get_provider in (
+        trace.get_tracer_provider,
+        metrics.get_meter_provider,
+        get_logger_provider,
+    ):
         try:
             provider = get_provider()
             shutdown = getattr(provider, "shutdown", None)
@@ -204,18 +220,17 @@ def get_tracer(name: str) -> Tracer:
 
 
 def instrument_engine(engine: Engine) -> None:
-    """Attach SQLAlchemy instrumentation to an engine when telemetry is enabled.
+    """Attach SQLAlchemy instrumentation to an engine.
 
+    Unconditional: safe to call with telemetry disabled because unconfigured
+    spans are no-ops, and it removes the ordering dependency between engine
+    creation (``get_db_engine`` is lru_cached) and telemetry configuration.
     The distro does not cover pyodbc, so this is the only SQLAlchemy
-    instrumentation. Called once per process because ``get_db_engine`` is
-    lru_cached; tests run with telemetry disabled so this is inert there.
+    instrumentation.
 
     Args:
         engine: The SQLAlchemy engine created by ``get_db_engine``.
     """
-    if not _enabled:
-        return
-
     SQLAlchemyInstrumentor().instrument(engine=engine)
 
 

@@ -23,7 +23,10 @@ app = FastAPI(
     redoc_url=None,
     description="Prioritize your video game backlog",
     lifespan=app_lifespan,
-    telemetry={"auto_configure": True},
+    # auto_configure False: native instrumentation still emits SERVER spans
+    # via the global provider (owned by the Azure distro), but FastAPI will
+    # not attach its own OTLP exporters if OTLP env vars are ever set.
+    telemetry={"auto_configure": False},
 )
 
 # Captures the HTTP server span while it is current, so request-scoped
