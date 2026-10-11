@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from functools import lru_cache
 from typing import Annotated
@@ -9,6 +9,7 @@ from sqlalchemy.engine import URL, Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.settings import Settings, get_settings
+from app.telemetry import instrument_engine
 
 
 def create_connection_url(settings: Settings) -> URL:
@@ -28,7 +29,14 @@ def create_connection_url(settings: Settings) -> URL:
 
 @lru_cache
 def get_db_engine() -> Engine:
-    return create_engine(create_connection_url(get_settings()))
+    """Create the cached database engine and attach telemetry instrumentation.
+
+    Returns:
+        The shared SQLAlchemy engine for the application.
+    """
+    engine = create_engine(create_connection_url(get_settings()))
+    instrument_engine(engine)
+    return engine
 
 
 @lru_cache
@@ -48,7 +56,16 @@ def create_db_session_factory(engine: Engine) -> sessionmaker[Session]:
 
 
 @contextmanager
-def create_db_session(engine: Engine | None = None) -> Iterator[Session]:
+def create_db_session(engine: Engine | None = None) -> Generator[Session]:
+    """Open a session from the shared factory, or from an explicit engine.
+
+    Args:
+        engine: Engine to build the session from. When ``None``, the cached
+            application engine is used.
+
+    Yields:
+        A SQLAlchemy session, closed and discarded on exit.
+    """
     session_factory = (
         get_db_session_factory()
         if engine is None

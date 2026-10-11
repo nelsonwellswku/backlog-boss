@@ -1,13 +1,17 @@
+from typing import Literal
+
 from fastapi import HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.database.engine import DbSession
 from app.features.api_model import ApiResponseModel
+from app.telemetry import is_telemetry_enabled
 
 
 class GetReadinessResponse(ApiResponseModel):
     message: str
+    telemetry: Literal["enabled", "disabled"]
 
 
 class GetReadinessHandler:
@@ -23,4 +27,7 @@ class GetReadinessHandler:
                 "Database is not ready.",
             ) from exc
 
-        return GetReadinessResponse(message="Database is ready.")
+        return GetReadinessResponse(
+            message="Database is ready.",
+            telemetry="enabled" if is_telemetry_enabled() else "disabled",
+        )

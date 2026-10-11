@@ -145,6 +145,32 @@ def database_container() -> Iterator[None]:
             _restore_environment(original_env)
 
 
+@pytest.fixture(scope="session", autouse=True)
+def telemetry_disabled() -> Iterator[None]:
+    """Force telemetry off for the whole test session.
+
+    A developer's local ``.env`` may carry a live Application Insights
+    connection string, which would make any test that starts the app
+    lifespan configure a real exporter and instrument shared clients.
+    Tests that need telemetry opt in via their own ``connection_string``
+    fixture.
+
+    Yields:
+        None, with telemetry disabled for the duration of the session.
+    """
+    original = os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING")
+    os.environ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = ""
+    clear_settings_cache()
+    try:
+        yield
+    finally:
+        if original is None:
+            os.environ.pop("APPLICATIONINSIGHTS_CONNECTION_STRING", None)
+        else:
+            os.environ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = original
+        clear_settings_cache()
+
+
 @pytest.fixture(scope="session")
 def database_engine(database_container: None) -> Iterator[Engine]:
     yield get_db_engine()

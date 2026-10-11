@@ -19,6 +19,15 @@ class Settings(BaseSettings):
     twitch_client_secret: str
     steam_api_key: str
 
+    # Optional by design, unlike the fields above: telemetry is a feature
+    # toggle rather than required config, so an unset or empty value means
+    # "telemetry disabled" instead of misconfiguration.
+    applicationinsights_connection_string: str = ""
+
+    otel_service_name: str = "backlog-boss"
+    otel_traces_sampler: str = "parentbased_trace_id_ratio"
+    otel_traces_sampler_arg: str = "1.0"
+
     base_url: str = "http://localhost:5173"
 
     @field_validator("base_url")
