@@ -225,7 +225,9 @@ def instrument_engine(engine: Engine) -> None:
     Unconditional: safe to call with telemetry disabled because unconfigured
     spans are no-ops, and it removes the ordering dependency between engine
     creation (``get_db_engine`` is lru_cached) and telemetry configuration.
-    The distro does not cover pyodbc, so this is the only SQLAlchemy
+    Required because the Azure distro only auto-instruments its supported
+    library list (django, fastapi, flask, httpx, psycopg2, requests, urllib,
+    azure_sdk) — sqlalchemy is not included — so this is the only SQLAlchemy
     instrumentation.
 
     Args:

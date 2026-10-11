@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -9,7 +11,7 @@ from app.telemetry import is_telemetry_enabled
 
 class GetReadinessResponse(ApiResponseModel):
     message: str
-    telemetry: str
+    telemetry: Literal["enabled", "disabled"]
 
 
 class GetReadinessHandler:
